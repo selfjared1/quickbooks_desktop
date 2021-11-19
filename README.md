@@ -13,8 +13,7 @@ in order for this library to work if you're using any <br>
 version below 2022 (or 22.0 for Enterprise).<br>
 
 <h2>Instructions</h2>
-This library will handle all of the complexities with Session <br>
-managment 
+This library will handle all of the complexities with Session managment<br>
 
 <h2>Getting Help</h2>
 For a look at xml code you can go to QuickBooks <a href="https://static.developer.intuit.com/qbSDK-current/common/newosr/index.html">Onscreen Reference</a>
