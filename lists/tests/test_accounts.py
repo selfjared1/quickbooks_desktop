@@ -7,11 +7,16 @@ class TestAccountsCommon(unittest.TestCase):
     def setUp(self):
         super(TestAccountsCommon, self).setUp()
         account = Accounts()
-        account.search(
+        account.quick_search(
             account_type='Accounts Payable',
         )
         self.assertTrue(account.account_type == 'Accounts Payable')
         print('h')
+
+class TestAccountsQuickSearch(TestAccountsCommon):
+
+    def test_account_quick_search(self):
+        qb = SessionManager()
 
 class TestAccountsSearch(TestAccountsCommon):
 
@@ -20,10 +25,10 @@ class TestAccountsSearch(TestAccountsCommon):
 
 class TestAccountsUpdate(TestAccountsCommon):
 
-    def test_session_object(self):
+    def test_account_update(self):
         qb = SessionManager()
 
 class TestAccountsAdd(TestAccountsCommon):
 
-    def test_session_object(self):
+    def test_account_add(self):
         qb = SessionManager()

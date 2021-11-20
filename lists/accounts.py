@@ -29,35 +29,50 @@ class Accounts():
         self.data_extension_type = None
         self.data_extension_value = None
 
-    def search(self,
-               list_id_list=[],
-               max_returned=None,
-               active_status='ActiveOnly',
-               from_modified_date=None,
-               to_modified_date=None,
-               name_starts_with=None,
-               name_contains=None,
-               name_ends_with=None,
-               name_range=('',''),
-               account_type=None,
-               currency_id=None,
-               currency_full_name=None,
-               limit_return_fields_to=[],
-               owner_id_list=[]
-               ):
+    def add_list_to_xml(self, root, item_list, element_name):
+        for list_item in item_list:
+            xml = et.Element(element_name).text = list_item
+            root.insert(xml)
+        return root
+
+    def add_element_to_xml(self, root, element, element_name):
+        xml = et.Element(element_name).text = element
+        root.insert(xml)
+        return root
+
+    def add_account_type_to_xml(self, root, account_type):
+        account_types = ["AccountsPayable", "AccountsReceivable", "Bank", "CostOfGoodsSold", "CreditCard", "Equity",
+                         "Expense", "FixedAsset", "Income", "LongTermLiability", "NonPosting", "OtherAsset",
+                         "OtherCurrentAsset", "OtherCurrentLiability", "OtherExpense", "OtherIncome"]
+        if account_type in account_types:
+            xml = et.Element('AccountType').text = account_type
+            root.insert(xml)
+        else:
+            raise Exception(f'''
+                                The account_type given ("{account_type}") is not in the approved list of account types \n
+                                Please choose an account type from the following: \n
+                                "AccountsPayable", "AccountsReceivable", "Bank", "CostOfGoodsSold", "CreditCard", \n
+                                "Equity", "Expense", "FixedAsset", "Income", "LongTermLiability", "NonPosting", \n
+                                "OtherAsset", "OtherCurrentAsset", "OtherCurrentLiability", "OtherExpense", "OtherIncome"
+                                ''')
+        return root
+
+    def quick_search(self,
+                     list_id_list=[],
+                     full_name_list=[],
+                     max_return=None,
+                     active_status='ActiveOnly',
+                     from_modified_date=None,
+                     to_modified_date=None,
+                     account_type=None
+                     ):
         """
-        :param list_id: A list strings that represent the backend ID (not UI or Report facing ID).
-        :param max_returned: An Int that represents the maximun quantity returned with the response.
+        :param list_id_list: A list strings that represent the backend ID (not UI or Report facing ID).
+        :param full_name_list: A list of strings with the accounts full_name.  Must be exact.
+        :param max_return: An Int that represents the maximun quantity returned with the response.
         :param active_status: A string that may have on of the following values: ActiveOnly, InactiveOnly, All
         :param from_modified_date: A Python date.datetime object or a date string.
         :param to_modified_date: A Python date.datetime object or a date string.
-        :param name_starts_with:  A string that the account Full Name would start with. Cannot Be combined with
-                                    name_contains, or name_ends_with.
-        :param name_contains:  A string that the account Full Name would have in it. Cannot Be combined with
-                                    name_starts_with, or name_ends_with.
-        :param name_ends_with:  A string that the account Full Name would end with. Cannot Be combined with
-                                    name_starts_with, or name_contains.
-        :param name_range:  A string that the account Full Name would end with.
         :param account_type: A string that may have one of the following values: AccountsPayable, AccountsReceivable,
                                 Bank, CostOfGoodsSold, CreditCard, Equity, Expense, FixedAsset, Income,
                                 LongTermLiability, NonPosting, OtherAsset, OtherCurrentAsset, OtherCurrentLiability,
@@ -67,19 +82,22 @@ class Accounts():
         :param limit_return_fields_to: A list of strings that represent the attributes (columns/fields) that you want to
                                             limit the returning data to.  Typically it's used if you have a large company
                                             file and you want to improve performance.
-        :param owner_id_list: A list of strings representing the custom data owner id's.  This is very rarely used.
         :return: A pandas dataframe of the accounts
         """
-        # for key, value in kwargs.items():
-        #     if hasattr(self, key):
-        #         self.__setattr__(key, value)
-        #     else:
-        #         raise Exception(f'The key "{key}" does not match the available attributes for accounts')
         root = et.Element('AccountQueryRq')
         if not list_id_list:
-            for list_id in list_id_list:
-                id_xml = et.Element('ListID').text = list_id
-                root.insert()
-        if self.full_name is not None:
-            et.SubElement(root, 'FullName')
-        if self.
+            root = self.add_list_to_xml(root, list_id_list, 'ListID')
+        if not full_name_list:
+            root = self.add_list_to_xml(root, full_name_list, 'FullName')
+        if max_return is not None:
+            root = self.add_element_to_xml(root, max_return, 'MaxReturn')
+        if active_status is not None:
+            root = self.add_element_to_xml(root, active_status, 'ActiveStatus')
+        if from_modified_date is not None:
+            root = self.add_element_to_xml(root, from_modified_date, 'FromModifiedDate')
+        if to_modified_date is not None:
+            root = self.add_element_to_xml(root, to_modified_date, 'ToModifiedDate')
+        if account_type is not None:
+            root = self.add_account_type_to_xml(root, account_type)
+
+        # todo: limit_return_fields_to = []
