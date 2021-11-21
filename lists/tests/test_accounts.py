@@ -1,4 +1,4 @@
-from lists.accounts import Accounts
+from lists.accounts_old import Accounts
 import unittest
 from core.test_session_manager import SessionManager
 
