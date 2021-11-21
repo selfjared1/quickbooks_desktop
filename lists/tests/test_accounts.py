@@ -7,10 +7,13 @@ class TestAccountsCommon(unittest.TestCase):
     def setUp(self):
         super(TestAccountsCommon, self).setUp()
         account = Accounts()
-        account.quick_search(
-            account_type='Accounts Payable',
-        )
-        self.assertTrue(account.account_type == 'Accounts Payable')
+        accounts_df = account.quick_search()
+
+        # account.quick_search(
+        #     account_type='Accounts Payable',
+        # )
+
+        # self.assertTrue(account.account_type == 'Accounts Payable')
         print('h')
 
 class TestAccountsQuickSearch(TestAccountsCommon):
