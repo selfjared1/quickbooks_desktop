@@ -1,6 +1,6 @@
 from lists.accounts_old import Accounts
 import unittest
-from core.test_session_manager import SessionManager
+from core.tests.test_session_manager import SessionManager
 
 class TestAccountsCommon(unittest.TestCase):
 

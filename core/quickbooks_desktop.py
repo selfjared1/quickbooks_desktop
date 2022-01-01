@@ -2,6 +2,7 @@ from core.session_manager import SessionManager
 from lxml import etree as et
 import pandas as pd
 import sqlite3
+import xmltodict
 
 available_actions = [
 'ARRefundCreditCardAdd',
@@ -241,18 +242,34 @@ class QuickBooksDesktop(SessionManager):
 
     """
     def __init__(self):
+        self.report = {
+            'aging_report_query': 'AgingReportQuery',
+            'budget_summary_report_query':'BudgetSummaryReportQuery',
+            'custom_detail_report_query': 'CustomDetailReportQuery',
+            'custom_summary_report_query': 'CustomSummaryReportQuery',
+            'general_detail_report_query':'GeneralDetailReportQuery',
+            'general_summary_report_query':'GeneralSummaryReportQuery',
+            'job_report_query':'JobReportQuery',
+            'payroll_detail_report_query':'PayrollDetailReportQuery',
+            'payroll_summary_report_query':'PayrollSummaryReportQuery',
+            'time_report_query':'TimeReportQuery'
+        }
+        self.removed_queries = {
+            'bill_to_pay_query': 'BillToPayQuery',
+            'data_event_recovery_info_query': 'DataEventRecoveryInfoQuery',
+            'item_assemblies_can_build_query':'ItemAssembliesCanBuildQuery',
+            'list_deleted_query':'ListDeletedQuery',
+            'txn_deleted_query':'TxnDeletedQuery',
+        }
         self.query = {
             'ar_refund_credit_card_query':'ARRefundCreditCardQuery',
             'account_query':'AccountQuery',
             'account_tax_line_info_query':'AccountTaxLineInfoQuery',
-            'aging_report_query':'AgingReportQuery',
             'bar_code_query':'BarCodeQuery',
             'bill_payment_check_query':'BillPaymentCheckQuery',
             'bill_payment_credit_card_query':'BillPaymentCreditCardQuery',
             'bill_query':'BillQuery',
-            'bill_to_pay_query':'BillToPayQuery',
             'billing_rate_query':'BillingRateQuery',
-            'budget_summary_report_query':'BudgetSummaryReportQuery',
             'build_assembly_query':'BuildAssemblyQuery',
             'charge_query':'ChargeQuery',
             'check_query':'CheckQuery',
@@ -263,12 +280,9 @@ class QuickBooksDesktop(SessionManager):
             'credit_card_credit_query':'CreditCardCreditQuery',
             'credit_memo_query':'CreditMemoQuery',
             'currency_query':'CurrencyQuery',
-            'custom_detail_report_query':'CustomDetailReportQuery',
-            'custom_summary_report_query':'CustomSummaryReportQuery',
             'customer_msg_query':'CustomerMsgQuery',
             'customer_query':'CustomerQuery',
             'customer_type_query':'CustomerTypeQuery',
-            'data_event_recovery_info_query':'DataEventRecoveryInfoQuery',
             'data_ext_def_query':'DataExtDefQuery',
             'date_driven_terms_query':'DateDrivenTermsQuery',
             'deposit_query':'DepositQuery',
@@ -276,13 +290,10 @@ class QuickBooksDesktop(SessionManager):
             'entity_query':'EntityQuery',
             'estimate_query':'EstimateQuery',
             'form1099_category_account_mapping_query':'Form1099CategoryAccountMappingQuery',
-            'general_detail_report_query':'GeneralDetailReportQuery',
-            'general_summary_report_query':'GeneralSummaryReportQuery',
             'host_query':'HostQuery',
             'inventory_adjustment_query':'InventoryAdjustmentQuery',
             'inventory_site_query':'InventorySiteQuery',
             'invoice_query':'InvoiceQuery',
-            'item_assemblies_can_build_query':'ItemAssembliesCanBuildQuery',
             'item_discount_query':'ItemDiscountQuery',
             'item_fixed_asset_query':'ItemFixedAssetQuery',
             'item_group_query':'ItemGroupQuery',
@@ -298,17 +309,13 @@ class QuickBooksDesktop(SessionManager):
             'item_service_query':'ItemServiceQuery',
             'item_sites_query':'ItemSitesQuery',
             'item_subtotal_query':'ItemSubtotalQuery',
-            'job_report_query':'JobReportQuery',
             'job_type_query':'JobTypeQuery',
             'journal_entry_query':'JournalEntryQuery',
             'lead_query':'LeadQuery',
-            'list_deleted_query':'ListDeletedQuery',
             'other_name_query':'OtherNameQuery',
             'payment_method_query':'PaymentMethodQuery',
-            'payroll_detail_report_query':'PayrollDetailReportQuery',
             'payroll_item_non_wage_query':'PayrollItemNonWageQuery',
             'payroll_item_wage_query':'PayrollItemWageQuery',
-            'payroll_summary_report_query':'PayrollSummaryReportQuery',
             'preferences_query':'PreferencesQuery',
             'price_level_query':'PriceLevelQuery',
             'purchase_order_query':'PurchaseOrderQuery',
@@ -324,13 +331,11 @@ class QuickBooksDesktop(SessionManager):
             'standard_terms_query':'StandardTermsQuery',
             'template_query':'TemplateQuery',
             'terms_query':'TermsQuery',
-            'time_report_query':'TimeReportQuery',
             'time_tracking_query':'TimeTrackingQuery',
             'to_do_query':'ToDoQuery',
             'transaction_query':'TransactionQuery',
             'transfer_inventory_query':'TransferInventoryQuery',
             'transfer_query':'TransferQuery',
-            'txn_deleted_query':'TxnDeletedQuery',
             'unit_of_measure_set_query':'UnitOfMeasureSetQuery',
             'vehicle_mileage_query':'VehicleMileageQuery',
             'vehicle_query':'VehicleQuery',
@@ -340,13 +345,18 @@ class QuickBooksDesktop(SessionManager):
             'workers_comp_code_query':'WorkersCompCodeQuery',
             }
 
-    def get_list(self, list_name):
-        root = et.Element(list_name + 'Rq')
+    def get_table(self, table_name):
+        print(f'begin {table_name}')
+        root = et.Element(table_name + 'Rq')
         qb = SessionManager()
         response = qb.send_xml(root)
-        xpath = f'''/QBXML/QBXMLMsgsRs/{list_name}Rs/{list_name.replace('Query','')}Ret'''
+        xpath = f'''/QBXML/QBXMLMsgsRs/{table_name}Rs/{table_name.replace('Query', '')}Ret'''
+        tree = et.fromstring(response)
+        tree = tree.xpath(xpath)
+        print(table_name)
+        # o = untangle.parse(et.tostring(tree[0], encoding='unicode'))
         try:
-            df = pd.read_xml(response, xpath, index=False)
+            df = pd.read_xml(response, xpath, parser='lxml')
             return df
         except Exception as e:
             print(e)
@@ -355,12 +365,25 @@ class QuickBooksDesktop(SessionManager):
     def replicate(self):
         connection = sqlite3.connect('qb_data.db')
         for code in self.query.keys():
-            df = self.get_list(self.query[code])
+            df = self.get_table(self.query[code])
             if df is not None:
-                df.to_sql(code, connection)
+                df.to_sql(code, connection, if_exists='replace', index=False)
 
+    def generate_xml_files(self):
+        for table_name in self.query.keys():
+            print(f'begin {table_name}')
+            root = et.Element(table_name + 'Rq')
+            qb = SessionManager()
+            response = qb.send_xml(root)
+            try:
+                with open(f"{table_name}.xml", "wb") as xml_writer:
+                    xml_writer.write(response)
+            except IOError:
+                pass
 
 if __name__ == '__main__':
     qb = QuickBooksDesktop()
-    qb.replicate()
+    # qb.replicate()
+    df = qb.get_table('BillQuery')
+
     print('b')
