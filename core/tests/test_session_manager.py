@@ -50,6 +50,7 @@ class TestSessionManager(TestSessionManagerCommon):
         # Tear Down
         qb.end_session()
         self.assertFalse(qb.session_begun)
+        qb.close_connection()
         self.assertFalse(qb.connection_open)
         qb = None
 

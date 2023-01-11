@@ -345,14 +345,18 @@ class QuickBooksDesktop(SessionManager):
             'workers_comp_code_query':'WorkersCompCodeQuery',
             }
 
+    def parse_response_xml(self, table_name, response):
+        xpath = f'''/QBXML/QBXMLMsgsRs/{table_name}Rs/{table_name.replace('Query', '')}Ret'''
+        tree = et.fromstring(response)
+        tree = tree.xpath(xpath)
+        return tree
+
     def get_table(self, table_name):
         print(f'begin {table_name}')
         root = et.Element(table_name + 'Rq')
         qb = SessionManager()
         response = qb.send_xml(root)
-        xpath = f'''/QBXML/QBXMLMsgsRs/{table_name}Rs/{table_name.replace('Query', '')}Ret'''
-        tree = et.fromstring(response)
-        tree = tree.xpath(xpath)
+        tree = self.parse_response_xml(table_name, response)
         print(table_name)
         # o = untangle.parse(et.tostring(tree[0], encoding='unicode'))
         try:

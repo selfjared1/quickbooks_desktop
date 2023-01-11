@@ -94,7 +94,7 @@ class SessionManager():
             self.begin_session()
             print('open session')
         root = et.Element("QBXML")
-        QBXMLMsgsRq = et.SubElement(root, "QBXMLMsgsRq", onError="stopOnError")
+        QBXMLMsgsRq = et.SubElement(root, "QBXMLMsgsRq", onError="continueOnError")
         requestXML.attrib['requestID'] = "1"
         QBXMLMsgsRq.insert(1, requestXML)
         #todo: handle more than one request
