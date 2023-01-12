@@ -3,6 +3,8 @@ from lxml import etree as et
 import pandas as pd
 import sqlite3
 import xmltodict
+from lists import *
+from utility.utilities import remove_query_from_string
 
 available_actions = [
 'ARRefundCreditCardAdd',
@@ -346,25 +348,30 @@ class QuickBooksDesktop(SessionManager):
             }
 
     def parse_response_xml(self, table_name, response):
-        xpath = f'''/QBXML/QBXMLMsgsRs/{table_name}Rs/{table_name.replace('Query', '')}Ret'''
+        """"
+        table_query: an example is 'AccountQuery' as a string
+        """
+        table_name = remove_query_from_string(table_name)
+        xpath = f'''/QBXML/QBXMLMsgsRs/{table_name}QueryRs/{table_name}Ret'''
         tree = et.fromstring(response)
         tree = tree.xpath(xpath)
-        return tree
+        list_of_instances = []
+        for element in tree:
+            MyClass = eval(table_name)
+            list_of_instances += [MyClass.from_xml(element)]
+        return list_of_instances
 
     def get_table(self, table_name):
-        print(f'begin {table_name}')
-        root = et.Element(table_name + 'Rq')
+        if table_name[-5:] == 'Query':
+            table_name = table_name.replace('Query', '')
+        else:
+            pass
+        root = et.Element(table_name + 'QueryRq')
         qb = SessionManager()
         response = qb.send_xml(root)
-        tree = self.parse_response_xml(table_name, response)
-        print(table_name)
-        # o = untangle.parse(et.tostring(tree[0], encoding='unicode'))
-        try:
-            df = pd.read_xml(response, xpath, parser='lxml')
-            return df
-        except Exception as e:
-            print(e)
-            return None
+        list_of_instances = self.parse_response_xml(table_name, response)
+        return list_of_instances
+
 
     def replicate(self):
         connection = sqlite3.connect('qb_data.db')
