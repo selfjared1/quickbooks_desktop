@@ -1,21 +1,32 @@
-from lists.accounts_marshmallow import Account
-from core.quickbooks_desktop import QuickBooksDesktop
 import unittest
+from datetime import datetime
+import pandas as pd
+from lists.Account import Account, Accounts
+from core.quickbooks_desktop import QuickBooksDesktop
+
 from core.tests.test_session_manager import SessionManager
 from lxml import etree as et
+
 
 class TestAccount(unittest.TestCase):
 
     def setUp(self):
         super(TestAccount, self).setUp()
-        qb = QuickBooksDesktop()
         root = et.parse('test_account_data.xml')
-        xpath = '''/QBXML/QBXMLMsgsRs/AccountQueryRs/AccountRet'''
-        self.account_ret = root.xpath(xpath.encode('utf-8'))
+        self.response = et.tostring(root, pretty_print=True, encoding='unicode')
+
+        # generates the same accounts as """accounts = qb.get_table('Account')"""
+
 
     def test_load(self):
-        account = Account.from_xml(et.tostring(self.account_ret[0]))
-        print(account)
+        qb = QuickBooksDesktop()
+
+        # generates the same accounts as """accounts = qb.get_table('Account')"""
+        self.accounts = qb.parse_response_xml('Account', self.response)
+        self.assertIsInstance(self.accounts, list)
+        self.assertIsInstance(self.accounts[0], Account)
+        self.assertIsInstance(self.accounts[0].TimeModified, datetime)
+        print(self.accounts)
 #         root = tree.getroot()
 #         # account = Accounts()
 #         accounts_df = account.search()

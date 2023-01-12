@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 /sample_data/
 /core/qb_data.db
+/discarded_code/
