@@ -7,11 +7,12 @@ setup(
     description='Initial Release',
     author='Jared Self',
     author_email='jared@quickbooksgg.com',
-    url='https://github.com/selfjared1/syncfreedom-lib/releases/tag/0.1',
-    download_url='https://github.com/selfjared1/syncfreedom-lib/archive/refs/tags/0.1.zip',
-    keywords=['quickbooks online', 'quickbooks'],
+    url='https://github.com/selfjared1/quickbooks_desktop/releases/tag/0.1',
+    download_url='https://github.com/selfjared1/quickbooks_desktop/archive/refs/tags/0.1.zip',
+    keywords=['quickbooks desktop', 'quickbooks'],
     classifiers=[],
     install_requires=[
-        'python-quickbooks'
+        'lxml',
+        'pywin32'
     ]
 )
