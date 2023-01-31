@@ -3,7 +3,7 @@ from utility.utilities import from_lxml_elements
 from attrs import define
 
 @define
-class ARRefundCrediCard:
+class ARRefundCreditCard:
     TxnID: str = None
     TimeCreated: datetime = None
     TimeModified: datetime = None
