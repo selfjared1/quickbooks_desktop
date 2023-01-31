@@ -9,7 +9,7 @@ class SessionManager():
     The first time connecting you'll need to authorize the app inside of QuickBooks's UI.
     """
 
-    def __init__(self, application_name="accountingpy", company_file=None):
+    def __init__(self, application_name="accountingpy", company_file=None, SDK_version='13.0'):
         self.application_name = application_name
         self.company_file = company_file
         self.session_begun = False
@@ -17,6 +17,7 @@ class SessionManager():
         self.dispatch_str = "QBXMLRP2.RequestProcessor"
         self.qbXMLRP = None
         self.ticket = None
+        self.SDK_version = '13.0'
 
 
     def dispatch(self):
@@ -87,7 +88,7 @@ class SessionManager():
         :param requestXML: The request element under the QBXMLMsgsRq tag.
         :return: responseXML from the quickbooks processor
         """
-        if self.qbXMLRP :
+        if self.qbXMLRP:
             self.qbXMLRP = self.dispatch()
             self.open_qb()
         elif not self.session_begun:
@@ -98,7 +99,7 @@ class SessionManager():
         requestXML.attrib['requestID'] = "1"
         QBXMLMsgsRq.insert(1, requestXML)
         #todo: handle more than one request
-        declaration = """<?xml version="1.0" encoding="utf-8"?><?qbxml version="13.0"?>"""
+        declaration = f"""<?xml version="1.0" encoding="utf-8"?><?qbxml version="{self.SDK_version}"?>"""
         full_request = declaration + et.tostring(root, encoding='unicode')
         responseXML = self.qbXMLRP.ProcessRequest(self.ticket, full_request)
         if keep_session_open:
