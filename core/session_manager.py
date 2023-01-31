@@ -21,7 +21,7 @@ class SessionManager():
 
     def dispatch(self):
         """
-        This will create an Win32com object for QuickBooks Desktop then set qbXMLRP.
+        This will create a Win32com object for QuickBooks Desktop then set qbXMLRP.
 
         """
         if self.qbXMLRP is None:
@@ -84,7 +84,7 @@ class SessionManager():
             1. finishes the XML build
             2. ensures the XML request has key components
             3. sends the request to QuickBooks
-        :param requestXML:
+        :param requestXML: The request element under the QBXMLMsgsRq tag.
         :return: responseXML from the quickbooks processor
         """
         if self.qbXMLRP :
@@ -113,7 +113,7 @@ class SessionManager():
     def end_session(self):
         """
         Simply ends the QuickBooks Session.  This should ALWAYS happen before closing the program.
-        :return:
+        :return: None
         """
         self.qbXMLRP.EndSession(self.ticket)
         self.session_begun = False
@@ -121,7 +121,7 @@ class SessionManager():
     def close_connection(self):
         """
         Simply closing the QuickBooks Connection.  This should ALWAYS happen before closing the program.
-        :return:
+        :return: None
         """
         if self.session_begun:
             self.end_session()
