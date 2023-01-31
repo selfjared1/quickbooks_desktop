@@ -1,5 +1,5 @@
 import unittest
-from .session_manager import SessionManager
+from core.session_manager import SessionManager
 from lxml import etree as et
 
 class TestSessionManagerCommon(unittest.TestCase):
