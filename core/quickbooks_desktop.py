@@ -362,7 +362,7 @@ class QuickBooksDesktop(SessionManager):
         return list_of_instances
 
     def get_table(self, table_name):
-        if table_name[-5:] == 'Query':
+        if 'Query' in table_name:
             table_name = table_name.replace('Query', '')
         else:
             pass
@@ -394,7 +394,7 @@ class QuickBooksDesktop(SessionManager):
 
 if __name__ == '__main__':
     qb = QuickBooksDesktop()
-    # qb.replicate()
-    df = qb.get_table('BillQuery')
+    qb.replicate()
+    # df = qb.get_table('BillQuery')
 
     print('b')
