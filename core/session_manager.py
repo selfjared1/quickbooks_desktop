@@ -87,7 +87,7 @@ class SessionManager():
         :param requestXML:
         :return: responseXML from the quickbooks processor
         """
-        if self.qbXMLRP :
+        if self.qbXMLRP:
             self.qbXMLRP = self.dispatch()
             self.open_qb()
         elif not self.session_begun:

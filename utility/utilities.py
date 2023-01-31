@@ -2,31 +2,39 @@
 import re
 from datetime import datetime
 
+KNOWN_DT = ['TimeCreated', 'TimeModified']
+KNOWN_DRILL_DOWN = ['CustomerRef', 'RefundFromAccountRef', 'ARAccountRef', 'CurrencyRef', 'Address', 'AddressBlock',
+                    'PaymentMethodRef', 'RefundAppliedToTxnRet', 'DataExtRet', 'TaxLineInfoRet', 'CurrencyRef']
+KNOWN_DOUBLE_DRILL_DOWN = ['CreditCardTxnInfo']
+
 
 def from_lxml_elements(
         cls,
         elements,
-        combine_with_child_list=None,
-        datetime_fields_list=['TimeCreated', 'TimeModified'],
-        sublist_list=['DataExtRet']
     ):
     my_class = cls()
     for element in elements:
         # print(element.tag)
-        if element.tag in datetime_fields_list:
+        if element.tag in KNOWN_DT:
             date_object = datetime.strptime(element.text, '%Y-%m-%dT%H:%M:%S%z')
             my_class.__setattr__(element.tag, date_object)
-        elif element.tag in combine_with_child_list:
+        elif element.tag in KNOWN_DRILL_DOWN:
             for i in range(len(element)):
                 my_class.__setattr__(element.tag + element[i].tag, element[i].text)
-        elif element.tag in sublist_list:
-            list_of_sub_elements = []
-            for sub_element in element:
-                sub_element_dict = {}
-                for i in range(len(sub_element)):
-                    sub_element_dict[sub_element.tag + sub_element[i].tag] = sub_element[i].text
-                list_of_sub_elements += [sub_element_dict]
-            my_class.__setattr__(element.tag, list_of_sub_elements)
+        elif element.tag in KNOWN_DOUBLE_DRILL_DOWN:
+
+            for i in range(len(element)):
+                my_class.__setattr__(element.tag + element[i].tag, element[i].text)
+
+
+        # elif element.tag in sublist_list:
+        #     list_of_sub_elements = []
+        #     for sub_element in element:
+        #         sub_element_dict = {}
+        #         for i in range(len(sub_element)):
+        #             sub_element_dict[sub_element.tag + sub_element[i].tag] = sub_element[i].text
+        #         list_of_sub_elements += [sub_element_dict]
+        #     my_class.__setattr__(element.tag, list_of_sub_elements)
         else:
             my_class.__setattr__(element.tag, element.text)
     return my_class
