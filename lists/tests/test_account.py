@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 import pandas as pd
-from lists.Account import Account, Accounts
+from lists.account import Account
 from core.quickbooks_desktop import QuickBooksDesktop
 
 from core.tests.test_session_manager import SessionManager
