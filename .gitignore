@@ -130,3 +130,7 @@ dmypy.json
 /sample_data/
 /core/qb_data.db
 /discarded_code/
+/discarded_code/build_from_xml_files.py
+
+.idea
+
