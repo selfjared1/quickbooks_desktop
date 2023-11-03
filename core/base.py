@@ -1,81 +1,54 @@
-from datetime import datetime
 from typing import Optional
-from core.special_fields import DataExtRet
+from core.special_fields import DataExtRet, QBDates
+import attr
 
-class QBObjectBaseMixin:
-    def __getattr__(self, name):
-        try:
-            return getattr(self.qb_object_base, name)
-        except AttributeError:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
 
-    def __setattr__(self, name, value):
-        if hasattr(self, 'qb_object_base') and hasattr(self.qb_object_base, name):
-            setattr(self.qb_object_base, name, value)
-        else:
-            super().__setattr__(name, value)
+@attr.s(auto_attribs=True)
+class QBBaseMixin:
+    TimeCreated: Optional[QBDates] = None
+    TimeModified: Optional[QBDates] = None
+    EditSequence: Optional[str] = None
+    DataExtRet: Optional[DataExtRet] = None
 
-class QBBase:
-    def __init__(self,
-                 list_id: Optional[str] = None,
-                 time_created: Optional[datetime] = None,
-                 time_modified: Optional[datetime] = None,
-                 edit_sequence: Optional[str] = None,
-                 data_ext_ret: Optional[DataExtRet] = None,
-                 ):
-        self.list_id = list_id
-        self.time_created = time_created
-        self.time_modified = time_modified
-        self.edit_sequence = edit_sequence
-        self.data_ext_ret = data_ext_ret
+@attr.s(auto_attribs=True)
+class QBListBase(QBBaseMixin):
+    """
+    This is for all list items in QuickBooks Desktop
+    """
+    ListID: Optional[str] = None
+    Name: Optional[str] = None
+    IsActive: Optional[bool] = None
 
-class QBListBase(QBObjectBaseMixin):
-    def __init__(self,
-                 name: Optional[str] = None,
-                 full_name: Optional[str] = None,
-                 is_active: Optional[bool] = None,
-                 desc: Optional[str] = None,
-                 parent_ref_list_id: Optional[str] = None,
-                 parent_ref_full_name: Optional[str] = None,
-                 sublevel: Optional[int] = None,
-                 **kwargs,
-                 ):
-        super().__init__(
-            list_id=None,
-            time_created=None,
-            time_modified=None,
-            edit_sequence=None,
-            data_ext_ret=None)
-        self.qb_base = QBBase(**kwargs)
-        self.name = name
-        self.full_name = full_name
-        self.is_active = is_active
-        self.desc = desc
-        self.parent_ref_list_id = parent_ref_list_id
-        self.parent_ref_full_name = parent_ref_full_name
-        self.sublevel = sublevel
+@attr.s(auto_attribs=True)
+class QBContactBase(QBListBase):
+    """
+    This is for all contact items in QuickBooks Desktop
+    """
+    CompanyName: Optional[str] = None
+    Salutation: Optional[str] = None
+    FirstName: Optional[str] = None
+    MiddleName: Optional[str] = None
+    LastName: Optional[str] = None
+    Phone: Optional[str] = None
+    Email: Optional[str] = None
+    AccountNumber: Optional[str] = None
 
-class QBTransactionBase(QBObjectBaseMixin):
+@attr.s(auto_attribs=True)
+class Address:
+    Addr1: Optional[str] = None
+    Addr2: Optional[str] = None
+    Addr3: Optional[str] = None
+    Addr4: Optional[str] = None
+    Addr5: Optional[str] = None
+    City: Optional[str] = None
+    State: Optional[str] = None
+    PostalCode: Optional[str] = None
+    Country: Optional[str] = None
+    Note: Optional[str] = None
+
+@attr.s(auto_attribs=True)
+class QBTransactionBase(QBBaseMixin):
     """" Multi currency is not supported yet"""
-    def __init__(self,
-                 txn_id: Optional[str] = None,
-                 txn_number: Optional[str] = None,
-                 ref_number: Optional[str] = None,
-                 memo: Optional[str] = None,
-                 external_guid: Optional[str] = None,
-                 linked_txns: Optional[list] = None,
-                 **kwargs
-                 ):
-        super().__init__(
-            list_id=None,
-            time_created=None,
-            time_modified=None,
-            edit_sequence=None,
-            data_ext_ret=None)
-        self.qb_base = QBBase(**kwargs)
-        self.txn_id = txn_id
-        self.txn_number = txn_number
-        self.ref_number = ref_number
-        self.memo = memo
-        self.external_guid = external_guid
-        self.linked_txns = linked_txns
+    TxnID: Optional[str] = None
+    TxnDate: Optional[QBDates] = None
+
