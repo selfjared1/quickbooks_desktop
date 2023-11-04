@@ -1,5 +1,6 @@
 import dateutil.parser as parser
 import datetime as dt
+import pandas as pd
 
 
 data_type_translator_python_to_qb = {
@@ -23,6 +24,10 @@ data_type_translator_qb_to_python = {
     'STR1024TYPE': 'str',
     'STR255TYPE': 'float'
 }
+
+class Ref:
+    # Todo
+    pass
 
 class DataExtRet:
     def __init__(self,
@@ -72,11 +77,14 @@ class DataExtRet:
                                  f'The value type is {type(value)}. \n'
                                  f'The value type needs to be of python type {data_type_translator_qb_to_python[self._DataExtType]}')
 
-class QBDates:
+class QBDate:
     def __init__(self, date=None):
         self.check_date_not_none(date)
-        self.macro_dict = QBDates.get_macro_dict(self)
-        self.date_is_macro = False
+        self.macro_dict = QBDate.get_macro_dict(self)
+        self.is_macro = False
+        self.__date_exception_message = f"""Your date parameter "{date}" could not be parsed.  \n 
+                                    Try to use a datetime object or a string in the format "mm/dd/yyyy". \n
+                                    Or try one of the following Macro date strings: {self.macro_dict.keys()}"""
         self.date = self.parse_date(date)
 
     def check_date_not_none(self, date):
@@ -86,21 +94,20 @@ class QBDates:
     def parse_date(self, date):
         if isinstance(date, str):
             if date.lower() in self.macro_dict.keys():
-                self.__setattr__('date_is_macro', True)
+                self.__setattr__('is_macro', True)
                 return self.macro_dict[date.lower()]
             else:
                 try:
                     date_parsed = parser.parse(date)
-                    date_str = dt.date.strftime("%m/%d/%Y")
+                    date_str = date_parsed.strftime("%m/%d/%Y")
                     return date_str
                 except Exception as e:
-                    raise Exception(f'Your date parameter "{date}" could not be parsed')
-        elif isinstance(date, dt.datetime):
-            # todo:
-            return None
-        elif isinstance(date, dt.date):
-            # todo:
-            return None
+                    raise Exception(self.__date_exception_message)
+        elif isinstance(date, dt.datetime) or isinstance(date, dt.date) or pd.api.types.is_datetime64_any_dtype(date):
+            parsed_date = date.strftime("%m/%d/%Y")
+            return parsed_date
+        else:
+            raise Exception(self.__date_exception_message)
 
     def get_macro_dict(self):
         return {'rdmall': 0,
