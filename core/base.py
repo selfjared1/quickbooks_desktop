@@ -1,12 +1,12 @@
 from typing import Optional
-from core.special_fields import DataExtRet, QBDates
+from core.special_fields import DataExtRet, QBDate
 import attr
 
 
 @attr.s(auto_attribs=True)
 class QBBaseMixin:
-    TimeCreated: Optional[QBDates] = None
-    TimeModified: Optional[QBDates] = None
+    TimeCreated: Optional[QBDate] = None
+    TimeModified: Optional[QBDate] = None
     EditSequence: Optional[str] = None
     DataExtRet: Optional[DataExtRet] = None
 
@@ -34,12 +34,16 @@ class QBContactBase(QBListBase):
     AccountNumber: Optional[str] = None
 
 @attr.s(auto_attribs=True)
-class Address:
+class QBAddressBlock:
     Addr1: Optional[str] = None
     Addr2: Optional[str] = None
     Addr3: Optional[str] = None
     Addr4: Optional[str] = None
     Addr5: Optional[str] = None
+
+
+@attr.s(auto_attribs=True)
+class QBAddress(QBAddressBlock):
     City: Optional[str] = None
     State: Optional[str] = None
     PostalCode: Optional[str] = None
@@ -50,5 +54,5 @@ class Address:
 class QBTransactionBase(QBBaseMixin):
     """" Multi currency is not supported yet"""
     TxnID: Optional[str] = None
-    TxnDate: Optional[QBDates] = None
+    TxnDate: Optional[QBDate] = None
 
