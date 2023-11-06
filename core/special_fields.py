@@ -1,6 +1,8 @@
 import dateutil.parser as parser
 import datetime as dt
 import pandas as pd
+from typing import Optional
+import attr
 
 
 data_type_translator_python_to_qb = {
@@ -29,17 +31,12 @@ class Ref:
     # Todo
     pass
 
+@attr.s(auto_attribs=True)
 class DataExtRet:
-    def __init__(self,
-                 OwnerID: str = None,
-                 DataExtName: str = None,
-                 DataExtType: str = None,
-                 DataExtValue: str = None,
-                 ):
-        self.OwnerId = OwnerID
-        self.DataExtName = DataExtName
-        self.DataExtType = DataExtType
-        self.DataExtValue = DataExtValue
+    OwnerID: Optional[str] = None
+    DataExtName: Optional[str] = None
+    DataExtType: Optional[str] = None
+    DataExtValue: Optional[str] = None
 
     @property
     def DataExtType(self):
