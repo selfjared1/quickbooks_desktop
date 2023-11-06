@@ -17,7 +17,7 @@ class SessionManager():
         self.dispatch_str = "QBXMLRP2.RequestProcessor"
         self.qbXMLRP = None
         self.ticket = None
-        self.SDK_version = '13.0'
+        self.SDK_version = SDK_version
 
 
     def dispatch(self):
