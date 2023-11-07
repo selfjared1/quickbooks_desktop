@@ -1,5 +1,42 @@
 from lxml import etree
 
+class SaveMixin(object):
+    def save(self, ignore_none=True):
+        if hasattr(self, 'ListID'):
+            if self.ListID is None:
+                self.create_list()
+            else:
+                self.update_list(ignore_none=ignore_none)
+        elif hasattr(self, 'TxnID'):
+            if self.TxnID is None:
+                self.create_txn()
+            else:
+                self.update_txn(ignore_none=ignore_none)
+
+
+class GetMixin(object):
+
+    def get(self, qb):
+        root = etree.Element(str(self.__class__.__name__) + 'QueryRq')
+        for key in self.query_direct_dict:
+            if getattr(self, key) is not None:
+                #todo: add support for type checks
+                #todo: add support for subelements
+                root.append(etree.Element(key, str(getattr(self, key))))
+            else:
+                pass
+        xml_data = etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
+        response = qb.send_xml(xml_data)
+        root = etree.fromstring(response)
+        response_etree_list = root.findall(str(self.__class__.__name__) + 'Ret')
+        if len(response_etree_list) > 0:
+            response_list = []
+            for element_root in response_etree_list:
+                response_list.append(self.from_root(element_root))
+            return response_list
+        else:
+            return []
+
 class ToXmlMixin(object):
     def to_xml(self, name_of_start_tag=None):
         if name_of_start_tag is None:
@@ -20,9 +57,15 @@ class FromXMLMixin(object):
     list_dict = {}
 
     @classmethod
-    def from_xml(cls, xml_data):
+    def from_xml(cls, xml_ret_data):
+        root = etree.fromstring(xml_ret_data)
+        obj = cls.from_root(root)
+        return obj
+
+    @classmethod
+    def from_root(cls, root):
         obj = cls()
-        root = etree.fromstring(xml_data)
+        print(root.keys())
         for key in root.keys():
             if key in obj.class_dict:
                 sub_obj = obj.class_dict[key]()
@@ -48,6 +91,7 @@ class FromXMLMixin(object):
                 setattr(obj, key, root.get(key))
 
         return obj
+
 
 
 # Based on http://stackoverflow.com/a/1118038

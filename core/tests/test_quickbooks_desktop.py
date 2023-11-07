@@ -1,4 +1,4 @@
-from core.xml_conversion import XmlListToObject
+from core.mixins import XmlListToObject
 from lxml import etree as et
 from core.quickbooks_desktop import QuickBooksDesktop
 import unittest
