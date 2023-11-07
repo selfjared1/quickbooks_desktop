@@ -391,10 +391,3 @@ class QuickBooksDesktop(SessionManager):
                     xml_writer.write(response)
             except IOError:
                 pass
-
-if __name__ == '__main__':
-    qb = QuickBooksDesktop()
-    qb.replicate()
-    # df = qb.get_table('BillQuery')
-
-    print('b')
