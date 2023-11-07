@@ -1,10 +1,13 @@
 from typing import Optional
 from core.special_fields import DataExtRet, QBDate
+from core.mixins import ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin
 import attr
 
 
 @attr.s(auto_attribs=True)
-class QBBaseMixin:
+class QBBaseMixin(ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin):
+    class_dict: dict = {}
+    list_dict: dict = {}
     TimeCreated: Optional[QBDate] = None
     TimeModified: Optional[QBDate] = None
     EditSequence: Optional[str] = None
@@ -18,6 +21,9 @@ class QBListBase(QBBaseMixin):
     ListID: Optional[str] = None
     Name: Optional[str] = None
     IsActive: Optional[bool] = None
+
+    # todo: def create_list(self):
+    # todo: def update_list(self, ignore_none=False):
 
 @attr.s(auto_attribs=True)
 class QBContactBase(QBListBase):
@@ -55,4 +61,5 @@ class QBTransactionBase(QBBaseMixin):
     """" Multi currency is not supported yet"""
     TxnID: Optional[str] = None
     TxnDate: Optional[QBDate] = None
-
+    # todo: def create_txn(self):
+    # todo: def update_txn(self, ignore_none=False):
