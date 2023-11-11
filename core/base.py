@@ -13,14 +13,15 @@ class QBBaseMixin(ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin):
     EditSequence: Optional[str] = None
     DataExtRet: Optional[DataExtRet] = None
 
+    def to_ref(self):
+        pass
+
 @attr.s(auto_attribs=True)
 class QBListBase(QBBaseMixin):
     """
     This is for all list items in QuickBooks Desktop
     """
     ListID: Optional[str] = None
-    Name: Optional[str] = None
-    IsActive: Optional[bool] = None
 
     # todo: def create_list(self):
     # todo: def update_list(self, ignore_none=False):
