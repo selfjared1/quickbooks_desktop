@@ -38,8 +38,6 @@ class GetMixin(object):
             return []
 
 class ToXmlMixin(object):
-    class_dict: dict = {}
-    list_dict: dict = {}
     def to_xml(self, request_type=None):
         """
             This mixin is used to convert a QuickBooks Desktop object into an XML string
@@ -57,13 +55,28 @@ class ToXmlMixin(object):
         root = etree.Element(name_of_start_tag)
 
         for key, value in vars(self).items():
-            if key in self.class_dict:
-                sub_element = etree.fromstring(value.to_xml())
-                root.append(sub_element)
-            elif key in self.list_dict:
-                for item in value:
-                    sub_element = etree.fromstring(item.to_xml())
+            match type(value):
+                case 'str':
+                    sub_element = etree.Element(key)
+                    sub_element.text = value
                     root.append(sub_element)
+                case 'Ref':
+                    sub_element = etree.fromstring(value.to_xml())
+                    root.append(sub_element)
+                case 'QBDate':
+                    sub_element = etree.fromstring(value.to_xml())
+                    root.append(sub_element)
+                case 'list':
+                    for item in value:
+                        sub_element = etree.fromstring(item.to_xml())
+                        root.append(sub_element)
+                case 'dict':
+                    for key, value in value:
+                        sub_element = etree.Element(key)
+                        sub_element.text = value
+                        root.append(sub_element)
+
+
         xml_str = etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
         return xml_str
 
@@ -81,30 +94,29 @@ class FromXMLMixin(object):
     def from_root(cls, root):
         obj = cls()
         print(root.keys())
-        for key in root.keys():
-            if key in obj.class_dict:
-                sub_obj = obj.class_dict[key]()
-                sub_xml_data = etree.tostring(root.find(key))
+        for element in root.getchildren():
+            if element.tag in obj.class_dict:
+                sub_obj = obj.class_dict[element.tag]()
+                sub_xml_data = etree.tostring(root.find(element.tag))
                 sub_obj = sub_obj.from_xml(sub_xml_data)
-                setattr(obj, key, sub_obj)
+                setattr(obj, element.tag, sub_obj)
 
-            elif key in obj.list_dict:
+            elif element.tag in obj.list_dict:
                 sub_list = []
-                for elem in root.findall(key):
+                for elem in root.findall(element.tag):
                     sub_xml_data = etree.tostring(elem)
 
                     if 'DetailType' in elem.keys() and elem.get('DetailType') in obj.detail_dict:
                         sub_obj = obj.detail_dict[elem.get('DetailType')]()
                     else:
-                        sub_obj = obj.list_dict[key]()
+                        sub_obj = obj.list_dict[element.tag]()
 
                     sub_obj = sub_obj.from_xml(sub_xml_data)
                     sub_list.append(sub_obj)
 
-                setattr(obj, key, sub_list)
+                setattr(obj, element.tag, sub_list)
             else:
-                setattr(obj, key, root.get(key))
-
+                setattr(obj, element.tag, root.getchildren()[0].text)
         return obj
 
 

@@ -2,7 +2,7 @@ from core.session_manager import SessionManager
 from lxml import etree as et
 import pandas as pd
 import sqlite3
-import xmltodict
+# import xmltodict
 from lists import *
 from utility.utilities import remove_query_from_string
 
@@ -358,7 +358,7 @@ class QuickBooksDesktop(SessionManager):
         list_of_instances = []
         for element in tree:
             MyClass = eval(obj_name)
-            list_of_instances += [MyClass.from_xml(element)]
+            list_of_instances += [MyClass.from_root(element)]
         return list_of_instances
 
     def get(self, obj_name):

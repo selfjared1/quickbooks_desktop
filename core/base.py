@@ -6,12 +6,11 @@ import attr
 
 @attr.s(auto_attribs=True)
 class QBBaseMixin(ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin):
-    class_dict: dict = {}
     list_dict: dict = {}
-    TimeCreated: Optional[QBDate] = None
-    TimeModified: Optional[QBDate] = None
-    EditSequence: Optional[str] = None
-    DataExtRet: Optional[DataExtRet] = None
+    TimeCreated: Optional[QBDate] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': False, 'Query': None}})
+    TimeModified: Optional[QBDate] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': False, 'Query': None}})
+    EditSequence: Optional[str] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': True, 'Query': None}})
+    DataExtRet: Optional[DataExtRet] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': False, 'Query': None}})
 
     def to_ref(self):
         pass
@@ -21,7 +20,7 @@ class QBListBase(QBBaseMixin):
     """
     This is for all list items in QuickBooks Desktop
     """
-    ListID: Optional[str] = None
+    ListID: Optional[str] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': True, 'Query': False}})
 
     # todo: def create_list(self):
     # todo: def update_list(self, ignore_none=False):
@@ -60,6 +59,10 @@ class QBAddress(QBAddressBlock):
 @attr.s(auto_attribs=True)
 class QBTransactionBase(QBBaseMixin):
     """" Multi currency is not supported yet"""
+    class_dict = {
+        **QBBaseMixin.class_dict,
+        "TxnDate": QBDate,
+    }
     TxnID: Optional[str] = None
     TxnDate: Optional[QBDate] = None
     # todo: def create_txn(self):
