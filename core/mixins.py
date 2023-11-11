@@ -38,19 +38,34 @@ class GetMixin(object):
             return []
 
 class ToXmlMixin(object):
-    def to_xml(self, name_of_start_tag=None):
-        if name_of_start_tag is None:
-            name_of_start_tag = self.__class__.__name__
+    class_dict: dict = {}
+    list_dict: dict = {}
+    def to_xml(self, request_type=None):
+        """
+            This mixin is used to convert a QuickBooks Desktop object into an XML string
+            request_type can be one of the following depending on the object: 'Query', 'Add', 'Mod'
+            To delete requires a different method like "ListDel" or "TxnDel"
+            To void use "TxnVoid"
+        """
+        if request_type is None:
+            name_of_start_tag = str(self.__class__.__name__) + 'QueryRq'
+        elif request_type[-2:] == 'Rq':
+            name_of_start_tag = request_type
+            request_type = request_type[:-2]
         else:
-            name_of_start_tag = name_of_start_tag.replace('_', '')
+            name_of_start_tag = str(self.__class__.__name__) + request_type + 'Rq'
         root = etree.Element(name_of_start_tag)
+
         for key, value in vars(self).items():
-            if not key.startswith('_') and value is not None:
-                child = etree.SubElement(root, key)
-                child.text = str(value)
-            else:
-                pass
-        return etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
+            if key in self.class_dict:
+                sub_element = etree.fromstring(value.to_xml())
+                root.append(sub_element)
+            elif key in self.list_dict:
+                for item in value:
+                    sub_element = etree.fromstring(item.to_xml())
+                    root.append(sub_element)
+        xml_str = etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
+        return xml_str
 
 class FromXMLMixin(object):
     class_dict = {}
