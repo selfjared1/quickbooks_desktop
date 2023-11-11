@@ -36,6 +36,11 @@ def cash_flow_classification_validator(instance, attribute, value):
 
 @attr.s(auto_attribs=True)
 class Account(QBListBase):
+    class_dict = {
+        "ParentRef": Ref,
+        "CurrencyRef": Ref,
+        "DataExtRet": DataExtRet,
+    }
 
     Name: Optional[str] = None
     FullName: Optional[str] = None
@@ -54,16 +59,16 @@ class Account(QBListBase):
     CurrencyRef: Optional[Ref] = None
     DataExtRet: Optional[DataExtRet] = None
 
-    def to_ref(self, ref_label=None):
-        if not ref_label:
-            ref_label = str(self.__class__.__name__) + "Ref"
-        elif ref_label[-3:] == "Ref":
+    def to_ref(self, name_of_start_tag=None):
+        if not name_of_start_tag:
+            name_of_start_tag = str(self.__class__.__name__) + "Ref"
+        elif name_of_start_tag[-3:] == "Ref":
             pass
         else:
-            ref_label = ref_label + "Ref"
+            name_of_start_tag = name_of_start_tag + "Ref"
 
         ref = Ref(
-            ref_label=ref_label,
+            ref_label=name_of_start_tag,
             id_name="ListID",
             ID=self.ListID,
             name_name="FullName",

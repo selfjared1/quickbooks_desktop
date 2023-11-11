@@ -1,5 +1,47 @@
-from lists.Account import Account
+from lists.Account import Account, account_type_validator, special_account_type_validator, cash_flow_classification_validator
 import unittest
+
+
+class TestAccountTypeValidator(unittest.TestCase):
+
+    def test_valid_account_type(self):
+        # Test with a valid account type
+        try:
+            account_type_validator(None, None, "Bank")
+        except ValueError:
+            self.fail("account_type_validator raised ValueError unexpectedly!")
+
+    def test_invalid_account_type(self):
+        # Test with an invalid account type
+        with self.assertRaises(ValueError):
+            account_type_validator(None, None, "InvalidType")
+
+
+class TestValidators(unittest.TestCase):
+
+    def test_valid_special_account_type(self):
+        # Test with a valid special account type
+        try:
+            special_account_type_validator(None, None, "AccountsPayable")
+        except ValueError:
+            self.fail("special_account_type_validator raised ValueError unexpectedly!")
+
+    def test_invalid_special_account_type(self):
+        # Test with an invalid special account type
+        with self.assertRaises(ValueError):
+            special_account_type_validator(None, None, "InvalidSpecialType")
+
+    def test_valid_cash_flow_classification(self):
+        # Test with a valid cash flow classification
+        try:
+            cash_flow_classification_validator(None, None, "Operating")
+        except ValueError:
+            self.fail("cash_flow_classification_validator raised ValueError unexpectedly!")
+
+    def test_invalid_cash_flow_classification(self):
+        # Test with an invalid cash flow classification
+        with self.assertRaises(ValueError):
+            cash_flow_classification_validator(None, None, "InvalidClassification")
 
 account_response = """<?xml version="1.0" ?>
 <QBXML>
@@ -57,4 +99,6 @@ class TestAccount(unittest.TestCase):
         self.assertIsNone(account.TaxLineInfoRet)
         self.assertIsNone(account.CashFlowClassification)
         self.assertIsNone(account.DataExtRet)
+
+
 
