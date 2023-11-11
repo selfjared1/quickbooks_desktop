@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 import datetime as dt
-from core.special_fields import QBDate
+from core.special_fields import QBDate, Ref
 
 class TestQBDates(unittest.TestCase):
 
@@ -39,3 +39,24 @@ class TestQBDates(unittest.TestCase):
         date_to_parse = pd.Timestamp('2022-01-01')
         qb_date = QBDate(date_to_parse)
         self.assertEqual(qb_date.date, date_to_parse.strftime('%m/%d/%Y'))
+
+class TestRef(unittest.TestCase):
+
+    def test_to_xml(self):
+        # Create a Ref instance with known values
+        ref = Ref(
+            ref_label="TestRef",
+            id_name="TestID",
+            ID="123",
+            name_name="TestName",
+            Name="Test Account"
+        )
+
+        # Generate the XML string
+        xml_str = ref.to_xml()
+
+        # Expected XML string
+        expected_xml = "<TestRef>\n  <TestID>123</TestID>\n  <TestName>Test Account</TestName>\n</TestRef>\n"
+
+        # Assert that the generated XML matches the expected XML
+        self.assertEqual(xml_str, expected_xml)

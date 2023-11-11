@@ -3,7 +3,7 @@ import datetime as dt
 import pandas as pd
 from typing import Optional
 import attr
-
+from lxml import etree
 
 data_type_translator_python_to_qb = {
     'float': 'AMTTYPE',
@@ -27,9 +27,27 @@ data_type_translator_qb_to_python = {
     'STR255TYPE': 'float'
 }
 
+@attr.s(auto_attribs=True)
 class Ref:
-    # Todo
-    pass
+    ref_label: Optional[str] = None
+    id_name: Optional[str] = None
+    ID: Optional[str] = None
+    name_name: Optional[str] = None
+    Name: Optional[str] = None
+
+    def to_xml(self):
+        root = etree.Element(self.ref_label)
+        if self.id_name and self.ID is not None:
+            id_elem = etree.Element(self.id_name)
+            id_elem.text = str(self.ID)
+            root.append(id_elem)
+
+        if self.name_name and self.Name is not None:
+            name_elem = etree.Element(self.name_name)
+            name_elem.text = str(self.Name)
+            root.append(name_elem)
+        xml_str = etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
+        return xml_str
 
 @attr.s(auto_attribs=True)
 class DataExtRet:
