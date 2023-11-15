@@ -26,11 +26,7 @@ class SessionManager():
 
         """
         if self.qbXMLRP is None:
-            if self.company_file is None:
-                self.qbXMLRP = win32com.client.Dispatch(self.dispatch_str)
-            else:
-                print("company file isn't an option right now")
-                #todo: make a way to connect to a specific file location
+            self.qbXMLRP = win32com.client.Dispatch(self.dispatch_str)
 
     def open_connection(self):
         """
@@ -56,17 +52,23 @@ class SessionManager():
         Note: This should ALWAYS be ended before closing the program.  Leaving the session open will make it to
             where QuickBooks Desktop cannot be closed.
         """
+
+        if self.company_file:
+            company_file = self.company_file
+        else:
+            company_file = ""
+
         try:
             if self.connection_open:
-                self.ticket = self.qbXMLRP.BeginSession("", 0)
+                self.ticket = self.qbXMLRP.BeginSession(company_file, 0)
                 self.session_begun = True
             else:
                 self.open_connection()
-                self.ticket = self.qbXMLRP.BeginSession("", 0)
+                self.ticket = self.qbXMLRP.BeginSession(company_file, 0)
                 self.session_begun = True
         except:
             try:
-                self.ticket = self.qbXMLRP.BeginSession("", 1)
+                self.ticket = self.qbXMLRP.BeginSession(company_file, 1)
                 self.session_begun = True
             except Exception as e:
                 print(e)
