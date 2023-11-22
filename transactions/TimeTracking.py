@@ -3,7 +3,12 @@ from lxml import etree
 import attr
 from core.base import QBTransactionBase
 from core.special_fields import Ref, QBDate, DataExtRet, QBTimeInterval, BillableStatus
+from core.query_fields import ModifiedDateRangeFilter, TxnDateRangeFilter
 
+class Query:
+    def __init__(self, query_dict):
+        self.ModifiedDateRangeFilter = ModifiedDateRangeFilter(**query_dict.get('ModifiedDateRangeFilter', {}))
+        self.TxnDateRangeFilter = TxnDateRangeFilter(**query_dict.get('TxnDateRangeFilter', {}))
 
 @attr.s(auto_attribs=True)
 class TimeTracking(QBTransactionBase):
