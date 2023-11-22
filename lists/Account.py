@@ -1,8 +1,6 @@
-from core.base import QBListBase
-
 from typing import Optional
 import attr
-from core.special_fields import Ref, DataExtRet, QBDate
+from core.special_fields import Ref, DataExtRet
 from core.base import QBListBase
 
 
