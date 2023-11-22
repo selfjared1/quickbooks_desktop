@@ -2,7 +2,8 @@ import unittest
 import pandas as pd
 import dateutil.parser as parser
 import datetime as dt
-from core.special_fields import QBDate, Ref, QBDateMacro
+from datetime import timedelta
+from core.special_fields import QBDate, Ref, QBDateMacro, QBTimeInterval
 
 class TestQBDateMacro(unittest.TestCase):
     def setUp(self):
@@ -76,3 +77,27 @@ class TestRef(unittest.TestCase):
 
         # Assert that the generated XML matches the expected XML
         self.assertEqual(xml_str, expected_xml)
+
+
+class TestQBTimeInterval(unittest.TestCase):
+    def test_xml_format(self):
+        time_interval = QBTimeInterval("PT2H30M15S")
+        self.assertEqual(time_interval.hours, 2)
+        self.assertEqual(time_interval.minutes, 30)
+        self.assertEqual(time_interval.seconds, 15)
+
+    def test_string_format(self):
+        time_interval = QBTimeInterval("02:30:15")
+        self.assertEqual(time_interval.hours, 2)
+        self.assertEqual(time_interval.minutes, 30)
+        self.assertEqual(time_interval.seconds, 15)
+
+    def test_timedelta(self):
+        time_interval = QBTimeInterval(timedelta(hours=2, minutes=30, seconds=15))
+        self.assertEqual(time_interval.hours, 2)
+        self.assertEqual(time_interval.minutes, 30)
+        self.assertEqual(time_interval.seconds, 15)
+
+    def test_invalid_format(self):
+        with self.assertRaises(ValueError):
+            QBTimeInterval("invalid format")

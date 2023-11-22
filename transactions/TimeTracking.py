@@ -1,25 +1,17 @@
+from typing import Optional
 from lxml import etree
 import attr
-from datetime import datetime
-from typing import List, Union
-
+from core.base import QBTransactionBase
+from core.special_fields import Ref, QBDate, DataExtRet
 
 
 @attr.s(auto_attribs=True)
-class TimeTrackingQueryRq:
-    TxnID: str = None
-    TimeCreated: datetime = None
-    TimeModified: datetime = None
-    EditSequence: str = None
-    TxnNumber: int = None
-    TxnDate: datetime = None
-    defMacro: str = None
-    EntityRef_ListID: str = None
-    EntityRef_FullName: str = None
-    CustomerRef_ListID: str = None
-    CustomerRef_FullName: str = None
-    ItemServiceRef_ListID: str = None
-    ItemServiceRef_FullName: str = None
+class TimeTrackingQueryRq(QBTransactionBase):
+
+    TxnNumber: Optional[str] = attr.ib(default=None, metadata={'is_required': {'Add': True, 'Mod': False, 'Query': None}})
+    EntityRef: Optional[Ref] = attr.ib(default=None, metadata={'is_required': {'Add': False, 'Mod': False, 'Query': None}})
+    CustomerRef: Optional[Ref] = attr.ib(default=None, metadata={'is_required': {'Add': False, 'Mod': False, 'Query': None}})
+    ItemServiceRef: Optional[Ref] = attr.ib(default=None, metadata={'is_required': {'Add': False, 'Mod': False, 'Query': None}})
     Duration: str = None  # Assuming TIMEINTERVALTYPE can be represented as str
     ClassRef_ListID: str = None
     ClassRef_FullName: str = None
