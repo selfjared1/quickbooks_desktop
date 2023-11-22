@@ -1,3 +1,5 @@
+from datetime import timedelta, datetime
+import re
 import dateutil.parser as parser
 import datetime as dt
 import pandas as pd
@@ -92,38 +94,13 @@ class DataExtRet:
                                  f'The value type is {type(value)}. \n'
                                  f'The value type needs to be of python type {data_type_translator_qb_to_python[self._DataExtType]}')
 
-class QBDate:
-    def __init__(self, date=None):
-        self.check_date_not_none(date)
-        self.macro_dict = QBDate.get_macro_dict(self)
-        self.is_macro = False
-        self.__date_exception_message = f"""Your date parameter "{date}" could not be parsed.  \n 
-                                    Try to use a datetime object or a string in the format "mm/dd/yyyy". \n
-                                    Or try one of the following Macro date strings: {self.macro_dict.keys()}"""
-        self.date = self.parse_date(date)
-
-    def check_date_not_none(self, date):
-        if date == None:
-            raise Exception('You did not include a date')
-
-    def parse_date(self, date):
-        if isinstance(date, str):
-            if date.lower() in self.macro_dict.keys():
-                self.__setattr__('is_macro', True)
-                return self.macro_dict[date.lower()]
-            else:
-                try:
-                    date_parsed = parser.parse(date)
-                    date_str = date_parsed.strftime("%m/%d/%Y")
-                    return date_str
-                except Exception as e:
-                    raise Exception(self.__date_exception_message)
-        elif isinstance(date, dt.datetime) or isinstance(date, dt.date) or pd.api.types.is_datetime64_any_dtype(date):
-            parsed_date = date.strftime("%m/%d/%Y")
-            return parsed_date
-        else:
-            raise Exception(self.__date_exception_message)
-
+class QBDateMacro:
+    def __init__(self, date_macro=None):
+        self.macro_dict = QBDateMacro.get_macro_dict(self)
+        self.__macro_exception_message = f"""Your date_macro parameter "{date_macro}" could not be parsed.  \n
+                            Try to use a QBDate object. \n
+                            Or try one of the following Macro date strings: {self.macro_dict.keys()}"""
+        self.date_macro = self.parse_date_macro(date_macro)
     def get_macro_dict(self):
         return {'rdmall': 0,
                 'rdmtoday': 1,
@@ -173,3 +150,97 @@ class QBDate:
                 'next_month': 21,
                 'next_quarter': 22,
                 'next_year': 23}
+
+    def parse_date_macro(self, date_macro):
+        if date_macro is None:
+            raise Exception(self.__macro_exception_message)
+        elif isinstance(date_macro, str):
+            if date_macro.lower() in self.macro_dict.keys():
+                return self.macro_dict[date_macro.lower()]
+            else:
+                raise Exception(self.__macro_exception_message)
+        elif isinstance(date_macro, int):
+            if date_macro in self.macro_dict.values():
+                return date_macro
+            else:
+                raise Exception(f"Please choose a number between 1 and 23. \n"
+                                f"Or try one of the following Macro date strings: {self.macro_dict.keys()}")
+        else:
+            raise Exception(self.__macro_exception_message)
+
+    def __str__(self):
+        return str(self.date_macro)
+
+class QBDate:
+    def __init__(self, date=None):
+        self.check_date_not_none(date)
+        self.__date_exception_message = f"""Your date parameter "{date}" could not be parsed.  \n 
+                                    Try to use a datetime object or a string in the format "mm/dd/yyyy". \n
+                                    Or try using the QBDateMacro class."""
+        self.date = self.parse_date(date)
+
+    def check_date_not_none(self, date):
+        if date is None:
+            raise Exception('You did not include a date')
+
+    def parse_date(self, date):
+        if isinstance(date, str):
+            try:
+                date_parsed = parser.parse(date)
+                date_obj = date_parsed.date()
+                return date_obj
+            except Exception as e:
+                raise Exception(self.__date_exception_message)
+        elif isinstance(date, dt.datetime):
+            date_obj = date.date()
+            return date_obj
+        if isinstance(date, dt.date):
+            return date
+        elif pd.api.types.is_datetime64_any_dtype(date):
+            date_obj = date.dt.date  # Extracts the date from a Pandas Series of datetime64 type
+            return date_obj
+        else:
+            raise Exception(self.__date_exception_message)
+
+    def __str__(self):
+        return self.date.strftime("%m/%d/%Y")
+
+    def to_xml(self):
+        return self.__str__()
+
+class QBTimeInterval:
+    def __init__(self, input_data):
+        self.hours = 0
+        self.minutes = 0
+        self.seconds = 0
+        if isinstance(input_data, str):
+            if re.match(r'PT(\d+H)?(\d+M)?(\d+S)?', input_data):
+                self.sef_from_xml_format(input_data)
+            elif re.match(r'\d{2}:\d{2}:\d{2}', input_data):  # Typical format: 'HH:MM:SS'
+                self.set_from_string_format(input_data)
+            else:
+                raise ValueError("Invalid string format. Use 'PTnHnMnS' or 'HH:MM:SS'")
+        elif isinstance(input_data, timedelta):
+            self.set_from_timedelta(input_data)
+
+    def sef_from_xml_format(self, time_str):
+        match = re.match(r'PT(\d+H)?(\d+M)?(\d+S)?', time_str)
+        if match:
+            self.hours = int(match.group(1)[:-1]) if match.group(1) else 0
+            self.minutes = int(match.group(2)[:-1]) if match.group(2) else 0
+            self.seconds = int(match.group(3)[:-1]) if match.group(3) else 0
+
+    def set_from_string_format(self, time_str):
+        time_parts = datetime.strptime(time_str, '%H:%M:%S').time()
+        self.hours = time_parts.hour
+        self.minutes = time_parts.minute
+        self.seconds = time_parts.second
+
+    def set_from_timedelta(self, timedelta_obj):
+        total_seconds = int(timedelta_obj.total_seconds())
+        self.hours = total_seconds // 3600
+        self.minutes = (total_seconds % 3600) // 60
+        self.seconds = total_seconds % 60
+
+    def __str__(self):
+        return f"PT{self.hours}H{self.minutes}M{self.seconds}S"
