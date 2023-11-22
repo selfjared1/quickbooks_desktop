@@ -1,44 +1,60 @@
 import unittest
 import pandas as pd
+import dateutil.parser as parser
 import datetime as dt
-from core.special_fields import QBDate, Ref
+from core.special_fields import QBDate, Ref, QBDateMacro
 
-class TestQBDates(unittest.TestCase):
+class TestQBDateMacro(unittest.TestCase):
+    def setUp(self):
+        self.qb_date_macro = QBDateMacro('today')
 
-    def test_check_date_not_none(self):
-        with self.assertRaises(Exception) as context:
-            QBDate()
-        self.assertEqual(str(context.exception), 'You did not include a date')
+    def test_valid_macros(self):
+        valid_macros = ['rdmtoday', 'this_month', 'last_year_to_date']
+        for macro in valid_macros:
+            with self.subTest(macro=macro):
+                result = self.qb_date_macro.parse_date_macro(macro)
+                self.assertIsNotNone(result)
+                self.assertIn(macro.lower(), self.qb_date_macro.macro_dict)
 
-    def test_parse_date_with_macro(self):
-        qb_date = QBDate('today')
-        self.assertEqual(qb_date.date, 1)
-        self.assertEqual(qb_date.is_macro, True)
-
-        qb_date = QBDate('next_year')
-        self.assertEqual(qb_date.date, 23)
-        self.assertEqual(qb_date.is_macro, True)
-
+    def test_invalid_macro(self):
         with self.assertRaises(Exception):
-            qb_date = QBDate('not_a_date')
+            self.qb_date_macro.parse_date_macro('invalid_macro')
 
-    def test_parse_date_with_string(self):
-        qb_date = QBDate('01/01/2000')
-        self.assertEqual(qb_date.date, '01/01/2000')
-        self.assertEqual(qb_date.is_macro, False)
+    def test_case_insensitivity(self):
+        macro = 'RdmToday'
+        result = self.qb_date_macro.parse_date_macro(macro)
+        self.assertEqual(result, self.qb_date_macro.macro_dict['rdmtoday'])
 
-    def test_parse_common_python_date_formats(self):
-        date_to_parse = dt.datetime.now()
-        qb_date = QBDate(date_to_parse)
-        self.assertEqual(qb_date.date, date_to_parse.strftime('%m/%d/%Y'))
+class TestQBDate(unittest.TestCase):
+    def test_date_object(self):
+        date = dt.date.today()
+        qb_date = QBDate(date)
+        self.assertEqual(qb_date.date, date)
 
-        date_to_parse = dt.date.today()
-        qb_date = QBDate(date_to_parse)
-        self.assertEqual(qb_date.date, date_to_parse.strftime('%m/%d/%Y'))
+    def test_datetime_object(self):
+        datetime = dt.datetime.now()
+        qb_date = QBDate(datetime)
+        self.assertEqual(qb_date.date, datetime.date())
 
-        date_to_parse = pd.Timestamp('2022-01-01')
-        qb_date = QBDate(date_to_parse)
-        self.assertEqual(qb_date.date, date_to_parse.strftime('%m/%d/%Y'))
+    def test_string_date(self):
+        date_string = "11/22/2023"
+        qb_date = QBDate(date_string)
+        expected_date = parser.parse(date_string).date()
+        self.assertEqual(qb_date.date, expected_date)
+
+    def test_invalid_string_date(self):
+        with self.assertRaises(Exception):
+            QBDate("invalid date string")
+
+    def test_none_date(self):
+        with self.assertRaises(Exception):
+            QBDate(None)
+
+    def test_pandas_datetime64(self):
+        pd_date = pd.Timestamp('2023-11-22')
+        qb_date = QBDate(pd_date)
+        expected_date = dt.date(2023, 11, 22)
+        self.assertEqual(qb_date.date, expected_date)
 
 class TestRef(unittest.TestCase):
 
