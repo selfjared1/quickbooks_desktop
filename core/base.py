@@ -64,6 +64,6 @@ class QBTransactionBase(QBBaseMixin):
         "TxnDate": QBDate,
     }
     TxnID: Optional[str] = None
-    TxnDate: Optional[QBDate] = None
+    TxnDate: Optional[QBDate] = attr.ib(default=None, metadata={'is_required': {'Add': False, 'Mod': False, 'Query': False}})
     # todo: def create_txn(self):
     # todo: def update_txn(self, ignore_none=False):
