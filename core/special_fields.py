@@ -203,7 +203,7 @@ class QBDate:
             raise Exception(self.__date_exception_message)
 
     def __str__(self):
-        return self.date.strftime("%m/%d/%Y")
+        return self.date.strftime("%Y-%m-%d")
 
     def to_xml(self):
         return self.__str__()
@@ -244,3 +244,42 @@ class QBTimeInterval:
 
     def __str__(self):
         return f"PT{self.hours}H{self.minutes}M{self.seconds}S"
+
+class BillableStatus:
+
+    def __init__(self, status):
+        self.status_options = self.get_status_options()
+        self.status = self.parse_status(status)
+
+    def parse_status(self, status):
+        if isinstance(status, int):
+            if status in self.status_options.values():
+                return status
+            else:
+                raise ValueError(f"Invalid status: {status}. Valid options are: {self.status_options.items()}")
+        elif status in self.status_options.keys():
+            return self.status_options[status]
+        else:
+            raise ValueError(f"Invalid status: {status}. Valid options are: {self.status_options.items()}")
+
+    def get_status_options(self):
+        status_options = {
+            "Billable": 1,
+            "NotBillable": 2,
+            "HasBeenBilled": 3
+        }
+        return status_options
+
+class ErrorRecovery:
+    def __init__(self, xml_data):
+        self.root = etree.fromstring(xml_data.encode())
+        self.list_id = self.get_optional_text('ListID')
+        self.owner_id = self.get_optional_text('OwnerID')
+        self.txn_id = self.get_optional_text('TxnID')
+        self.txn_number = self.get_optional_text('TxnNumber')
+        self.edit_sequence = self.get_optional_text('EditSequence')
+        self.external_guid = self.get_optional_text('ExternalGUID')
+
+    def get_optional_text(self, tag):
+        element = self.root.find(tag)
+        return element.text if element is not None else None

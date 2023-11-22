@@ -57,6 +57,16 @@ class TestQBDate(unittest.TestCase):
         expected_date = dt.date(2023, 11, 22)
         self.assertEqual(qb_date.date, expected_date)
 
+    def test_str_method(self):
+        date = dt.date(2023, 11, 22)
+        qb_date = QBDate(date)
+        self.assertEqual(str(qb_date), "2023-11-22")
+
+    def test_to_xml_method(self):
+        date = dt.date(2023, 11, 22)
+        qb_date = QBDate(date)
+        self.assertEqual(qb_date.to_xml(), "2023-11-22")
+
 class TestRef(unittest.TestCase):
 
     def test_to_xml(self):
