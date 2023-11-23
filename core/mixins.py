@@ -16,23 +16,18 @@ class SaveMixin(object):
 
 class GetMixin(object):
 
-    def get(self, qb):
-        root = etree.Element(str(self.__class__.__name__) + 'QueryRq')
-        for key in self.query_direct_dict:
-            if getattr(self, key) is not None:
-                #todo: add support for type checks
-                #todo: add support for subelements
-                root.append(etree.Element(key, str(getattr(self, key))))
-            else:
-                pass
-        xml_data = etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
+    @classmethod
+    def get(cls, qb, query_dict=None, query_object=None):
+        obj = cls()
+        query = query_object(query_dict)
+        xml_data = query.to_xml()
         response = qb.send_xml(xml_data)
         root = etree.fromstring(response)
-        response_etree_list = root.findall(str(self.__class__.__name__) + 'Ret')
+        response_etree_list = root.findall(str(cls.__class__.__name__) + 'Ret')
         if len(response_etree_list) > 0:
             response_list = []
             for element_root in response_etree_list:
-                response_list.append(self.from_root(element_root))
+                response_list.append(cls.from_root(element_root))
             return response_list
         else:
             return []
