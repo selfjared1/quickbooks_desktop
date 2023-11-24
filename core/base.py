@@ -1,11 +1,11 @@
 from typing import Optional
 from core.special_fields import DataExtRet, QBDate
-from core.mixins import ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin
+from core.mixins import ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin, GetMixin
 import attr
 
 
 @attr.s(auto_attribs=True)
-class QBBaseMixin(ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin):
+class QBBaseMixin(ToXmlMixin, FromXMLMixin, ToDictMixin, SaveMixin, GetMixin):
     list_dict: dict = {}
     TimeCreated: Optional[QBDate] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': False, 'Query': None}})
     TimeModified: Optional[QBDate] = attr.ib(default=None, metadata={'is_required': {'Add': None, 'Mod': False, 'Query': None}})

@@ -79,3 +79,6 @@ class TimeTracking(QBTransactionBase):
     IsBillable: Optional[bool] = attr.ib(default=None, metadata={'is_required': {'Add': False, 'Mod': False, 'Query': None}})
     ExternalGUID: Optional[str] = attr.ib(default=None, metadata={'is_required': {'Add': False, 'Mod': False, 'Query': None}})
 
+    def get(self, qb, query_dict=None):
+        response_list = super().get(qb, query_dict=query_dict, query_object=TimeTrackingQuery)
+        return response_list

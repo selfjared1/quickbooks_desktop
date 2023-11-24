@@ -16,21 +16,36 @@ class SaveMixin(object):
 
 class GetMixin(object):
 
-    @classmethod
-    def get(cls, qb, query_dict=None, query_object=None):
-        obj = cls()
+    def get(self, qb, query_dict=None, query_object=None):
+        if not query_dict:
+            query_dict = {}
+
         query = query_object(query_dict)
         xml_data = query.to_xml()
         response = qb.send_xml(xml_data)
         root = etree.fromstring(response)
-        response_etree_list = root.findall(str(cls.__class__.__name__) + 'Ret')
-        if len(response_etree_list) > 0:
-            response_list = []
-            for element_root in response_etree_list:
-                response_list.append(cls.from_root(element_root))
-            return response_list
-        else:
+        response_etree_list = root.findall(str(self.__class__.__name__) + 'Ret')
+
+        if len(response_etree_list) == 0:
             return []
+
+        response_list = [self.from_root(element_root) for element_root in response_etree_list]
+
+        # Check if there are any non-None attributes in self
+        non_none_attributes = any(value is not None for value in vars(self).values())
+
+        # If all attributes in self are None, return all objects
+        if not non_none_attributes:
+            return response_list
+
+        # Filter the response list based on non-None attributes of self
+        filtered_response_list = []
+        for response_obj in response_list:
+            if all(getattr(response_obj, attr, None) == getattr(self, attr, None)
+                   for attr, value in vars(self).items() if value is not None):
+                filtered_response_list.append(response_obj)
+
+        return filtered_response_list
 
 class ToXmlMixin(object):
     def to_xml(self, request_type=None):
