@@ -1,9 +1,8 @@
 import unittest
-<<<<<<<< HEAD:core/tests/test_session_manager.py
 from core.session_manager import SessionManager
-========
+
 from quickbooks_desktop.session_manager import SessionManager
->>>>>>>> develop:src/quickbooks_desktop/tests/test_session_manager.py
+
 from lxml import etree as et
 
 class TestSessionManagerCommon(unittest.TestCase):
