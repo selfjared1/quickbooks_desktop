@@ -43,7 +43,22 @@ class TxnDateRangeFilter:
                 root.append(to_date)
             return etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
 
-class TxnQuery:
+class QueryBase:
+    def __init__(self, query_dict):
+        self.MaxReturned = query_dict.get('MaxReturned', None)
+        self.ModifiedDateRangeFilter = ModifiedDateRangeFilter(**query_dict.get('ModifiedDateRangeFilter', {}))
+        self.IncludeRetElements = self.get_include_ret_elements(query_dict.get('IncludeRetElements', []))
+
+    def get_include_ret_elements(self, include_ret_elements):
+        if isinstance(include_ret_elements, list):
+            return include_ret_elements
+        elif include_ret_elements:
+            return [include_ret_elements]
+        else:
+            return []
+
+
+class TxnQuery(QueryBase):
     def __init__(self, query_dict):
         self.TxnIDs = self.get_txn_ids(query_dict.get('TxnIDs', []))
         self.MaxReturned = query_dict.get('MaxReturned', None)
@@ -105,3 +120,11 @@ class TxnQuery:
             else:
                 pass
         return etree
+
+class ListQuery:
+    def __init__(self, query_dict):
+        self.ListIDs = self.get_list_ids(query_dict.get('ListIDs', []))
+        self.MaxReturned = query_dict.get('MaxReturned', None)
+        self.ModifiedDateRangeFilter = ModifiedDateRangeFilter(**query_dict.get('ModifiedDateRangeFilter', {}))
+        self.TxnDateRangeFilter = TxnDateRangeFilter(**query_dict.get('TxnDateRangeFilter', {}))
+        self.IncludeRetElements = self.get_include_ret_elements(query_dict.get('IncludeRetElements', []))

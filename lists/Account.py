@@ -47,6 +47,20 @@ def cash_flow_classification_validator(instance, attribute, value):
         else:
             return
 
+class AccountQuery(ListQuery):
+    def __init__(self, query_dict):
+        super().__init__(query_dict)
+        self.TimeTrackingEntityFilter = TimeTrackingEntityFilter(**query_dict.get('TimeTrackingEntityFilter', {}))
+
+    def to_xml(self):
+        root = super().to_xml()
+        if self.TimeTrackingEntityFilter:
+            root.append(self.TimeTrackingEntityFilter.to_xml())
+        else:
+            pass
+        xml_str = etree.tostring(root, pretty_print=True, encoding='utf-8').decode('utf-8')
+        return xml_str
+
 @attr.s(auto_attribs=True)
 class Account(QBListBase):
     class_dict = {
@@ -89,4 +103,8 @@ class Account(QBListBase):
             Name=self.FullName
         )
         return ref
+
+    def get(self, qb, query_dict=None):
+        response_list = super().get(qb, query_dict=query_dict, query_object=TimeTrackingQuery)
+        return response_list
 
