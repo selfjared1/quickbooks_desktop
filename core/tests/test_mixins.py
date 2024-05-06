@@ -37,46 +37,46 @@ class TestToXmlMixin(unittest.TestCase):
         self.assertNotIn("_private_attr", xml_str)
         self.assertIn("<attr2>value2</attr2>", xml_str)
 
-# class MockClassWithFromXml(FromXMLMixin):
-#     class_dict = {
-#         'SubObject': MockSubClassWithFromXml
-#     }
-#     list_dict = {
-#         'Items': MockListItemWithFromXml
-#     }
-#
-# class MockSubClassWithFromXml(FromXMLMixin):
-#     # This class would have its own from_xml logic, attributes, and methods
-#     pass
-#
-# class MockListItemWithFromXml(FromXMLMixin):
-#     # This class would handle list items from XML
-#     pass
-#
-# class TestFromXMLMixin(unittest.TestCase):
-#     def test_from_xml_with_class_dict(self):
-#         """Test the from_xml method with a class dictionary."""
-#         xml_data = '<MockClass><SubObject><Name>TestName</Name></SubObject></MockClass>'
-#         obj = MockClassWithFromXml.from_xml(xml_data)
-#         self.assertIsInstance(obj.SubObject, MockSubClassWithFromXml)
-#         self.assertEqual(obj.SubObject.Name, 'TestName')
-#
-#     def test_from_xml_with_list_dict(self):
-#         """Test the from_xml method with a list dictionary."""
-#         xml_data = '<MockClass><Items><Item><Name>Item1</Name></Item><Item><Name>Item2</Name></Item></Items></MockClass>'
-#         obj = MockClassWithFromXml.from_xml(xml_data)
-#         self.assertIsInstance(obj.Items, list)
-#         self.assertEqual(len(obj.Items), 2)
-#         self.assertIsInstance(obj.Items[0], MockListItemWithFromXml)
-#         self.assertEqual(obj.Items[0].Name, 'Item1')
-#         self.assertEqual(obj.Items[1].Name, 'Item2')
-#
-#     def test_from_xml_with_simple_attributes(self):
-#         """Test the from_xml method with simple attributes."""
-#         xml_data = '<MockClass><Name>Simple Name</Name><Value>123</Value></MockClass>'
-#         obj = MockClassWithFromXml.from_xml(xml_data)
-#         self.assertEqual(obj.Name, 'Simple Name')
-#         self.assertEqual(obj.Value, '123')
+class MockClassWithFromXml(FromXMLMixin):
+    class_dict = {
+        'SubObject': MockSubClassWithFromXml
+    }
+    list_dict = {
+        'Items': MockListItemWithFromXml
+    }
+
+class MockSubClassWithFromXml(FromXMLMixin):
+    # This class would have its own from_xml logic, attributes, and methods
+    pass
+
+class MockListItemWithFromXml(FromXMLMixin):
+    # This class would handle list items from XML
+    pass
+
+class TestFromXMLMixin(unittest.TestCase):
+    def test_from_xml_with_class_dict(self):
+        """Test the from_xml method with a class dictionary."""
+        xml_data = '<MockClass><SubObject><Name>TestName</Name></SubObject></MockClass>'
+        obj = MockClassWithFromXml.from_xml(xml_data)
+        self.assertIsInstance(obj.SubObject, MockSubClassWithFromXml)
+        self.assertEqual(obj.SubObject.Name, 'TestName')
+
+    def test_from_xml_with_list_dict(self):
+        """Test the from_xml method with a list dictionary."""
+        xml_data = '<MockClass><Items><Item><Name>Item1</Name></Item><Item><Name>Item2</Name></Item></Items></MockClass>'
+        obj = MockClassWithFromXml.from_xml(xml_data)
+        self.assertIsInstance(obj.Items, list)
+        self.assertEqual(len(obj.Items), 2)
+        self.assertIsInstance(obj.Items[0], MockListItemWithFromXml)
+        self.assertEqual(obj.Items[0].Name, 'Item1')
+        self.assertEqual(obj.Items[1].Name, 'Item2')
+
+    def test_from_xml_with_simple_attributes(self):
+        """Test the from_xml method with simple attributes."""
+        xml_data = '<MockClass><Name>Simple Name</Name><Value>123</Value></MockClass>'
+        obj = MockClassWithFromXml.from_xml(xml_data)
+        self.assertEqual(obj.Name, 'Simple Name')
+        self.assertEqual(obj.Value, '123')
 
 
 
@@ -125,5 +125,3 @@ class TestToDict(unittest.TestCase):
         expected = {'classname': 'MockClass', 'value': 1}
         self.assertEqual(obj_dict, expected)
 
-if __name__ == '__main__':
-    unittest.main()

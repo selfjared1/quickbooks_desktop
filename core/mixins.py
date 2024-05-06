@@ -1,18 +1,5 @@
 from lxml import etree
 
-class SaveMixin(object):
-    def save(self, ignore_none=True):
-        if hasattr(self, 'ListID'):
-            if self.ListID is None:
-                self.create_list()
-            else:
-                self.update_list(ignore_none=ignore_none)
-        elif hasattr(self, 'TxnID'):
-            if self.TxnID is None:
-                self.create_txn()
-            else:
-                self.update_txn(ignore_none=ignore_none)
-
 
 class GetMixin(object):
 
@@ -46,6 +33,22 @@ class GetMixin(object):
                 filtered_response_list.append(response_obj)
 
         return filtered_response_list
+
+class SaveMixin(object):
+    def save(self, ignore_none=True):
+        if hasattr(self, 'ListID'):
+            if self.ListID is None:
+                self.create_list()
+            else:
+                self.update_list(ignore_none=ignore_none)
+        elif hasattr(self, 'TxnID'):
+            if self.TxnID is None:
+                self.create_txn()
+            else:
+                self.update_txn(ignore_none=ignore_none)
+
+
+
 
 class ToXmlMixin(object):
     def to_xml(self, request_type=None):
