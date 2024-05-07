@@ -1,8 +1,6 @@
 import unittest
 from core.session_manager import SessionManager
 
-from quickbooks_desktop.session_manager import SessionManager
-
 from lxml import etree as et
 
 class TestSessionManagerCommon(unittest.TestCase):
@@ -62,6 +60,3 @@ class TestSessionManager(TestSessionManagerCommon):
         root = et.Element('AccountQueryRq')
         response = qb.send_xml(root)
         print(response)
-
-if __name__ == '__main__':
-    unittest.main()

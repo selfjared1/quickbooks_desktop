@@ -81,26 +81,39 @@ class QBDates:
 
     def check_date_not_none(self, date):
         if date == None:
-            raise Exception('You did not include a date')
+            self.date = ''
+        elif date == '':
+            pass
+        else:
+            pass
 
     def parse_date(self, date):
         if isinstance(date, str):
             if date.lower() in self.macro_dict.keys():
                 self.__setattr__('date_is_macro', True)
                 return self.macro_dict[date.lower()]
+            elif date == '':
+                return date
             else:
                 try:
                     date_parsed = parser.parse(date)
-                    date_str = dt.date.strftime("%m/%d/%Y")
-                    return date_str
+                    return date_parsed
                 except Exception as e:
-                    raise Exception(f'Your date parameter "{date}" could not be parsed')
+                    raise Exception(f'Your date parameter "{date}" could not be parsed.  '
+                                    f'Try using DateTime object or a macro value.')
+        elif isinstance(date, int):
+            if date > 0 and date < 24:
+                self.date_is_macro = True
+                return date
+            else:
+                raise Exception(f'Your date parameter "{date}" could not be parsed.'
+                                f'Try using DateTime object, macro value, or macro word.')
         elif isinstance(date, dt.datetime):
-            # todo:
-            return None
+            return date
         elif isinstance(date, dt.date):
-            # todo:
-            return None
+            return dt.datetime(date.year, date.month, date.day, hour=23, minute=59, second=59)
+        else:
+            pass
 
     def get_macro_dict(self):
         return {'rdmall': 0,
