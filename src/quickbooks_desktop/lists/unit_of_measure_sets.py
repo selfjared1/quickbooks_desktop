@@ -6,7 +6,7 @@ import re
 from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
 from src.quickbooks_desktop.lists.terms import TermsRef
-from app.models.qb_models.objects.customers import Customer as DBCustomer
+from src.quickbooks_desktop.lists.customers import Customer as DBCustomer
 from src.quickbooks_desktop.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
     ShipAddressBlock, ShipToAddress, \
     Contacts

@@ -5,7 +5,7 @@ from src.quickbooks_desktop.qb_mixin import PluralMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter
-from app.models.qb_models.objects.qb_classes import DBofQBClass as DBClass
+from src.quickbooks_desktop.lists.qb_classes import DBofQBClass as DBClass
 
 
 

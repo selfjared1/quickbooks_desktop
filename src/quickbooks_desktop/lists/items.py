@@ -11,7 +11,7 @@ from src.quickbooks_desktop.qb_other_common_fields import ParentRef
 from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
     CurrencyFilter, ClassFilter
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
-from app.models.qb_models.objects.items import ItemService as DBItemService
+from src.quickbooks_desktop.lists.items import ItemService as DBItemService
 
 
 
