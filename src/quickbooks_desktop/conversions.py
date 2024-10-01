@@ -2,7 +2,7 @@ from typing import Type, Any
 from sqlalchemy.orm import Session
 from dataclasses import fields, is_dataclass, MISSING
 from src.quickbooks_desktop.db_models.base import Base
-from app.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.qb_contact_common_fields import Address
 
 import logging

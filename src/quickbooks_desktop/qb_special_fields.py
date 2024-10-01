@@ -3,7 +3,7 @@ from typing import Optional, Union, Dict
 import datetime as dt
 from dateutil import parser
 from datetime import timedelta
-from app.utils.utilities import snake_to_camel
+from src.quickbooks_desktop.utilities import snake_to_camel
 import re
 from lxml import etree as et
 

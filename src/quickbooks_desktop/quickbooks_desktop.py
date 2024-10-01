@@ -1,7 +1,6 @@
 import win32com.client
 from lxml import etree as et
 import xml.etree.ElementTree as ETree
-import easygui
 import logging
 
 logger = logging.getLogger(__name__)
