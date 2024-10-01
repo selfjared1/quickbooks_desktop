@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
 from decimal import Decimal
-from app.models.qb_models.objects.employees import Employee as DBEmployee
+# from app.models.qb_models.objects.employees import Employee as DBEmployee
 from src.quickbooks_desktop.qb_contact_common_fields import EmployeeAddress, AdditionalContactRef
 from src.quickbooks_desktop.qb_mixin import PluralMixin, QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime

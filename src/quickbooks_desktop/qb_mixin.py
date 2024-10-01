@@ -1,5 +1,5 @@
 from lxml import etree as et
-from typing import Any, Optional, Union, get_args, get_origin
+from typing import Any, Optional, Union, get_args, get_origin, List
 from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
 from sqlalchemy import func
@@ -7,6 +7,7 @@ import logging
 from src.quickbooks_desktop.conversions import qb_to_sql
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from app.utils.utilities import to_lower_camel_case
+from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter
 
 
 logger = logging.getLogger(__name__)
@@ -282,6 +283,7 @@ class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin):
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}QueryRq"
+
 
 class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin):
 
