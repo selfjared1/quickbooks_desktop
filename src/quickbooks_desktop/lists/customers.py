@@ -2,18 +2,18 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List
 
-from app.quickbooks_desktop.objects.qb_classes import QBClassRef
-from app.quickbooks_desktop.objects.sales_reps import SalesRepRef
-from app.quickbooks_desktop.objects.terms import TermsRef
-from app.models.qb_models.objects.customers import Customer as DBCustomer
-from app.quickbooks_desktop.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
+from src.quickbooks_desktop.lists.qb_classes import QBClassRef
+from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
+from src.quickbooks_desktop.lists.terms import TermsRef
+from src.quickbooks_desktop.db_models.lists.customers import Customer as DBCustomer
+from src.quickbooks_desktop.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
     ShipAddressBlock, ShipToAddress, \
     Contacts
-from app.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, PluralMixin, QBQueryMixin
-from app.quickbooks_desktop.qb_other_common_fields import ParentRef
-from app.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
+from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, PluralMixin, QBQueryMixin
+from src.quickbooks_desktop.qb_other_common_fields import ParentRef
+from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
     CurrencyFilter, ClassFilter
-from app.quickbooks_desktop.qb_special_fields import QBDates
+from src.quickbooks_desktop.qb_special_fields import QBDates
 
 
 @dataclass

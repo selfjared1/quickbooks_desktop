@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List
 
-from src.quickbooks_desktop.lists import AccountRef, IncomeAccountRef, ExpenseAccountRef
+from src.quickbooks_desktop.lists.accounts import AccountRef, IncomeAccountRef, ExpenseAccountRef
 from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 from src.quickbooks_desktop.lists.vendors import PrefVendorRef
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef, PurchaseTaxCodeRef
@@ -11,7 +11,6 @@ from src.quickbooks_desktop.qb_other_common_fields import ParentRef
 from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
     CurrencyFilter, ClassFilter
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
-from src.quickbooks_desktop.lists.items import ItemService as DBItemService
 
 
 

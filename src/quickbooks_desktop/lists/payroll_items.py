@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.qb_mixin import QBMixin
-from src.quickbooks_desktop.lists import ExpenseAccountRef
+from src.quickbooks_desktop.lists.accounts import ExpenseAccountRef
 from src.quickbooks_desktop.qb_mixin import QBRefMixin
 
 @dataclass
