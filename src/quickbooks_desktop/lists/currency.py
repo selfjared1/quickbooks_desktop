@@ -6,6 +6,12 @@ from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, QBMixi
 from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter
 
 
+@dataclass
+class CurrencyRef(QBRefMixin):
+
+    class Meta:
+        name = "CurrencyRef"
+
 
 @dataclass
 class CurrencyFormat(QBMixin):

@@ -156,6 +156,18 @@ class FromXmlMixin:
         instance = cls(**init_args)
         return instance
 
+
+class CopyFromParentMixin:
+
+    @classmethod
+    def copy_from_parent(cls, parent):
+        instance = cls()
+        for attr, value in parent.__dict__.items():
+            if hasattr(instance, attr):
+                setattr(instance, attr, value)
+        return instance
+
+
 class PluralMixin:
 
     # class Meta:
@@ -278,11 +290,63 @@ class PluralMixin:
             cls.populate_db(qb, session)
 
 
+class PluralListSaveMixin:
+    def save_all(self, qb):
+        xml_requests = []
+        for item in self:
+            if item.list_id is not None:
+                mod_xml = item._get_mod_xml()
+                xml_requests.append(mod_xml)
+            else:
+                add_xml = item._get_add_xml()
+                xml_requests.append(add_xml)
+        response = qb.send_xml(xml_requests)
+        return response
+
+
+
 class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}QueryRq"
+
+class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin):
+
+    @classmethod
+    def set_name(cls, name):
+        cls.Meta.name = f"{name}AddRq"
+
+
+class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin):
+
+    @classmethod
+    def set_name(cls, name):
+        cls.Meta.name = f"{name}ModRq"
+
+class ListSaveMixin:
+
+    def _get_mod_xml(self):
+        mod_class = getattr(self, f'{self.Meta.name}mod', None)
+        mod_instance = mod_class.copy_from_parent(self)
+        mod_xml = mod_instance.to_xml()
+        return mod_xml
+
+    def _get_add_xml(self):
+        add_class = getattr(self, f'{self.Meta.name}mod', None)
+        add_instance = add_class.copy_from_parent(self)
+        add_xml = add_instance.to_xml()
+
+    def save(self, qb):
+        if self.list_id is not None:
+            mod_xml = self._get_mod_xml()
+            response = qb.send_xml(mod_xml)
+            return response
+        else:
+            add_xml = self._get_add_xml()
+            response = qb.send_xml(add_xml)
+            return response
+
 
 
 class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin):
