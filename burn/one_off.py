@@ -1,5 +1,5 @@
 import lxml as et
-from quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
 import os
 
 def save_xml_to_file(xml_string, file_path):
