@@ -1,5 +1,7 @@
-from src.quickbooks_desktop.desktop_to_desktop.query_all import query_all
+
 import os
+import lxml.etree as ET
+from src.quickbooks_desktop.desktop_to_desktop.query_all import query_all
 from burn.phone_notifications import notify_jared_process_is_done
 
 #Info on things that need to be done manually:
@@ -119,15 +121,79 @@ def pass_10():
         "SalesTaxPaymentCheck",
     ]
 
-def main():
-    file_location = os.path.expanduser("~/Desktop/burn")
-    response_file_path = os.path.join(file_location, f"full_file.xml")
+def get_data(response_file_path):
     query_all(response_file_path)
     notify_jared_process_is_done()
 
 
+def remove_unwanted_tags(root, tags_to_remove):
+    # Loop through all tags in the XML and remove the unwanted ones
+    for tag in tags_to_remove:
+        for element in root.xpath(f"//{tag}"):
+            parent = element.getparent()
+            if parent is not None:
+                parent.remove(element)
+    return root
+
+
+
+def get_query_rs_list(source_file_path):
+    # Load the source XML data
+    tree = ET.parse(source_file_path)
+    root = tree.getroot()
+    return root
+
+def write_xml_to_file(root, file_path):
+    # Convert the root to a string
+    xml_string = ET.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode()
+
+    # Write the string to a file
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(xml_string)
+
+def transform_qbxml(root):
+    tags_to_remove = ['ListID', 'TimeCreated', 'TimeModified', 'EditSequence', 'TxnNumber']
+    root = remove_unwanted_tags(root, tags_to_remove)
+
+    # Find and update QBXMLMsgsRs to QBXMLMsgsRq
+    qbxml_msgs = root.find("QBXMLMsgsRs")
+    qbxml_msgs.tag = "QBXMLMsgsRq"
+    qbxml_msgs.set("onError", "stopOnError")
+    request_counter = 1  # Initialize the requestID counter
+
+    # Elevate all Ret elements up one level and remove QueryRs elements
+    for query_rs in qbxml_msgs.getchildren():
+        # Move all Ret elements (e.g., PurchaseOrderRet) to be direct children of QBXMLMsgsRq
+        for ret_element in query_rs.getchildren():
+            qbxml_msgs.append(ret_element)
+        qbxml_msgs.remove(query_rs)
+
+    # Now iterate over each Ret element and wrap it with AddRq
+    for ret_element in qbxml_msgs.getchildren():
+        # Extract the base table name (e.g., from PurchaseOrderRet to PurchaseOrder)
+        if ret_element.tag[:-3] == 'Ret':
+            base_name = ret_element.tag[:-3]  # Remove 'Ret' from tag name
+            ret_element.tag = f"{base_name}Add"
+            add_rq = ET.Element(f"{base_name}AddRq", requestID=str(request_counter))
+            request_counter += 1
+            add_rq.append(ret_element)
+            qbxml_msgs.replace(ret_element, add_rq)
+        else:
+            pass
+    return root
+
+
+
 if __name__ == '__main__':
-    main()
+    file_location = os.path.expanduser("~/Desktop/burn")
+    response_file_path = os.path.join(file_location, f"full_file.xml")
+    # get_data(response_file_path)
+
+    root = get_query_rs_list(response_file_path)
+    root = transform_qbxml(root)
+
+    with open(response_file_path, 'w') as response_file:
+        response_file.write(response)
 
 
 
