@@ -87,7 +87,34 @@ if __name__ == '__main__':
     qb.open_connection()
     qb.begin_session()
     data_transfer_dict = {
-        "Bill": {},  # Example to process Invoice table
+        "ARRefundCreditCard": {},
+        "Bill": {},
+        "BillPaymentCheck": {},
+        "BillPaymentCreditCard": {},
+        "BuildAssembly": {},
+        "Charge": {},
+        "Check": {},
+        "CreditCardCharge": {},
+        "CreditCardCredit": {},
+        "CreditMemo": {},
+        "Deposit": {},
+        "Estimate": {},
+        "InventoryAdjustment": {},
+        "Invoice": {},
+        "ItemReceipt": {},
+        "JournalEntry": {},
+        "PayrollLiabilityAdjustment": {},
+        "PayrollPriorPayment": {},
+        "PayrollYearToDateAdjustment": {},
+        "PurchaseOrder": {},
+        "ReceivePayment": {},
+        "SalesOrder": {},
+        "SalesReceipt": {},
+        "SalesTaxPaymentCheck": {},
+        "TimeTracking": {},
+        "TransferInventory": {},
+        "VehicleMileage": {},
+        "VendorCredit": {}
     }
 
     # Run the query and deletion process
