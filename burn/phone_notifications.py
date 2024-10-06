@@ -44,7 +44,7 @@ def send_pushbullet_notification(title, body, access_token):
 def notify_jared_process_is_done():
 
     # Get the access token from the ini file
-    ini_file_path = 'config.ini'  # Path to your ini file
+    ini_file_path = '../temp_config.ini'  # Path to your ini file
     access_token = get_access_token_from_ini(ini_file_path)
 
     # The notification title and body
