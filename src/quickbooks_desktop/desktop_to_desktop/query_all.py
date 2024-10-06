@@ -269,7 +269,9 @@ def query_all(response_file_path):
     qb = QuickbooksDesktop()
     qb.qbXMLRP = qb.dispatch()
     qb.open_connection()
+    print('trying begin_session')
     qb.begin_session()
+    print('began begin_session')
     try:
         response = qb.qbXMLRP.ProcessRequest(qb.ticket, xml_str)
 
