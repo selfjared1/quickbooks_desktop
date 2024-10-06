@@ -76,7 +76,6 @@ def pass_05():
     # because you build stuff after you purchase it
     pass_list = [
         "BuildAssembly",
-        "BuildAssemblyPending",  # missing in the original list
     ]
 
 def pass_06():
