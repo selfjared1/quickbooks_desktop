@@ -38,15 +38,12 @@ def pass_01_transform_qbxml(session):
 def pass_01_add_to_qb(qb):
     folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "add_rq_xml")
     add_rq_file_path = os.path.join(folder_path, f'add_rq_01.xml')
-    qb.qbXMLRP = qb.dispatch()
-    print('trying begin_session')
-    qb.open_connection()
-    print('began begin_session')
-    qb.begin_session()
+
     with open(add_rq_file_path, 'r', encoding='utf-8') as file:
         xml_str = file.read()
     try:
         response = qb.qbXMLRP.ProcessRequest(qb.ticket, xml_str)
+        print(response[:100])
         response_file_path = os.path.join(folder_path, f'add_rq_01_response.xml')
         with open(response_file_path, 'w') as response_file:
             response_file.write(response)
@@ -58,7 +55,7 @@ def pass_01_add_to_qb(qb):
         session.close()
     except Exception as e:
         print(e)
-    qb.close_qb()
+
 
 
 

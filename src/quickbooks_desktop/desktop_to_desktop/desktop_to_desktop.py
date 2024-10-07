@@ -20,10 +20,20 @@ if __name__ == '__main__':
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
+
     qb = QuickbooksDesktop()
+    qb.qbXMLRP = qb.dispatch()
+    print('trying begin_session')
+    qb.open_connection()
+    print('began begin_session')
+    qb.begin_session()
 
     # pass_01_transform_qbxml(session)
     # pass_01_add_to_qb(qb)
 
-    pass_02_transform_qbxml(session)
-    # pass_02_add_to_qb(qb)
+    print('begin pass 2')
+    # pass_02_transform_qbxml(session)
+    pass_02_add_to_qb(qb)
+    print('finished pass 2')
+
+    # qb.close_qb()

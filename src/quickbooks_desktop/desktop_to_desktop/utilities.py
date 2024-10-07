@@ -257,17 +257,15 @@ def create_data_ext_mod_rq(data_ext_ret, parent_id_macro, request_counter, table
     txn_data_ext_type.text = table_name
     data_ext_add.append(txn_data_ext_type)
 
-
-
-
-
     txn_obj_ref = ET.Element("TxnID", useMacro=parent_id_macro)
+    txn_obj_ref.text = parent_id_macro.split(':')[1]
     data_ext_add.append(txn_obj_ref)
 
     if line_macro is not None:
         txn_line_id_element = ET.Element("TxnLineID")
         txn_line_id_element.text = line_macro
         txn_line_id_element.set('useMacro', line_macro)
+        data_ext_add.append(txn_line_id_element)
     else:
         pass
 
@@ -296,6 +294,41 @@ def remove_tags(root):
     root = remove_unwanted_tags(root, specific_tags_to_remove)
     return root
 
+def handle_data_ext(new_qbxml_msgs, data_ext_elements, add_rq, base_name, parent_request_id_for_data_ext, request_counter):
+
+    add = add_rq[0]
+    trx_def_macro = f'TxnID:{parent_request_id_for_data_ext}'
+    add.set('defMacro', trx_def_macro)
+    new_qbxml_msgs.append(add_rq)
+    for data_ext_element in data_ext_elements:
+        data_ext_element_parent = data_ext_element.getparent()
+        if data_ext_element_parent == add:
+            data_ext_add_rq = create_data_ext_mod_rq(data_ext_element, trx_def_macro, request_counter, base_name)
+            request_counter += 1
+            try:
+                new_qbxml_msgs.append(data_ext_add_rq)
+            except:
+                new_qbxml_msgs.append(data_ext_add_rq)
+        else:
+            line_number = data_ext_element_parent[0].text.split('-')[0]
+            line_macro = f'TxnLineID:{(parent_request_id_for_data_ext)}-{line_number}'
+            data_ext_element_parent.set('defMacro', line_macro)
+            data_ext_add_rq = create_data_ext_mod_rq(data_ext_element, trx_def_macro, parent_request_id_for_data_ext,
+                                                     base_name, line_macro=line_macro)
+            request_counter += 1
+            try:
+                new_qbxml_msgs.append(data_ext_add_rq)
+            except:
+                new_qbxml_msgs.append(data_ext_add_rq)
+        try:
+            data_ext_element_parent.remove(data_ext_element)
+        except Exception as e:
+            print(e)
+            data_ext_element_parent.remove(data_ext_element)
+            print('did it!')
+
+    return new_qbxml_msgs, request_counter
+
 def convert_ret_to_add(qbxml_msgs):
     request_counter = 1
     new_qbxml_msgs = ET.Element("QBXMLMsgsRq", onError="stopOnError")
@@ -308,41 +341,17 @@ def convert_ret_to_add(qbxml_msgs):
                 base_name = ret_element.tag[:-3]
                 ret_element.tag = f"{base_name}Add"
                 add_rq = ET.Element(f"{base_name}AddRq", requestID=str(request_counter))
+                parent_request_id_for_data_ext = request_counter
                 request_counter += 1
                 add_rq.append(ret_element)
-
-
                 data_ext_elements = ret_element.xpath('.//DataExtRet')
                 if data_ext_elements is not None:
-                    add = add_rq[0]
-                    trx_def_macro = f'{base_name}ID:{request_counter}'
-                    add.set('defMacro', trx_def_macro)
-                    new_qbxml_msgs.append(add_rq)
-                    for data_ext_element in data_ext_elements:
-                        data_ext_element_parent = data_ext_element.getparent()
-                        if data_ext_element_parent == add:
-                            data_ext_add_rq = create_data_ext_mod_rq(data_ext_element, trx_def_macro, request_counter, base_name)
-                            request_counter += 1
-                            try:
-                                new_qbxml_msgs.append(data_ext_add_rq)
-                            except:
-                                new_qbxml_msgs.append(data_ext_add_rq)
-                        else:
-                            line_number = data_ext_element_parent[0].text.split('-')[0]
-                            line_macro = f'{base_name}LineID:{request_counter}-{line_number}'
-                            data_ext_element_parent.set('defMacro', line_macro)
-                            data_ext_add_rq = create_data_ext_mod_rq(data_ext_element, trx_def_macro, request_counter,
-                                                                     base_name, line_macro=line_macro)
-                            request_counter += 1
-                            try:
-                                new_qbxml_msgs.append(data_ext_add_rq)
-                            except:
-                                new_qbxml_msgs.append(data_ext_add_rq)
-                        data_ext_element_parent.remove(data_ext_element)
-
+                    new_qbxml_msgs, request_counter = handle_data_ext(new_qbxml_msgs, data_ext_elements, add_rq, base_name, parent_request_id_for_data_ext, request_counter)
                 else:
-                    new_qbxml_msgs.append(add_rq)
-
+                    try:
+                        new_qbxml_msgs.append(add_rq)
+                    except:
+                        new_qbxml_msgs.append(add_rq)
             else:
                 pass
     return new_qbxml_msgs
