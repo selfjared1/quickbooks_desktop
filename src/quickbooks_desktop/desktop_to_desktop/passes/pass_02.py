@@ -13,7 +13,10 @@ def pass_02_transform_qbxml(session):
     #todo: IsHomeCurrencyAdjustment may need to be reviewed on if it should say if true
     general_tags_to_remove = ['TimeCreated', 'TimeModified', 'EditSequence', 'TxnNumber', 'IsHomeCurrencyAdjustment',
                               'BillAddressBlock', 'ShipAddressBlock', 'EstimateRet/Subtotal', 'EstimateRet/SalesTaxPercentage',
-                              'EstimateRet/SalesTaxTotal', 'EstimateRet/TotalAmount']
+                              'EstimateRet/SalesTaxTotal', 'EstimateRet/TotalAmount', 'VendorAddressBlock',
+                              'PurchaseOrderRet/TotalAmount', 'IsManuallyClosed', 'IsFullyReceived', 'PurchaseOrderRet/LinkedTxn',
+                              'PurchaseOrderLineRet/ReceivedQuantity', 'PurchaseOrderLineRet/IsBilled',
+                              'PurchaseOrderLineRet/OverrideUOMSetRef']
     root = remove_empty_query_responses(root)
     root = remove_unwanted_tags(root, general_tags_to_remove)
     # Locate QBXMLMsgsRs and convert it to QBXMLMsgsRq
