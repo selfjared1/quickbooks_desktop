@@ -1,6 +1,6 @@
 import unittest
 import lxml.etree as ET
-from src.quickbooks_desktop.desktop_to_desktop.desktop_to_desktop import add_data_ext_add, transform_qbxml
+from src.quickbooks_desktop.desktop_to_desktop.utilities import add_data_ext_add, transform_qbxml
 
 class TestAddDataExtAdd(unittest.TestCase):
 

@@ -1,6 +1,6 @@
 import unittest
 import lxml.etree as ET
-from src.quickbooks_desktop.desktop_to_desktop.desktop_to_desktop import remove_unwanted_tags
+from src.quickbooks_desktop.desktop_to_desktop.utilities import remove_unwanted_tags
 
 # Assuming remove_unwanted_tags function is already imported
 
