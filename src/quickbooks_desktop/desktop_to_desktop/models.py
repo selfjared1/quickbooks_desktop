@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, create_engine
+from sqlalchemy import Column, Integer, String, Boolean, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 # Define the base class for all the models
 Base = declarative_base()
@@ -13,9 +12,10 @@ class TransactionMapping(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)  # Primary key
     request_id = Column(Integer, nullable=False)
     qb_add_rq_name = Column(String, nullable=False)
-    is_trx_line_id = Column(Boolean, nullable=False)
-    old_qb_id = Column(String, nullable=False, unique=True)
-    new_qb_id = Column(String, nullable=True)
+    old_qb_trx_id = Column(Integer, nullable=False)
+    new_qb_trx_id = Column(String, nullable=True)
+    old_qb_trx_line_id = Column(String, nullable=True, unique=True)
+    new_qb_trx_line_id = Column(String, nullable=True, unique=True)
 
     def __repr__(self):
         return f"<TransactionMapping(request_id={self.request_id}, old_id={self.old_id}, new_id={self.new_id})>"
@@ -24,13 +24,19 @@ class TransactionMapping(Base):
 class DataExtMod(Base):
     __tablename__ = 'data_ext_mod'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    data_ext_name = Column(String, nullable=False)
-    txn_data_ext_type = Column(String, nullable=False)
-    txn_id_old = Column(String, nullable=False, unique=True)
-    txn_id_new = Column(String, nullable=True, unique=True)
-    txn_line_id_old = Column(String, nullable=True, unique=True)
-    txn_line_id_new = Column(String, nullable=True, unique=True)
-    data_ext_value = Column(String, nullable=True)
+    request_id = Column(Integer, nullable=False)
+    owner_id = Column(String, nullable=False)
+    data_ext_name = Column(String, nullable=False) #Name of the custom field
+    txn_data_ext_type = Column(String, nullable=False) #Name of the transaction (not the request) Estimate, not EstimateAddRq
+    txn_id_old = Column(String, nullable=False)
+    txn_id_new = Column(String, nullable=True)
+    txn_line_id_old = Column(String, nullable=True)
+    txn_line_id_new = Column(String, nullable=True)
+    data_ext_value = Column(String, nullable=True) # The value of the custom field
+
+    __table_args__ = (
+        UniqueConstraint('data_ext_name', 'txn_id_old', 'txn_line_id_old', name='_dataextmod_uc'),
+    )
 
     def __repr__(self):
         return (f"<DataExtMod(id={self.id}, data_ext_name={self.data_ext_name}, "

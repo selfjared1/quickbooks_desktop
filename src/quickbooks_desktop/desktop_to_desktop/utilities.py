@@ -1,11 +1,6 @@
-
-import os
 import lxml.etree as ET
-from src.quickbooks_desktop.desktop_to_desktop.models import TransactionMapping
-from src.quickbooks_desktop.desktop_to_desktop.query_all import query_all
-from burn.phone_notifications import notify_jared_process_is_done
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
+from src.quickbooks_desktop.desktop_to_desktop.models import TransactionMapping, DataExtMod
+
 
 #Info on things that need to be done manually:
     #Add currency exchange rates
@@ -124,38 +119,38 @@ def pass_10():
         "SalesTaxPaymentCheck",
     ]
 
-def add_journal_line_to_db(add, request_id, qb_table_name, session):
+def add_journal_line_to_db(add, request_id, qb_table_name, old_qb_trx_id, session):
     txn_line_id_elements = add.xpath('.//TxnLineID')
     for txn_line_id_elem in txn_line_id_elements:
         parent = txn_line_id_elem.getparent()
         if parent.tag in ['JournalCreditLine', 'JournalDebitLine']:
-            old_qb_id = txn_line_id_elem.text
+            old_qb_trx_line_id = txn_line_id_elem.text
             mapping = TransactionMapping(
                 request_id=request_id,
                 qb_add_rq_name=qb_table_name,
-                is_trx_line_id=True,
-                old_qb_id=old_qb_id
+                old_qb_trx_id=old_qb_trx_id,
+                old_qb_trx_line_id=old_qb_trx_line_id,
             )
             session.add(mapping)
             parent.remove(txn_line_id_elem)
         else:
             pass
 
-def add_line_ret_to_db(add, request_id, qb_table_name, session):
+def add_line_ret_to_db(add, request_id, qb_table_name, old_qb_trx_id, session):
     # txn_line_id_elements = add.xpath('.//TxnLineID')
     txn_line_ret_elements = add.xpath(
-        ".//*[substring(local-name(), string-length(local-name()) - string-length('LineRet') + 1) = 'LineRet']"
+        ".//*[substring(local-name(), string-length(local-name()) - string-length('LineRet') + 1) = 'LineRet' or substring(local-name(), string-length(local-name()) - string-length('LineGroupRet') + 1) = 'LineGroupRet']"
     )
 
     for txn_line_ret in txn_line_ret_elements:
         if txn_line_ret[0].tag[-6:] == 'LineID':
             txn_line_id_elem = txn_line_ret[0]
-            old_qb_id = txn_line_id_elem.text
+            old_qb_trx_line_id = txn_line_id_elem.text
             mapping = TransactionMapping(
                 request_id=request_id,
                 qb_add_rq_name=qb_table_name,
-                is_trx_line_id=True,
-                old_qb_id=old_qb_id
+                old_qb_trx_id=old_qb_trx_id,
+                old_qb_trx_line_id=old_qb_trx_line_id,
             )
             session.add(mapping)
             txn_line_id_elem.getparent().remove(txn_line_id_elem)
@@ -163,31 +158,6 @@ def add_line_ret_to_db(add, request_id, qb_table_name, session):
             pass
         txn_line_ret.tag = txn_line_ret.tag.replace('Ret', 'Add')
 
-def add_rq_to_db(qbxml_msgs, session):
-    for rq_element in qbxml_msgs:
-        request_id = int(rq_element.get('requestID', '0'))
-        qb_table_name = rq_element.tag.replace('Rq', '')
-        add = rq_element[0] if len(rq_element) > 0 else None
-        first_child = add[0] if len(add) > 0 else None
-        if first_child is not None and first_child.tag == 'TxnID':
-            old_qb_id = first_child.text
-            mapping = TransactionMapping(
-                request_id=request_id,
-                qb_add_rq_name=qb_table_name,
-                is_trx_line_id=False,
-                old_qb_id=old_qb_id
-            )
-            session.add(mapping)
-            first_child.getparent().remove(first_child)
-        else:
-            pass
-
-        add_journal_line_to_db(add, request_id, qb_table_name, session)
-
-        add_line_ret_to_db(add, request_id, qb_table_name, session)
-
-
-    session.commit()
 
 def remove_empty_query_responses(root):
     # Find all elements with the specific statusMessage
@@ -294,67 +264,138 @@ def remove_tags(root):
     root = remove_unwanted_tags(root, specific_tags_to_remove)
     return root
 
-def handle_data_ext(new_qbxml_msgs, data_ext_elements, add_rq, base_name, parent_request_id_for_data_ext, request_counter):
-
-    add = add_rq[0]
-    trx_def_macro = f'TxnID:{parent_request_id_for_data_ext}'
-    add.set('defMacro', trx_def_macro)
-    new_qbxml_msgs.append(add_rq)
+def handle_data_ext(data_ext_elements, add_element, base_name, request_id, session, batch_size=1000):
+    count = 0
     for data_ext_element in data_ext_elements:
         data_ext_element_parent = data_ext_element.getparent()
-        if data_ext_element_parent == add:
-            data_ext_add_rq = create_data_ext_mod_rq(data_ext_element, trx_def_macro, request_counter, base_name)
-            request_counter += 1
-            try:
-                new_qbxml_msgs.append(data_ext_add_rq)
-            except:
-                new_qbxml_msgs.append(data_ext_add_rq)
+        if data_ext_element_parent == add_element:
+            data_ext_mod = DataExtMod(
+                request_id=request_id,
+                owner_id=data_ext_element.find("OwnerID").text,
+                data_ext_name=data_ext_element.find('DataExtName').text,
+                txn_data_ext_type=base_name,
+                txn_id_old=add_element.find('TxnID').text,
+                data_ext_value=data_ext_element.find('DataExtValue').text,
+            )
+            session.add(data_ext_mod)
+            count += 1
         else:
-            line_number = data_ext_element_parent[0].text.split('-')[0]
-            line_macro = f'TxnLineID:{(parent_request_id_for_data_ext)}-{line_number}'
-            data_ext_element_parent.set('defMacro', line_macro)
-            data_ext_add_rq = create_data_ext_mod_rq(data_ext_element, trx_def_macro, parent_request_id_for_data_ext,
-                                                     base_name, line_macro=line_macro)
-            request_counter += 1
-            try:
-                new_qbxml_msgs.append(data_ext_add_rq)
-            except:
-                new_qbxml_msgs.append(data_ext_add_rq)
-        try:
-            data_ext_element_parent.remove(data_ext_element)
-        except Exception as e:
-            print(e)
-            data_ext_element_parent.remove(data_ext_element)
-            print('did it!')
+            if data_ext_element_parent[0].tag.endswith('LineID'):
+                data_ext_mod = DataExtMod(
+                    request_id=request_id,
+                    owner_id=data_ext_element.find("OwnerID").text,
+                    data_ext_name=data_ext_element.find('DataExtName').text,
+                    txn_data_ext_type=base_name,
+                    txn_id_old=add_element.find('TxnID').text,
+                    txn_line_id_old=data_ext_element_parent[0].text,
+                    data_ext_value=data_ext_element.find('DataExtValue').text,
+                )
+                session.add(data_ext_mod)
+                count += 1
+            else:
+                try:
+                    print('program drops from here sometimes')
+                except Exception as e:
+                    pass
+        if count >= batch_size:
+            print('batch 1000')
+            session.commit()
+            count = 0
+    if count > 0:
+        session.commit()
 
-    return new_qbxml_msgs, request_counter
 
-def convert_ret_to_add(qbxml_msgs):
+def convert_ret_to_add(qbxml_msgs, session):
     request_counter = 1
     new_qbxml_msgs = ET.Element("QBXMLMsgsRq", onError="stopOnError")
     query_rs_list = qbxml_msgs.getchildren()
-    for query_rs in query_rs_list:
+    for i in range(len(query_rs_list)):
+        query_rs = query_rs_list[i]
         ret_list = query_rs.getchildren()
-        for ret_element in ret_list:
-            if ret_element.tag[-3:] == 'Ret':
-                # Modify Ret tag to Add tag (e.g., CustomerRet -> CustomerAdd)
+        for i in range(len(ret_list)):
+            ret_element = ret_list[i]
+            if ret_element.tag.endswith('Ret'):
                 base_name = ret_element.tag[:-3]
                 ret_element.tag = f"{base_name}Add"
-                add_rq = ET.Element(f"{base_name}AddRq", requestID=str(request_counter))
-                parent_request_id_for_data_ext = request_counter
+                request_id = str(request_counter)
+                add_rq = ET.Element(f"{base_name}AddRq", requestID=request_id)
                 request_counter += 1
                 add_rq.append(ret_element)
-                data_ext_elements = ret_element.xpath('.//DataExtRet')
-                if data_ext_elements is not None:
-                    new_qbxml_msgs, request_counter = handle_data_ext(new_qbxml_msgs, data_ext_elements, add_rq, base_name, parent_request_id_for_data_ext, request_counter)
+                new_qbxml_msgs.append(add_rq)
+                data_ext_elements = ret_element.findall('.//DataExtRet')
+                if data_ext_elements:
+                    handle_data_ext(data_ext_elements, ret_element, base_name, request_id, session)
+                    # print('finished handle_data_ext')
                 else:
-                    try:
-                        new_qbxml_msgs.append(add_rq)
-                    except:
-                        new_qbxml_msgs.append(add_rq)
+                    pass
             else:
                 pass
+    print('exited loop')
+    data_ext_elements = ret_element.xpath('.//DataExtRet')
+    for data_ext_element in data_ext_elements:
+        parent = data_ext_element.getparent()
+        parent.remove(data_ext_element)
     return new_qbxml_msgs
+
+def add_trx_id_to_trx_mapping_table(new_qb_trx_id, request_id, qb_add_rq_name, session):
+    # Query the database for matching record
+    trx_id_mappings = session.query(TransactionMapping).filter(
+        TransactionMapping.request_id == request_id,
+        TransactionMapping.qb_add_rq_name == qb_add_rq_name
+    ).all()
+
+    if trx_id_mappings:
+        for trx_id_mapping in trx_id_mappings:
+            trx_id_mapping.new_qb_trx_id = new_qb_trx_id
+        session.commit()
+    else:
+        print(f"No matching record found for request_id {request_id}, qb_add_rq_name {qb_add_rq_name}")
+
+def add_trx_line_id_to_trx_mapping_table(request_id, add_rq_name, response_line_elements, session):
+    line_mappings = session.query(TransactionMapping).filter(
+        TransactionMapping.request_id == request_id,
+        TransactionMapping.qb_add_rq_name == add_rq_name,
+        TransactionMapping.old_qb_trx_line_id.is_not(None)
+    ).all()
+
+    if len(line_mappings) == len(response_line_elements):
+        for mapping, line_elem in zip(line_mappings, response_line_elements):
+            txn_line_id_elem = line_elem.find('TxnLineID')
+            if txn_line_id_elem is not None:
+                mapping.new_qb_trx_line_id = txn_line_id_elem.text
+            else:
+                print(
+                    f"No TxnLineID found in line element at sequence {mapping.request_id} for {mapping.qb_add_rq_name}")
+        session.commit()
+    else:
+        raise NotImplementedError("This isn't coded yet")
+
+
+def add_trx_id_to_data_ext_mod_table(new_qb_trx_id, request_id, qb_add_rq_name, session):
+    data_ext_mods = session.query(DataExtMod).filter(
+        DataExtMod.request_id == request_id,
+        DataExtMod.txn_data_ext_type == qb_add_rq_name.replace('Add', '')
+    ).all()
+
+    if data_ext_mods:
+        for data_ext_mod in data_ext_mods:
+            data_ext_mod.txn_id_new = new_qb_trx_id
+        session.commit()
+    else:
+        print(
+            f"No matching record found for request_id {request_id}, qb_add_rq_name {qb_add_rq_name}")
+
+
+def add_trx_line_id_to_data_ext_mod_table(request_id, add_rq_name, response_line_elements, session):
+    for response_line_element in response_line_elements:
+        data_ext_mods_with_line_ids = session.query(DataExtMod).filter(
+            DataExtMod.request_id == request_id,
+            DataExtMod.txn_data_ext_type == add_rq_name.replace('Add', ''),
+            DataExtMod.txn_line_id_old._is(response_line_element.find('TxnLineID').text)
+        ).all()
+        for data_ext_mod in data_ext_mods_with_line_ids:
+            data_ext_mod.txn_line_id_new = response_line_element.find('TxnLineID').text
+        session.commit()
 
 
 def process_response_xml(response_file_path, session):
@@ -378,42 +419,18 @@ def process_response_xml(response_file_path, session):
             for ret_element in query_rs:
                 if ret_element.tag.endswith('Ret') and ret_element[0].tag == 'TxnID':
                     txn_id_element = ret_element[0]
+                    qb_add_rq_name = ret_element.tag.replace('Ret', 'Add')
                     if txn_id_element is not None:
-                        new_qb_id = txn_id_element.text
-                        ret_tag = ret_element.tag  # e.g., JournalEntryRet
-                        # Map Ret tag to corresponding Add tag
-                        qb_add_rq_name = ret_tag.replace('Ret', 'Add')
+                        new_qb_trx_id = txn_id_element.text
+                        add_trx_id_to_trx_mapping_table(new_qb_trx_id, request_id, qb_add_rq_name, session)
+                        add_trx_id_to_data_ext_mod_table(new_qb_trx_id, request_id, qb_add_rq_name, session)
 
-                        # Query the database for matching record
-                        mapping = session.query(TransactionMapping).filter_by(
-                            request_id=request_id,
-                            qb_add_rq_name=qb_add_rq_name
-                        ).first()
-
-                        if mapping:
-                            mapping.new_qb_id = new_qb_id
-                            session.commit()
-                        else:
-                            print(f"No matching record found for request_id {request_id}, qb_add_rq_name {qb_add_rq_name}")
                     else:
                         pass
-                    line_mappings = session.query(TransactionMapping).filter_by(
-                        request_id=request_id,
-                        qb_add_rq_name=qb_add_rq_name,
-                        is_trx_line_id=True
-                    ).all()
-                    response_line_elements = [elem for elem in ret_element if elem.tag.endswith('Line')]
-                    if len(line_mappings) == len(response_line_elements):
-                        for mapping, line_elem in zip(line_mappings, response_line_elements):
-                            txn_line_id_elem = line_elem.find('TxnLineID')
-                            if txn_line_id_elem is not None:
-                                mapping.new_qb_id = txn_line_id_elem.text
-                            else:
-                                print(f"No TxnLineID found in line element at sequence {mapping.line_sequence}")
-                            session.commit()
-                    else:
-                        raise
 
+                    response_line_elements = [elem for elem in ret_element if elem.tag.endswith('LineRet')]
+                    add_trx_line_id_to_trx_mapping_table(request_id, qb_add_rq_name, response_line_elements, session)
+                    add_trx_line_id_to_data_ext_mod_table(request_id, qb_add_rq_name, response_line_elements, session)
                 else:
                     pass
 
@@ -421,13 +438,144 @@ def process_response_xml(response_file_path, session):
     session.close()
     print(f'errors_requests: {errors_requests}')
 
+def reorder_xml_in_entire_document(entire_xml, parent_to_loop_through, out_of_place_tag, tag_before, tag_after):
+    """
+    Reorder child elements within each occurrence of parent_to_loop_through in the entire XML.
+
+    For each occurrence of out_of_place_tag within parent_element,
+    move it to be after tag_before, or before tag_after if tag_before is not found.
+
+    :param entire_xml: The root element of the entire XML document.
+    :param parent_to_loop_through: The tag name of the parent elements to process.
+    :param out_of_place_tag: The tag name of the element to be repositioned.
+    :param tag_before: The tag name of the element after which out_of_place_tag should be placed.
+    :param tag_after: The tag name of the element before which out_of_place_tag should be placed if tag_before is not found.
+    """
+    # Find all parent elements in the entire XML
+    parent_elements = entire_xml.findall('.//' + parent_to_loop_through)
+
+    for parent_element in parent_elements:
+        # Collect all child elements
+        children = list(parent_element)
+
+        # Extract out_of_place_tag elements and their original positions
+        elements_to_move = []
+        indices_to_remove = []
+        for i, child in enumerate(children):
+            if child.tag == out_of_place_tag:
+                elements_to_move.append(child)
+                indices_to_remove.append(i)
+            else:
+                pass
+
+        # Remove out_of_place_tag elements from children list
+        for index in sorted(indices_to_remove, reverse=True):
+            del children[index]
+
+        # Find index of tag_before
+        try:
+            index_tag_before = next(i for i, child in enumerate(children) if child.tag == tag_before)
+            # Insert elements after tag_before
+            insertion_index = index_tag_before + 1
+            for elem in elements_to_move:
+                children.insert(insertion_index, elem)
+                insertion_index += 1  # Increment to maintain order
+        except StopIteration:
+            # tag_before not found, look for tag_after
+            try:
+                index_tag_after = next(i for i, child in enumerate(children) if child.tag == tag_after)
+                # Insert elements before tag_after
+                insertion_index = index_tag_after
+                for elem in elements_to_move:
+                    children.insert(insertion_index, elem)
+                    insertion_index += 1
+            except StopIteration:
+                # Neither tag_before nor tag_after found, append elements at the end
+                children.extend(elements_to_move)
+
+        # Remove all existing children from parent_element
+        parent_element.clear()
+
+        # Append children back to parent_element in the new order
+        for child in children:
+            parent_element.append(child)
+
+def remove_amount_if_qty_and_rate(root):
+    """
+        Removes the <Amount> tag from line items that have both <Quantity> and <Rate>.
+
+        :param root: The root element of the XML tree.
+        :return: The modified root element.
+        """
+    # Find all line elements
+    # Assuming line elements are those where the tag ends with 'LineRet'
+    line_elements = root.xpath(".//*[substring(name(), string-length(name()) - 6) = 'LineRet']")
+
+    # Loop through each line element
+    for line in line_elements:
+        # Check if the line has both Quantity and Rate tags
+        quantity = line.find('Quantity')
+        rate = line.find('Rate')
+        if quantity is not None and rate is not None:
+            # Remove the Amount tag if it exists
+            amount = line.find('Amount')
+            if amount is not None:
+                parent = amount.getparent()
+                parent.remove(amount)
+    return root
 
 
+def remove_amount_from_subtotals(root, item_names):
+    """
+    Removes the <Amount> tag from parent elements of <ItemRef><FullName> that match any name in item_names.
+
+    :param root: The root element of the XML tree.
+    :param item_names: A list of strings representing the FullName values to search for.
+    :return: The modified root element.
+    """
+    # Iterate over each item name
+    for item_name in item_names:
+        # Find all <FullName> elements under <ItemRef> with text equal to item_name
+        full_name_elements = root.xpath(f".//ItemRef[FullName='{item_name}']/FullName")
+
+        # Iterate over each matching <FullName> element
+        for full_name in full_name_elements:
+            # Get the parent <ItemRef> element
+            item_ref = full_name.getparent()
+            if item_ref is not None:
+                # Get the parent of <ItemRef>, which is assumed to be the line element
+                line_element = item_ref.getparent()
+                if line_element is not None:
+                    # Find the <Amount> element within the line element
+                    amount = line_element.find('Amount')
+                    if amount is not None:
+                        # Remove the <Amount> element from its parent
+                        line_element.remove(amount)
+    return root
+
+def truncate_tag_text(xml_root, tag_name, max_length):
+
+    for elem in xml_root.findall(f'.//{tag_name}'):
+        if elem.text and len(elem.text) > max_length:
+            elem.text = elem.text[:max_length]
+        else:
+            pass
+    return xml_root
 
 
+def remove_uncle_tag_based_on_xpath(root, search_xpath, uncle_to_remove):
+    """This is mainly looking for sales tax items and removing the Rate which is a uncle"""
+    # Find all elements matching the search_xpath
+    matching_elements = root.xpath(search_xpath)
 
-
-
-
-
-
+    for elem in matching_elements:
+        # Check if the element's text matches the target value
+        parent = elem.getparent()
+        grandparent = parent.getparent()
+        tag_element = grandparent.find(uncle_to_remove)
+        if tag_element is not None:
+            # Remove the tag_to_remove element from the grandparent
+            grandparent.remove(tag_element)
+        else:
+            pass
+    return root

@@ -2,8 +2,10 @@ import os
 import lxml.etree as ET
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.quickbooks_desktop.desktop_to_desktop.utilities import remove_unwanted_tags, convert_ret_to_add, remove_empty_query_responses, add_rq_to_db, process_response_xml
-
+from src.quickbooks_desktop.desktop_to_desktop.utilities import remove_unwanted_tags, convert_ret_to_add, remove_empty_query_responses, \
+    process_response_xml
+from src.quickbooks_desktop.desktop_to_desktop.add_rq_to_db import add_rq_to_db
+from src.quickbooks_desktop.desktop_to_desktop.clean_xml import clean_text
 
 def pass_01_transform_qbxml(session):
     folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "all_xml")
@@ -20,13 +22,14 @@ def pass_01_transform_qbxml(session):
     qbxml_msgs.set("onError", "stopOnError")
 
 
-    qbxml_msgs = convert_ret_to_add(qbxml_msgs)
+    qbxml_msgs = convert_ret_to_add(qbxml_msgs, session)
     add_rq_to_db(qbxml_msgs, session)
     # Optionally remove unwanted tags
     last_tags_to_remove = ['ListID']
     qbxml_msgs = remove_unwanted_tags(qbxml_msgs, last_tags_to_remove)
 
     xml_string = ET.tostring(qbxml_msgs, pretty_print=True, xml_declaration=False, encoding="UTF-8").decode()
+    xml_string = clean_text(xml_string)
     full_xml = f"""<?xml version="1.0" encoding="utf-8"?><?qbxml version="13.0"?><QBXML>{xml_string}</QBXML>"""
     # Write the string to a file
     folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "add_rq_xml")

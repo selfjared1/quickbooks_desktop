@@ -19,23 +19,20 @@ class TestProcessResponseXml(unittest.TestCase):
         mapping = TransactionMapping(
             request_id=1,  # Matching the requestID in the sample XML
             qb_add_rq_name='JournalEntryAdd',
-            is_trx_line_id=False,
-            old_qb_id='19C72-1627671245'
+            old_qb_trx_id='19C72-1627671245'
         )
         self.session.add(mapping)
 
         line_mapping_01 = TransactionMapping(
             request_id=1,  # Matching the requestID in the sample XML
             qb_add_rq_name='JournalEntryAdd',
-            is_trx_line_id=True,
-            old_qb_id='19C72-1627671246'
+            old_qb_trx_id='19C72-1627671246'
         )
         self.session.add(line_mapping_01)
         line_mapping_02 = TransactionMapping(
             request_id=1,  # Matching the requestID in the sample XML
             qb_add_rq_name='JournalEntryAdd',
-            is_trx_line_id=True,
-            old_qb_id='19C72-1627671247'
+            old_qb_trx_id='19C72-1627671247'
         )
         self.session.add(line_mapping_02)
         self.session.commit()
@@ -99,16 +96,16 @@ class TestProcessResponseXml(unittest.TestCase):
             qb_add_rq_name='JournalEntryAdd'
         ).first()
         self.assertIsNotNone(mapping)
-        self.assertEqual(mapping.new_qb_id, 'BF5E-1828899527')
+        self.assertEqual(mapping.new_qb_trx_id, 'BF5E-1828899527')
 
         mappings = self.session.query(TransactionMapping).filter_by(
             request_id=1,
-            is_trx_line_id=True,
             qb_add_rq_name='JournalEntryAdd'
         ).all()
-
-        self.assertEqual(mappings[0].new_qb_id, 'BF5F-1828899527')
-        self.assertEqual(mappings[1].new_qb_id, 'BF60-1828899527')
+        self.assertEqual(mappings[0].new_qb_trx_id, 'BF5E-1828899527')
+        self.assertEqual(mappings[0].new_qb_trx_line_id, 'BF5F-1828899527')
+        self.assertEqual(mappings[1].new_qb_trx_id, 'BF5E-1828899527')
+        self.assertEqual(mappings[1].new_qb_trx_line_id, 'BF60-1828899527')
 
 
 
