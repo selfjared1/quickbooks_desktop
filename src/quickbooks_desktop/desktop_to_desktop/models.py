@@ -14,6 +14,7 @@ class TransactionMapping(Base):
     qb_add_rq_name = Column(String, nullable=False)
     old_qb_trx_id = Column(Integer, nullable=False)
     new_qb_trx_id = Column(String, nullable=True)
+    new_edit_sequence = Column(Integer, nullable=True)
     old_qb_trx_line_id = Column(String, nullable=True, unique=True)
     new_qb_trx_line_id = Column(String, nullable=True, unique=True)
 
@@ -30,6 +31,7 @@ class DataExtMod(Base):
     txn_data_ext_type = Column(String, nullable=False) #Name of the transaction (not the request) Estimate, not EstimateAddRq
     txn_id_old = Column(String, nullable=False)
     txn_id_new = Column(String, nullable=True)
+    edit_sequence = Column(Integer, nullable=True)
     txn_line_id_old = Column(String, nullable=True)
     txn_line_id_new = Column(String, nullable=True)
     data_ext_value = Column(String, nullable=True) # The value of the custom field

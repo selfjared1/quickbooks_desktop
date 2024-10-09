@@ -2,7 +2,7 @@ import os
 import lxml.etree as ET
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.quickbooks_desktop.desktop_to_desktop.utilities import remove_unwanted_tags, convert_ret_to_add, remove_empty_query_responses, \
+from src.quickbooks_desktop.desktop_to_desktop.utilities import remove_unwanted_tags, convert_ret_to_add_or_mod, remove_empty_query_responses, \
     process_response_xml
 from src.quickbooks_desktop.desktop_to_desktop.add_rq_to_db import add_rq_to_db
 from src.quickbooks_desktop.desktop_to_desktop.clean_xml import clean_text
@@ -22,7 +22,7 @@ def pass_01_transform_qbxml(session):
     qbxml_msgs.set("onError", "stopOnError")
 
 
-    qbxml_msgs = convert_ret_to_add(qbxml_msgs, session)
+    qbxml_msgs = convert_ret_to_add_or_mod(qbxml_msgs, session, 'Add')
     add_rq_to_db(qbxml_msgs, session)
     # Optionally remove unwanted tags
     last_tags_to_remove = ['ListID']

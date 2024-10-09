@@ -119,8 +119,8 @@ def pass_10():
         "SalesTaxPaymentCheck",
     ]
 
-def add_journal_line_to_db(add, request_id, qb_table_name, old_qb_trx_id, session):
-    txn_line_id_elements = add.xpath('.//TxnLineID')
+def add_journal_line_to_db(add_element, request_id, qb_table_name, old_qb_trx_id, session):
+    txn_line_id_elements = add_element.xpath('.//TxnLineID')
     for txn_line_id_elem in txn_line_id_elements:
         parent = txn_line_id_elem.getparent()
         if parent.tag in ['JournalCreditLine', 'JournalDebitLine']:
@@ -136,9 +136,9 @@ def add_journal_line_to_db(add, request_id, qb_table_name, old_qb_trx_id, sessio
         else:
             pass
 
-def add_line_ret_to_db(add, request_id, qb_table_name, old_qb_trx_id, session):
+def add_line_ret_to_db(add_element, request_id, qb_table_name, old_qb_trx_id, session):
     # txn_line_id_elements = add.xpath('.//TxnLineID')
-    txn_line_ret_elements = add.xpath(
+    txn_line_ret_elements = add_element.xpath(
         ".//*[substring(local-name(), string-length(local-name()) - string-length('LineRet') + 1) = 'LineRet' or substring(local-name(), string-length(local-name()) - string-length('LineGroupRet') + 1) = 'LineGroupRet']"
     )
 
@@ -305,7 +305,7 @@ def handle_data_ext(data_ext_elements, add_element, base_name, request_id, sessi
         session.commit()
 
 
-def convert_ret_to_add(qbxml_msgs, session):
+def convert_ret_to_add_or_mod(qbxml_msgs, session, add_or_mod_str):
     request_counter = 1
     new_qbxml_msgs = ET.Element("QBXMLMsgsRq", onError="stopOnError")
     query_rs_list = qbxml_msgs.getchildren()
@@ -316,9 +316,9 @@ def convert_ret_to_add(qbxml_msgs, session):
             ret_element = ret_list[i]
             if ret_element.tag.endswith('Ret'):
                 base_name = ret_element.tag[:-3]
-                ret_element.tag = f"{base_name}Add"
+                ret_element.tag = f"{base_name}{add_or_mod_str}"
                 request_id = str(request_counter)
-                add_rq = ET.Element(f"{base_name}AddRq", requestID=request_id)
+                add_rq = ET.Element(f"{base_name}{add_or_mod_str}Rq", requestID=request_id)
                 request_counter += 1
                 add_rq.append(ret_element)
                 new_qbxml_msgs.append(add_rq)
@@ -337,7 +337,7 @@ def convert_ret_to_add(qbxml_msgs, session):
         parent.remove(data_ext_element)
     return new_qbxml_msgs
 
-def add_trx_id_to_trx_mapping_table(new_qb_trx_id, request_id, qb_add_rq_name, session):
+def add_trx_id_to_trx_mapping_table(new_qb_trx_id, edit_sequence, request_id, qb_add_rq_name, session):
     # Query the database for matching record
     trx_id_mappings = session.query(TransactionMapping).filter(
         TransactionMapping.request_id == request_id,
@@ -347,6 +347,7 @@ def add_trx_id_to_trx_mapping_table(new_qb_trx_id, request_id, qb_add_rq_name, s
     if trx_id_mappings:
         for trx_id_mapping in trx_id_mappings:
             trx_id_mapping.new_qb_trx_id = new_qb_trx_id
+            trx_id_mapping.edit_sequence = edit_sequence
         session.commit()
     else:
         print(f"No matching record found for request_id {request_id}, qb_add_rq_name {qb_add_rq_name}")
@@ -371,7 +372,7 @@ def add_trx_line_id_to_trx_mapping_table(request_id, add_rq_name, response_line_
         raise NotImplementedError("This isn't coded yet")
 
 
-def add_trx_id_to_data_ext_mod_table(new_qb_trx_id, request_id, qb_add_rq_name, session):
+def add_trx_id_to_data_ext_mod_table(new_qb_trx_id, edit_sequence, request_id, qb_add_rq_name, session):
     data_ext_mods = session.query(DataExtMod).filter(
         DataExtMod.request_id == request_id,
         DataExtMod.txn_data_ext_type == qb_add_rq_name.replace('Add', '')
@@ -380,6 +381,7 @@ def add_trx_id_to_data_ext_mod_table(new_qb_trx_id, request_id, qb_add_rq_name, 
     if data_ext_mods:
         for data_ext_mod in data_ext_mods:
             data_ext_mod.txn_id_new = new_qb_trx_id
+            data_ext_mod.edit_sequence = edit_sequence
         session.commit()
     else:
         print(
@@ -418,12 +420,14 @@ def process_response_xml(response_file_path, session):
             # Get the Ret element name (e.g., JournalEntryRet)
             for ret_element in query_rs:
                 if ret_element.tag.endswith('Ret') and ret_element[0].tag == 'TxnID':
-                    txn_id_element = ret_element[0]
+                    txn_id_element = ret_element.find('TxnID')
+                    edit_sequence_element = ret_element.find('EditSequence')
                     qb_add_rq_name = ret_element.tag.replace('Ret', 'Add')
                     if txn_id_element is not None:
                         new_qb_trx_id = txn_id_element.text
-                        add_trx_id_to_trx_mapping_table(new_qb_trx_id, request_id, qb_add_rq_name, session)
-                        add_trx_id_to_data_ext_mod_table(new_qb_trx_id, request_id, qb_add_rq_name, session)
+                        edit_sequence = edit_sequence_element.text
+                        add_trx_id_to_trx_mapping_table(new_qb_trx_id, edit_sequence, request_id, qb_add_rq_name, session)
+                        add_trx_id_to_data_ext_mod_table(new_qb_trx_id, edit_sequence, request_id, qb_add_rq_name, session)
 
                     else:
                         pass
@@ -437,6 +441,108 @@ def process_response_xml(response_file_path, session):
     # Close the session
     session.close()
     print(f'errors_requests: {errors_requests}')
+
+
+def reorder_specific_tag_in_document(entire_xml, parent_tag, tag_order_list, tag_to_correct):
+    """
+    Reorder child elements within each occurrence of parent_to_loop_through in the entire XML.
+    For each occurrence of out_of_place_tag within parent_element, move it to the correct position defined by tag_order_list.
+
+    :param entire_xml: The root element of the entire XML document.
+    :param parent_tag: The tag name of the parent elements to process.
+    :param tag_order_list: List of tags in their correct order.
+    :param tag_to_correct: The tag to move to the correct position.
+    """
+    # Find all parent elements in the entire XML
+    found_matching_elements = entire_xml.findall(f'.//{parent_tag}/{tag_to_correct}')
+
+
+    for found_matching_element in found_matching_elements:
+        children_tags_in_new_order = []
+        parent_tag_element = found_matching_element.getparent()
+        children_tags_in_old_order = [child.tag for child in parent_tag_element]
+        began_rearranging = False
+        for tag_to_search_for in tag_order_list:
+            if not began_rearranging:
+                try:
+                    first_matching_tag_index = children_tags_in_old_order.index(tag_to_search_for)
+                    children_tags_in_new_order += children_tags_in_old_order[:first_matching_tag_index + 1]
+                    children_tags_in_old_order = children_tags_in_old_order[first_matching_tag_index + 1:]
+                    began_rearranging = True
+                except:
+                    #tag_in_order_not_found
+                    continue
+            else:
+                if tag_to_search_for in children_tags_in_old_order:
+                    children_tags_in_new_order.append(tag_to_search_for)
+                    children_tags_in_old_order.remove(tag_to_search_for)
+                else:
+                    continue
+        children_tags_in_new_order += children_tags_in_old_order
+        child_elements = parent_tag_element.getchildren()
+        parent_tag_element.clear()
+        for tag_in_new_order in children_tags_in_new_order:
+            for child in child_elements:
+                if child.tag == tag_in_new_order:
+                    parent_tag_element.append(child)
+                else:
+                    pass
+
+
+
+
+
+
+
+
+
+
+
+        # # Extract tag_to_correct elements and their original positions
+        # elements_to_move = []
+        # indices_to_remove = []
+        # for i, child in enumerate(children):
+        #     if child.tag == tag_to_correct:
+        #         elements_to_move.append(child)
+        #         indices_to_remove.append(i)
+        #     else:
+        #         pass
+        #
+        # # Remove tag_to_correct elements from children list
+        # for index in sorted(indices_to_remove, reverse=True):
+        #     del children[index]
+        #
+        # # Iterate over tag_order_list and place tag_to_correct in the correct position
+        # for i, tag in enumerate(tag_order_list):
+        #     if tag == tag_to_correct:
+        #         # If we reached the tag_to_correct, insert it here
+        #         insertion_index = i
+        #         if insertion_index < len(children):
+        #             # Check if next tag in list is still present in the correct order
+        #             next_expected_tag = tag_order_list[i + 1] if i + 1 < len(tag_order_list) else None
+        #
+        #             # Insert elements before the next tag, or append if not found
+        #             if next_expected_tag:
+        #                 try:
+        #                     next_tag_index = next(i for i, child in enumerate(children) if child.tag == next_expected_tag)
+        #                     # Insert elements before the next expected tag
+        #                     children.insert(next_tag_index, elements_to_move[0])
+        #                 except StopIteration:
+        #                     # If the next tag isn't found, append the element to the end
+        #                     children.append(elements_to_move[0])
+        #             else:
+        #                 # If no next expected tag, just append the element to the end
+        #                 children.append(elements_to_move[0])
+        #
+        #         break
+        #
+        # # Remove all existing children from parent_element
+        # parent_element.clear()
+        #
+        # # Append children back to parent_element in the new order
+        # for child in children:
+        #     parent_element.append(child)
+
 
 def reorder_xml_in_entire_document(entire_xml, parent_to_loop_through, out_of_place_tag, tag_before, tag_after):
     """
@@ -579,3 +685,16 @@ def remove_uncle_tag_based_on_xpath(root, search_xpath, uncle_to_remove):
         else:
             pass
     return root
+
+
+def only_keep_child_tags(parent_element, tags_to_keep):
+    """
+    Remove all child tags from the parent element except for the ones specified in tags_to_keep.
+
+    :param parent_element: The XML parent element.
+    :param tags_to_keep: List of tag names to keep as children of the parent element.
+    """
+    # Loop through a copy of the children to avoid modifying the list while iterating
+    for child in list(parent_element):
+        if child.tag not in tags_to_keep:
+            parent_element.remove(child)
