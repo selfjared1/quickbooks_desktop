@@ -24,49 +24,116 @@ class MaxLengthMixin:
                 raise ValueError(f"Value for {field_info.name} field '{key}' exceeds the maximum allowed length of {max_length}")
         super().__setattr__(key, value)
 
-class ToXmlMixin:
 
-    # IS_YES_NO_FIELD_LIST shouldn't be populated until later down in inheritance so MRO shouldn't conflict
+class ToXmlMixin:
     IS_YES_NO_FIELD_LIST = []
 
     def to_xml(self) -> et.Element:
         root = et.Element(self.Meta.name)
-        for field in self.__dataclass_fields__.values():
+
+        # Retrieve the custom field order if available, otherwise use natural order
+        field_order = getattr(self, 'FIELD_ORDER', None)
+
+        # Get all fields from the dataclass
+        fields = self._get_sorted_fields(field_order)
+
+        for field in fields:
             value = getattr(self, field.name)
             if value is not None:
-                if isinstance(value, list):
-                    if len(value):
-                        element = et.SubElement(root, field.metadata.get("name", field.name))
-                        for child in value:
-                            element.append(child)
-                    else:
-                        continue
-                elif isinstance(value, bool):
-                    field_name = field.metadata.get("name", field.name)
-                    element = et.SubElement(root, field_name)
-                    if field_name in self.IS_YES_NO_FIELD_LIST:
-                        element.text = "Yes" if value else "No"
-                    else:
-                        element.text = "true" if value else "false"
-                elif isinstance(value, QBDates) or isinstance(value, QBTime):
-                    element = value.to_xml(field.name)
+                element = self._create_xml_element(root, field, value)
+                if element is not None:
                     root.append(element)
-                elif is_dataclass(value):
-                    element = value.to_xml()
-                    root.append(element)
-                else:
-                    element = et.SubElement(root, field.metadata.get("name", field.name))
-                    element.text = str(value)
+
         return root
+
+    def _get_sorted_fields(self, field_order):
+        """
+        Return the fields sorted by the given field order.
+        If no field order is provided, return them in natural order.
+        """
+        fields = list(self.__dataclass_fields__.values())
+        if field_order:
+            fields.sort(key=lambda f: field_order.index(f.name) if f.name in field_order else len(field_order))
+        return fields
+
+    def _create_xml_element(self, root, field, value):
+        """
+        Create an XML element based on the field and value.
+        """
+        if isinstance(value, list):
+            return self._handle_list_value(root, field, value)
+        elif isinstance(value, bool):
+            return self._handle_bool_value(field, value)
+        elif isinstance(value, QBDates) or isinstance(value, QBTime):
+            return value.to_xml(field.name)
+        elif is_dataclass(value):
+            return value.to_xml()
+        else:
+            return self._handle_simple_value(field, value)
+
+    def _handle_list_value(self, root, field, value_list):
+        """
+        Handle list values, creating XML elements for each item in the list.
+        """
+        if len(value_list) == 0:
+            return None
+
+        parent_element = et.Element(field.metadata.get("name", field.name))
+        for child in value_list:
+            parent_element.append(child)
+        return parent_element
+
+    def _handle_bool_value(self, field, value):
+        """
+        Handle boolean values, converting them to 'Yes/No' or 'true/false' based on IS_YES_NO_FIELD_LIST.
+        """
+        field_name = field.metadata.get("name", field.name)
+        element = et.Element(field_name)
+        if field_name in self.IS_YES_NO_FIELD_LIST:
+            element.text = "Yes" if value else "No"
+        else:
+            element.text = "true" if value else "false"
+        return element
+
+    def _handle_simple_value(self, field, value):
+        """
+        Handle simple values, such as strings and numbers, converting them to text.
+        """
+        element = et.Element(field.metadata.get("name", field.name))
+        element.text = str(value)
+        return element
+
 
 
 class ValidationMixin:
+    validate_on_init: bool = True  # Default is to validate in __post_init__
+
+    def __post_init__(self):
+        if self.validate_on_init:
+            self.validate()
+
+    def validate(self) -> None:
+        """
+        Loop through all attributes in the class, check for 'valid_values' in metadata,
+        and validate the attribute if valid values are present.
+        """
+        for field_name, field_def in self.__dataclass_fields__.items():
+            valid_values = field_def.metadata.get("valid_values")
+            attribute_value = getattr(self, field_name)
+
+            # If valid_values exists, perform validation
+            if valid_values is not None:
+                # If the attribute is a list, validate each value
+                if isinstance(attribute_value, list):
+                    for single_value in attribute_value:
+                        self._validate_str_from_list_of_values(field_name, single_value, valid_values)
+                else:
+                    # Single value validation
+                    self._validate_str_from_list_of_values(field_name, attribute_value, valid_values)
 
     def _validate_str_from_list_of_values(self, attribute_name, qb_str, list_of_valid_values) -> None:
         if qb_str is not None and qb_str not in list_of_valid_values:
             raise ValueError(f"Invalid {attribute_name}: {qb_str}. Must be one of {list_of_valid_values}.")
-        else:
-            pass
 
 
 class FromXmlMixin:

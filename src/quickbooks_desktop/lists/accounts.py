@@ -51,6 +51,8 @@ VALID_SPECIAL_ACCOUNT_TYPE_VALUES = [
     "UncategorizedIncome", "UndepositedFunds"
 ]
 
+VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Financing", "NotApplicable"]
+
 
 @dataclass
 class AccountRef(QBRefMixin):
@@ -95,7 +97,153 @@ class TaxLineInfo(QBMixin):
     )
 
 @dataclass
-class AccountQuery(QBQueryMixin):
+class AccountBase:
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    account_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountType",
+            "type": "Element",
+            "valid_values": VALID_ACCOUNT_TYPE_VALUES,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 7,
+        },
+    )
+    bank_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BankNumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 200,
+        },
+    )
+    open_balance: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "OpenBalance",
+            "type": "Element",
+        },
+    )
+    open_balance_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "OpenBalanceDate",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AccountAdd(AccountBase, QBAddMixin):
+
+    FIELD_ORDER = [
+        "name", "is_active", "parent_ref", "account_type", "account_number",
+        "bank_number", "desc", "open_balance", "open_balance_date",
+        "tax_line_id", "currency_ref", "include_ret_element"
+    ]
+
+    class Meta:
+        name = "AccountAdd"
+
+    tax_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TaxLineID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AccountMod(AccountBase, QBModMixin):
+
+    FIELD_ORDER = [
+        "list_id", "edit_sequence", "name", "is_active", "parent_ref",
+        "account_type", "account_number", "bank_number", "desc",
+        "open_balance", "open_balance_date", "tax_line_id",
+        "currency_ref", "include_ret_element"
+    ]
+
+    class Meta:
+        name = "AccountMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AccountQuery(AccountBase, QBQueryMixin):
+
+    FIELD_ORDER = [
+        "list_id", "full_name", "max_returned", "active_status",
+        "from_modified_date", "to_modified_date", "name_filter",
+        "name_range_filter", "account_type", "currency_filter",
+        "include_ret_element", "owner_id", "request_id"
+    ]
 
     class Meta:
         name = "AccountQuery"
@@ -156,20 +304,6 @@ class AccountQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    account_type: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "AccountType",
-            "type": "Element",
-        },
-    )
-    currency_filter: Optional[CurrencyFilter] = field(
-        default=None,
-        metadata={
-            "name": "CurrencyFilter",
-            "type": "Element",
-        },
-    )
     include_ret_element: List[str] = field(
         default_factory=list,
         metadata={
@@ -192,254 +326,9 @@ class AccountQuery(QBQueryMixin):
             "type": "Attribute",
         },
     )
-    #todo: Add Field
-    # meta_data: AccountQueryRqTypeMetaData = field(
-    #     default=AccountQueryRqTypeMetaData.NO_META_DATA,
-    #     metadata={
-    #         "name": "metaData",
-    #         "type": "Attribute",
-    #     },
-    # )
-
-    VALID_ACCOUNT_TYPE_VALUES = VALID_ACCOUNT_TYPE_VALUES
-
-    def __post_init__(self):
-        for single_account_type in self.account_type:
-            self._validate_str_from_list_of_values('account_type', single_account_type, self.VALID_ACCOUNT_TYPE_VALUES)
-
 
 @dataclass
-class AccountAdd(QBAddMixin):
-
-    class Meta:
-        name = "AccountAdd"
-
-    name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Name",
-            "type": "Element",
-            "required": True,
-            "max_length": 31,
-        },
-    )
-    is_active: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsActive",
-            "type": "Element",
-        },
-    )
-    parent_ref: Optional[ParentRef] = field(
-        default=None,
-        metadata={
-            "name": "ParentRef",
-            "type": "Element",
-        },
-    )
-    account_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountType",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    detail_account_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "DetailAccountType",
-            "type": "Element",
-        },
-    )
-    account_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountNumber",
-            "type": "Element",
-            "max_length": 7,
-        },
-    )
-    bank_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BankNumber",
-            "type": "Element",
-            "max_length": 25,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-            "max_length": 200,
-        },
-    )
-    open_balance: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "OpenBalance",
-            "type": "Element",
-        },
-    )
-    open_balance_date: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "OpenBalanceDate",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
-    tax_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TaxLineID",
-            "type": "Element",
-        },
-    )
-    currency_ref: Optional[CurrencyRef] = field(
-        default=None,
-        metadata={
-            "name": "CurrencyRef",
-            "type": "Element",
-        },
-    )
-
-    VALID_ACCOUNT_TYPE_VALUES = VALID_ACCOUNT_TYPE_VALUES
-    VALID_DETAIL_ACCOUNT_TYPE_VALUES = VALID_DETAIL_ACCOUNT_TYPE_VALUES
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('wage_type', self.account_type, self.VALID_ACCOUNT_TYPE_VALUES)
-        self._validate_str_from_list_of_values('detail_account_type', self.detail_account_type, self.VALID_DETAIL_ACCOUNT_TYPE_VALUES)
-
-
-@dataclass
-class AccountMod(QBModMixin):
-
-    class Meta:
-        name = "AccountMod"
-
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    edit_sequence: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "EditSequence",
-            "type": "Element",
-            "required": True,
-            "max_length": 16,
-        },
-    )
-    name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Name",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    is_active: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsActive",
-            "type": "Element",
-        },
-    )
-    parent_ref: Optional[ParentRef] = field(
-        default=None,
-        metadata={
-            "name": "ParentRef",
-            "type": "Element",
-        },
-    )
-    account_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountType",
-            "type": "Element",
-        },
-    )
-    account_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountNumber",
-            "type": "Element",
-            "max_length": 7,
-        },
-    )
-    bank_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BankNumber",
-            "type": "Element",
-            "max_length": 25,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-            "max_length": 200,
-        },
-    )
-    open_balance: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "OpenBalance",
-            "type": "Element",
-        },
-    )
-    open_balance_date: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "OpenBalanceDate",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
-    tax_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TaxLineID",
-            "type": "Element",
-        },
-    )
-    currency_ref: Optional[CurrencyRef] = field(
-        default=None,
-        metadata={
-            "name": "CurrencyRef",
-            "type": "Element",
-        },
-    )
-
-    VALID_ACCOUNT_TYPE_VALUES = VALID_ACCOUNT_TYPE_VALUES
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('wage_type', self.account_type, self.VALID_ACCOUNT_TYPE_VALUES)
-
-
-@dataclass
-class Account(QBMixinWithQuery, ListSaveMixin):
+class Account(AccountBase, QBMixinWithQuery, ListSaveMixin):
 
     class Meta:
         name = "Account"
@@ -477,34 +366,12 @@ class Account(QBMixinWithQuery, ListSaveMixin):
             "max_length": 16,
         },
     )
-    name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Name",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
     full_name: Optional[str] = field(
         default=None,
         metadata={
             "name": "FullName",
             "type": "Element",
             "max_length": 159,
-        },
-    )
-    is_active: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsActive",
-            "type": "Element",
-        },
-    )
-    parent_ref: Optional[ParentRef] = field(
-        default=None,
-        metadata={
-            "name": "ParentRef",
-            "type": "Element",
         },
     )
     sublevel: Optional[int] = field(
@@ -514,18 +381,12 @@ class Account(QBMixinWithQuery, ListSaveMixin):
             "type": "Element",
         },
     )
-    account_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountType",
-            "type": "Element",
-        },
-    )
     detail_account_type: Optional[str] = field(
         default=None,
         metadata={
             "name": "DetailAccountType",
             "type": "Element",
+            "valid_values": VALID_DETAIL_ACCOUNT_TYPE_VALUES,
         },
     )
     special_account_type: Optional[str] = field(
@@ -533,6 +394,7 @@ class Account(QBMixinWithQuery, ListSaveMixin):
         metadata={
             "name": "SpecialAccountType",
             "type": "Element",
+            "valid_values": VALID_SPECIAL_ACCOUNT_TYPE_VALUES,
         },
     )
     is_tax_account: Optional[bool] = field(
@@ -542,35 +404,11 @@ class Account(QBMixinWithQuery, ListSaveMixin):
             "type": "Element",
         },
     )
-    account_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountNumber",
-            "type": "Element",
-            "max_length": 7,
-        },
-    )
-    bank_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BankNumber",
-            "type": "Element",
-            "max_length": 25,
-        },
-    )
     last_check_number: Optional[str] = field(
         default=None,
         metadata={
             "name": "LastCheckNumber",
             "type": "Element",
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-            "max_length": 200,
         },
     )
     balance: Optional[Decimal] = field(
@@ -606,9 +444,9 @@ class Account(QBMixinWithQuery, ListSaveMixin):
         metadata={
             "name": "CashFlowClassification",
             "type": "Element",
+            "valid_values": VALID_CASH_FLOW_CLASSIFICATION_VALUES,
         },
     )
-
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -616,6 +454,7 @@ class Account(QBMixinWithQuery, ListSaveMixin):
             "type": "Element",
         },
     )
+
     # data_ext_ret: List[DataExtRet] = field(
     #     default_factory=list,
     #     metadata={
@@ -624,16 +463,6 @@ class Account(QBMixinWithQuery, ListSaveMixin):
     #     },
     # )
 
-    VALID_ACCOUNT_TYPE_VALUES = VALID_ACCOUNT_TYPE_VALUES
-    VALID_DETAIL_ACCOUNT_TYPE_VALUES = VALID_DETAIL_ACCOUNT_TYPE_VALUES
-    VALID_SPECIAL_ACCOUNT_TYPE_VALUES = VALID_SPECIAL_ACCOUNT_TYPE_VALUES
-    VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Financing", "NotApplicable"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('wage_type', self.account_type, self.VALID_ACCOUNT_TYPE_VALUES)
-        self._validate_str_from_list_of_values('detail_account_type', self.detail_account_type, self.VALID_DETAIL_ACCOUNT_TYPE_VALUES)
-        self._validate_str_from_list_of_values('special_account_type', self.special_account_type, self.VALID_SPECIAL_ACCOUNT_TYPE_VALUES)
-        self._validate_str_from_list_of_values('cash_flow_classification', self.cash_flow_classification, self.VALID_CASH_FLOW_CLASSIFICATION_VALUES)
 
 class Accounts(PluralMixin):
 
