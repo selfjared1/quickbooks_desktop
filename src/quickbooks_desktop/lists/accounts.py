@@ -609,14 +609,13 @@ class Account(QBMixinWithQuery, ListSaveMixin):
         },
     )
 
-    #todo: Add Field
-    # currency_ref: Optional[CurrencyRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "CurrencyRef",
-    #         "type": "Element",
-    #     },
-    # )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
     # data_ext_ret: List[DataExtRet] = field(
     #     default_factory=list,
     #     metadata={

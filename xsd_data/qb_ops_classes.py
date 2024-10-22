@@ -16167,13 +16167,16 @@ class DataExtMod:
 
 @dataclass
 class DataExtRet:
-    owner_id: Optional[OwnerId] = field(
+    owner_id: Optional[str] = field(
         default=None,
         metadata={
             "name": "OwnerID",
             "type": "Element",
+            "required": True,
+            "pattern": r"0|(\{[0-9a-fA-F]{8}(\-([0-9a-fA-F]{4})){3}\-[0-9a-fA-F]{12}\})",
         },
     )
+
     data_ext_name: Optional[str] = field(
         default=None,
         metadata={

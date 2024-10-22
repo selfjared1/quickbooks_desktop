@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # pass_01_add_to_qb(qb)
 
     print('begin pass 2')
-    # pass_02_transform_qbxml(session)
+    pass_02_transform_qbxml(session)
     # pass_02_add_to_qb(qb)
     # pass_02_process_response_xml()
     print('finished pass 2')
