@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Boolean, Integer, DECIMAL, DateTime, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
-from src.quickbooks_desktop.qb_contact_common_fields import AdditionalContactRef, Contacts
+from src.quickbooks_desktop.common_and_special_fields.qb_contact_common_fields import AdditionalContactRef, Contacts
 from src.quickbooks_desktop.db_models.base import Base
 from src.quickbooks_desktop.db_models.db_models_mixins import PluralMixin
 

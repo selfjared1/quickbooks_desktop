@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List, Type
-from src.quickbooks_desktop.qb_mixin import PluralMixin
-from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin, ListSaveMixin, PluralListSaveMixin
-from src.quickbooks_desktop.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, CurrencyFilter
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin, ListSaveMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
+from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, CurrencyFilter
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef
 from src.quickbooks_desktop.lists.currency import CurrencyRef
 
@@ -59,6 +59,12 @@ class AccountRef(QBRefMixin):
 
     class Meta:
         name = "AccountRef"
+
+@dataclass
+class AraccountRef(QBRefMixin):
+
+    class Meta:
+        name = "AraccountRef"
 
 
 @dataclass

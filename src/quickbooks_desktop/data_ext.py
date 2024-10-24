@@ -1,5 +1,6 @@
 
-from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin, ListSaveMixin, PluralListSaveMixin
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin, ListSaveMixin
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralListSaveMixin
 
 
 @dataclass

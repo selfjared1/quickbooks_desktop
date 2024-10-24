@@ -1,4 +1,4 @@
-from src.quickbooks_desktop.qb_mixin import QBRefMixin
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin
 from dataclasses import dataclass
 
 @dataclass

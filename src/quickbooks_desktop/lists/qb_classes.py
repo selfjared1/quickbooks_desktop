@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Optional, List
-from src.quickbooks_desktop.qb_mixin import PluralMixin
-from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, QBQueryMixin
-from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter
 from src.quickbooks_desktop.db_models.lists.qb_classes import DBofQBClass as DBClass
 
 

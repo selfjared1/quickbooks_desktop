@@ -1,20 +1,15 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Optional, List
 import re
 
-from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
-from src.quickbooks_desktop.lists.terms import TermsRef
 from src.quickbooks_desktop.lists.customers import Customer as DBCustomer
-from src.quickbooks_desktop.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
-    ShipAddressBlock, ShipToAddress, \
-    Contacts
-from src.quickbooks_desktop.qb_mixin import QBMixin, QBRefMixin, QBMixinWithQuery, PluralMixin, QBQueryMixin
-from src.quickbooks_desktop.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
-    CurrencyFilter, ClassFilter
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
+from src.quickbooks_desktop.mixins.qb_mixins import QBMixin, QBRefMixin, QBMixinWithQuery, QBQueryMixin
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
+from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
+    ClassFilter
+from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates, QBPriceType
 
 @dataclass
 class DefaultUnit(QBMixin):

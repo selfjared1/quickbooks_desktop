@@ -6,14 +6,15 @@ from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
 from src.quickbooks_desktop.lists.terms import TermsRef
 from src.quickbooks_desktop.db_models.lists.customers import Customer as DBCustomer
-from src.quickbooks_desktop.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
+from src.quickbooks_desktop.common_and_special_fields.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
     ShipAddressBlock, ShipToAddress, \
     Contacts
-from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, PluralMixin, QBQueryMixin
-from src.quickbooks_desktop.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
+from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
     CurrencyFilter, ClassFilter
-from src.quickbooks_desktop.qb_special_fields import QBDates
+from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
 
 
 @dataclass

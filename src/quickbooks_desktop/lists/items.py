@@ -1,16 +1,15 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Optional, List
 
 from src.quickbooks_desktop.lists.accounts import AccountRef, IncomeAccountRef, ExpenseAccountRef
 from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 from src.quickbooks_desktop.lists.vendors import PrefVendorRef
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef, PurchaseTaxCodeRef
-from src.quickbooks_desktop.qb_mixin import QBRefMixin, QBMixinWithQuery, PluralMixin, QBQueryMixin, QBMixin
-from src.quickbooks_desktop.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
-    CurrencyFilter, ClassFilter
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBMixin
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
+from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, ClassFilter
+from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates, QBPriceType
 
 
 
