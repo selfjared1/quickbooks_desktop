@@ -33,6 +33,13 @@ class PluralMixin:
         self._items.append(item)
 
     @classmethod
+    def from_list(cls, items):
+        instance = cls()
+        for item in items:
+            instance.add_item(item)
+        return instance
+
+    @classmethod
     def get_all_from_qb(cls, qb, include_custom_fields=False, include_line_items=False, include_linked_txns=False):
         QueryRq = et.Element(f'{cls.Meta.name}QueryRq')
         if include_line_items:

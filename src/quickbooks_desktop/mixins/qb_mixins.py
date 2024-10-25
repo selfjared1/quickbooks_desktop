@@ -36,7 +36,10 @@ class ToXmlMixin:
             value = getattr(self, field.name)
             if value is not None and not isinstance(value, type):
                 element = self._create_xml_element(root, field, value)
-                if element is not None:
+                if element is not None and isinstance(element, list):
+                    for el in element:
+                        root.append(el)
+                elif element is not None:
                     root.append(element)
                 else:
                     pass
@@ -61,6 +64,7 @@ class ToXmlMixin:
         """
         if isinstance(value, list):
             element = self._handle_list_value(root, field, value)
+            #returned element needs to be the list of line_add's
             return element
         elif isinstance(value, bool):
             return self._handle_bool_value(field, value)
@@ -71,21 +75,21 @@ class ToXmlMixin:
         else:
             return self._handle_simple_value(field, value)
 
-    def _handle_list_value(self, root, field, value_list):
+    def _handle_list_value(self, root, field, list_of_objs_or_elements):
         """
         Handle list values, creating XML elements for each item in the list.
         """
-        if len(value_list) == 0:
+        if len(list_of_objs_or_elements) == 0:
             return None
-
-        parent_element = et.Element(field.metadata.get("name", field.name))
-        for child in value_list:
-            if isinstance(child, et._Element):
-                parent_element.append(child)
+        list_of_elements = []
+        for obj in list_of_objs_or_elements:
+            if isinstance(obj, et._Element):
+                #the object is already an lxml element and can be added directly to the parent.
+                list_of_elements.append(obj)
             else:
-                element = child.to_xml()
-                return element
-        return parent_element
+                element = obj.to_xml()
+                list_of_elements.append(element)
+        return list_of_elements
 
     def _handle_bool_value(self, field, value):
         """
@@ -165,14 +169,15 @@ class FromXmlMixin:
             return field_type
 
     @staticmethod
-    def __parse_list_field_type(init_args, field, field_type, xml_element):
+    def __parse_list_field_type(init_args, field, field_type, xml_elements):
         # if the field type is a list
-        class_to_use = field_type.__args__[0]
-        instance = class_to_use.from_xml(xml_element)
-        if field.name in init_args.keys():
-            init_args[field.name].append(instance)
-        else:
-            init_args[field.name] = [instance]
+        for xml_element in xml_elements:
+            class_to_use = field_type.__args__[0]
+            instance = class_to_use.from_xml(xml_element)
+            if field.name in init_args.keys():
+                init_args[field.name].append(instance)
+            else:
+                init_args[field.name] = [instance]
         return init_args
 
 
@@ -277,6 +282,10 @@ class CopyFromParentMixin:
             else:
                 pass
 
+        if getattr(instance, 'validate', False):
+            instance.validate()
+        else:
+            pass
         return instance
 
 

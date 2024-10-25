@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional, List, Type
+from typing import Optional, List, Type, Dict
+from collections import defaultdict
+
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     LinkedTxn, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, SetCredit,
@@ -806,16 +808,12 @@ class InvoiceAdd(QBAddMixin):
     #     },
     # )
 
-    def __post_init__(self):
-        if getattr(self, 'is_paid', False):
-            self.is_to_be_emailed = False
-            self.is_pending = False
-            self.is_to_be_printed = False
-        else:
-            pass
+    def validate(self):
+        super().validate()
+        self.is_to_be_emailed = False
+        self.is_pending = False
+        self.is_to_be_printed = False
 
-        if getattr(self, 'is_pending', False):
-            self.is_to_be_emailed = False
 
 
 
@@ -1106,7 +1104,7 @@ class Invoice(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    ponumber: Optional[str] = field(
+    po_number: Optional[str] = field(
         default=None,
         metadata={
             "name": "PONumber",
@@ -1334,3 +1332,14 @@ class Invoices(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "Invoice"
         plural_of = Invoice
+
+    def split_invoices_by_tax(self) -> Dict[str, List[Invoice]]:
+        result = defaultdict(list)
+
+        # Group invoices by item_sales_tax_ref and sales_tax_percentage
+        for invoice in self:  # Assuming self.invoices holds the list of Invoice objects
+            key = f"{invoice.item_sales_tax_ref}-{invoice.sales_tax_percentage}"
+            result[key].append(invoice)
+
+        return dict(result)
+
