@@ -1,5 +1,5 @@
 
-from .accounts import Account, Accounts, AraccountRef, OverrideItemAccountRef, AccountRef
+from .accounts import Account, Accounts, AraccountRef, OverrideItemAccountRef, AccountRef, DepositToAccountRef
 from .currency import Currency, CurrencyRef
 from .customer_msg import CustomerMsgRef
 from .customer_sales_tax_code import CustomerSalesTaxCodeRef
@@ -7,6 +7,7 @@ from .customers import Customer, Customers, CustomerRef
 from .employees import Employee, Employees, EntityRef
 from .inventory_site import InventorySiteRef, InventorySiteLocationRef
 from .items import UnitOfMeasureSetRef, ItemServiceRef, ItemSalesTaxRef, ItemService, ItemServices, ItemRef, ItemGroupRef
+from .payment_method import PaymentMethodRef
 from .price_level import PriceLevelRef
 from .qb_classes import QBClass, QBClasses, QBClassRef
 from .sales_reps import SalesRep, SalesRepRef

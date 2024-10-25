@@ -72,6 +72,12 @@ class AraccountRef(QBRefMixin):
     class Meta:
         name = "AraccountRef"
 
+@dataclass
+class DepositToAccountRef(QBRefMixin):
+
+    class Meta:
+        name = "DepositToAccountRef"
+
 
 @dataclass
 class ExpenseAccountRef(QBRefMixin):

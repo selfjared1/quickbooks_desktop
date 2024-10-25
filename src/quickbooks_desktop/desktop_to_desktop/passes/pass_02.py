@@ -155,56 +155,56 @@ def pass_02_mod_line_groups():
 
 
 
-
-    root = remove_empty_query_responses(root)
-    root = remove_unwanted_tags(root, general_tags_to_remove)
-    delete_uncles_list = {
-        'Total Avatax': 'Rate'
-    }
-
-    for item_name, uncle_to_remove in delete_uncles_list.items():
-        search_xpath = f".//*[substring(local-name(), string-length(local-name()) - string-length('LineAdd') + 1) = 'LineAdd']/ItemRef/FullName[text()='{item_name}']"
-        root = remove_uncle_tag_based_on_xpath(root, search_xpath, uncle_to_remove)
-    # Locate QBXMLMsgsRs and convert it to QBXMLMsgsRq
-    list_of_subtotal_items = ['Reimb Subt', 'Amount Subtotal']
-    remove_amount_from_subtotals(root, list_of_subtotal_items)
-    # line_elements = root.xpath(".//*[substring(name(), string-length(name()) - 6) = 'LineRet']")
-    # for line_element in line_elements:
-    #     print(ET.tostring(line_element))
-
-    qbxml_msgs = root.find("QBXMLMsgsRs")
-    qbxml_msgs.tag = "QBXMLMsgsRq"
-    qbxml_msgs.set("onError", "stopOnError")
-
-    qbxml_msgs = convert_ret_to_add_or_mod(qbxml_msgs, session, 'Add')
-    print('finished convert_ret_to_add')
-    add_rq_to_db(qbxml_msgs, session)
-    # Optionally remove unwanted tags
-    last_tags_to_remove = ['ListID', 'DataExtRet']
-    qbxml_msgs = remove_unwanted_tags(qbxml_msgs, last_tags_to_remove)
-
-    so_tag_order_list = ['ItemSalesTaxRef', 'Memo', 'CustomerMsgRef', 'IsToBeEmailed', 'CustomerSalesTaxCodeRef',
-                         'Other',
-                         'ExchangeRate', 'ExternalGUID']
-    reorder_specific_tag_in_document(qbxml_msgs, 'EstimateAdd', so_tag_order_list, 'ExchangeRate')
-
-    po_tag_order_list = ['DueDate', 'ExpectedDate', 'ShipMethodRef', 'FOB', 'Memo', 'VendorMsg', 'IsToBePrinted',
-                         'IsToBeEmailed', 'Other1', 'Other2', 'ExchangeRate', 'ExternalGUID']
-    reorder_specific_tag_in_document(qbxml_msgs, 'PurchaseOrderAdd', po_tag_order_list, 'ExchangeRate')
-
-    tags_to_truncate = {'Addr1': 39,
-                        'Addr2': 39,
-                        }
-    for tag, length in tags_to_truncate.items():
-        qbxml_msgs = truncate_tag_text(qbxml_msgs, tag, length)
-
-    xml_string = ET.tostring(qbxml_msgs, pretty_print=True, xml_declaration=False, encoding="UTF-8").decode()
-    xml_string = clean_text(xml_string)
-    full_xml = f"""<?xml version="1.0" encoding="utf-8"?><?qbxml version="13.0"?><QBXML>{xml_string}</QBXML>"""
-    # Write the string to a file
-    folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "add_rq_xml")
-    os.makedirs(folder_path, exist_ok=True)
-    add_rq_file_path = os.path.join(folder_path, f'add_rq_02.xml')
-    with open(add_rq_file_path, 'w', encoding='utf-8') as add_rq_file:
-        add_rq_file.write(full_xml)
-    print('finished tranform_qbxml')
+    #
+    # # root = remove_empty_query_responses(root)
+    # # root = remove_unwanted_tags(root, general_tags_to_remove)
+    # delete_uncles_list = {
+    #     'Total Avatax': 'Rate'
+    # }
+    #
+    # for item_name, uncle_to_remove in delete_uncles_list.items():
+    #     search_xpath = f".//*[substring(local-name(), string-length(local-name()) - string-length('LineAdd') + 1) = 'LineAdd']/ItemRef/FullName[text()='{item_name}']"
+    #     root = remove_uncle_tag_based_on_xpath(root, search_xpath, uncle_to_remove)
+    # # Locate QBXMLMsgsRs and convert it to QBXMLMsgsRq
+    # list_of_subtotal_items = ['Reimb Subt', 'Amount Subtotal']
+    # remove_amount_from_subtotals(root, list_of_subtotal_items)
+    # # line_elements = root.xpath(".//*[substring(name(), string-length(name()) - 6) = 'LineRet']")
+    # # for line_element in line_elements:
+    # #     print(ET.tostring(line_element))
+    #
+    # qbxml_msgs = root.find("QBXMLMsgsRs")
+    # qbxml_msgs.tag = "QBXMLMsgsRq"
+    # qbxml_msgs.set("onError", "stopOnError")
+    #
+    # qbxml_msgs = convert_ret_to_add_or_mod(qbxml_msgs, session, 'Add')
+    # print('finished convert_ret_to_add')
+    # add_rq_to_db(qbxml_msgs, session)
+    # # Optionally remove unwanted tags
+    # last_tags_to_remove = ['ListID', 'DataExtRet']
+    # qbxml_msgs = remove_unwanted_tags(qbxml_msgs, last_tags_to_remove)
+    #
+    # so_tag_order_list = ['ItemSalesTaxRef', 'Memo', 'CustomerMsgRef', 'IsToBeEmailed', 'CustomerSalesTaxCodeRef',
+    #                      'Other',
+    #                      'ExchangeRate', 'ExternalGUID']
+    # reorder_specific_tag_in_document(qbxml_msgs, 'EstimateAdd', so_tag_order_list, 'ExchangeRate')
+    #
+    # po_tag_order_list = ['DueDate', 'ExpectedDate', 'ShipMethodRef', 'FOB', 'Memo', 'VendorMsg', 'IsToBePrinted',
+    #                      'IsToBeEmailed', 'Other1', 'Other2', 'ExchangeRate', 'ExternalGUID']
+    # reorder_specific_tag_in_document(qbxml_msgs, 'PurchaseOrderAdd', po_tag_order_list, 'ExchangeRate')
+    #
+    # tags_to_truncate = {'Addr1': 39,
+    #                     'Addr2': 39,
+    #                     }
+    # for tag, length in tags_to_truncate.items():
+    #     qbxml_msgs = truncate_tag_text(qbxml_msgs, tag, length)
+    #
+    # xml_string = ET.tostring(qbxml_msgs, pretty_print=True, xml_declaration=False, encoding="UTF-8").decode()
+    # xml_string = clean_text(xml_string)
+    # full_xml = f"""<?xml version="1.0" encoding="utf-8"?><?qbxml version="13.0"?><QBXML>{xml_string}</QBXML>"""
+    # # Write the string to a file
+    # folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "add_rq_xml")
+    # os.makedirs(folder_path, exist_ok=True)
+    # add_rq_file_path = os.path.join(folder_path, f'add_rq_02.xml')
+    # with open(add_rq_file_path, 'w', encoding='utf-8') as add_rq_file:
+    #     add_rq_file.write(full_xml)
+    # print('finished tranform_qbxml')
