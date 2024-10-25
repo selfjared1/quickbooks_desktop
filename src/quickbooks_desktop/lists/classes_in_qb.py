@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional, List, Type
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.mixins.qb_mixins import (
     QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBAddMixin, QBModMixin
@@ -264,7 +264,7 @@ class ClassInQB(QBMixinWithQuery):
     )
 
 
-class ClassesInQB(PluralMixin):
+class ClassesInQB(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "Class"
         plural_of = ClassInQB

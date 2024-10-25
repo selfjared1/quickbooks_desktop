@@ -1,8 +1,8 @@
 
 from .accounts import Account, Accounts, AraccountRef, OverrideItemAccountRef, AccountRef, DepositToAccountRef
 from .currency import Currency, CurrencyRef
-from .customer_msg import CustomerMsgRef
-from .customer_sales_tax_code import CustomerSalesTaxCodeRef
+from .customer_msgs import CustomerMsgRef
+from .customer_sales_tax_codes import CustomerSalesTaxCodeRef
 from .customers import Customer, Customers, CustomerRef
 from .employees import Employee, Employees, EntityRef
 from .inventory_site import InventorySiteRef, InventorySiteLocationRef
