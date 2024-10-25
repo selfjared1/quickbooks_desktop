@@ -1,20 +1,23 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional, List
-
-from src.quickbooks_desktop.lists.classes_in_qb import ClassInQBRef
-from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
-from src.quickbooks_desktop.lists.terms import TermsRef
-# from src.quickbooks_desktop.db_models.lists.customers import Customer as DBCustomer
-from src.quickbooks_desktop.common.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
-    ShipAddressBlock, ShipToAddress, \
-    Contacts
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
-from src.quickbooks_desktop.common.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
-    CurrencyFilter, ClassFilter
+from typing import Optional, List, Type
 from src.quickbooks_desktop.qb_special_fields import QBDates
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.data_ext import DataExt
+from src.quickbooks_desktop.mixins.qb_mixins import (
+    QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBAddMixin, QBModMixin, QBMixin
+)
+from src.quickbooks_desktop.lists import (
+    ClassInQBRef, SalesRepRef, TermsRef, SalesTaxCodeRef, ItemSalesTaxRef, PriceLevelRef, CurrencyRef,
+)
+
+from src.quickbooks_desktop.common import (
+    ParentRef, NameFilter, NameRangeFilter, TotalBalanceFilter, CurrencyFilter, Contacts,
+    ClassFilter, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, ShipToAddress,
+    AdditionalContactRef, PreferredPaymentMethodRef, CreditCardInfo, JobTypeRef, AdditionalNotes,
+    ContactsMod, AdditionalNotesMod, AdditionalNotesRet
+)
+
 
 
 @dataclass
@@ -163,19 +166,30 @@ class CustomerQuery(QBQueryMixin):
     # )
 
 @dataclass
-class CustomerBase:
-    list_id: Optional[str] = field(
+class CustomerAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "ClassRef", "ParentRef", "CompanyName", "Salutation",
+        "FirstName", "MiddleName", "LastName", "JobTitle", "BillAddress",
+        "ShipAddress", "ShipToAddress", "Phone", "AltPhone", "Fax", "Email", "Cc",
+        "Contact", "AltContact", "AdditionalContactRef", "Contacts",
+        "CustomerTypeRef", "TermsRef", "SalesRepRef", "OpenBalance",
+        "OpenBalanceDate", "SalesTaxCodeRef", "ItemSalesTaxRef", "ResaleNumber",
+        "AccountNumber", "CreditLimit", "PreferredPaymentMethodRef",
+        "CreditCardInfo", "JobStatus", "JobStartDate", "JobProjectedEndDate",
+        "JobEndDate", "JobDesc", "JobTypeRef", "Notes", "AdditionalNotes",
+        "PreferredDeliveryMethod", "PriceLevelRef", "ExternalGUID", "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "CustomerAdd"
+
+    name: Optional[str] = field(
         default=None,
         metadata={
-            "name": "ListID",
+            "name": "Name",
             "type": "Element",
-        },
-    )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
+            "required": True,
+            "max_length": 41,
         },
     )
     is_active: Optional[bool] = field(
@@ -199,10 +213,430 @@ class CustomerBase:
             "type": "Element",
         },
     )
-    sublevel: Optional[int] = field(
+    company_name: Optional[str] = field(
         default=None,
         metadata={
-            "name": "Sublevel",
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    suffix: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Suffix",
+            "type": "Element",
+        },
+    )
+    job_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobTitle",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_to_address: List[ShipToAddress] = field(
+        default_factory=list,
+        metadata={
+            "name": "ShipToAddress",
+            "type": "Element",
+            "max_occurs": 50,
+        },
+    )
+    print_as: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PrintAs",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    mobile: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Mobile",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    pager: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Pager",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    cc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Cc",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 8,
+        },
+    )
+    contacts: List[Contacts] = field(
+        default_factory=list,
+        metadata={
+            "name": "Contacts",
+            "type": "Element",
+        },
+    )
+    customer_type_ref: Optional[CustomerTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerTypeRef",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    open_balance: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "OpenBalance",
+            "type": "Element",
+        },
+    )
+    open_balance_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "OpenBalanceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_country: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCountry",
+            "type": "Element",
+            "valid_values": ["Australia", "Canada", "UK", "US"]
+        },
+    )
+    resale_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ResaleNumber",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    credit_limit: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditLimit",
+            "type": "Element",
+        },
+    )
+    preferred_payment_method_ref: Optional[PreferredPaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PreferredPaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    credit_card_info: Optional[CreditCardInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardInfo",
+            "type": "Element",
+        },
+    )
+    job_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobStatus",
+            "type": "Element",
+            "valid_values": ["Awarded", "Closed", "InProgress", "None", "NotAwarded", "Pending"]
+        },
+    )
+    job_start_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "JobStartDate",
+            "type": "Element",
+        },
+    )
+    job_projected_end_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "JobProjectedEndDate",
+            "type": "Element",
+        },
+    )
+    job_end_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "JobEndDate",
+            "type": "Element",
+        },
+    )
+    job_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobDesc",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    job_type_ref: Optional[JobTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "JobTypeRef",
+            "type": "Element",
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    additional_notes: List[AdditionalNotes] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalNotes",
+            "type": "Element",
+        },
+    )
+    preferred_delivery_method: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PreferredDeliveryMethod",
+            "type": "Element",
+            "valid_values": ["None", "Email", "Fax"]
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    tax_registration_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TaxRegistrationNumber",
+            "type": "Element",
+            "max_length": 30,
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class CustomerMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive", "ClassRef", "ParentRef",
+        "CompanyName", "Salutation", "FirstName", "MiddleName", "LastName",
+        "JobTitle", "BillAddress", "ShipAddress", "ShipToAddress", "Phone",
+        "AltPhone", "Fax", "Email", "Cc", "Contact", "AltContact",
+        "AdditionalContactRef", "ContactsMod", "CustomerTypeRef", "TermsRef",
+        "SalesRepRef", "SalesTaxCodeRef", "ItemSalesTaxRef", "ResaleNumber",
+        "AccountNumber", "CreditLimit", "PreferredPaymentMethodRef",
+        "CreditCardInfo", "JobStatus", "JobStartDate", "JobProjectedEndDate",
+        "JobEndDate", "JobDesc", "JobTypeRef", "Notes", "AdditionalNotesMod",
+        "PreferredDeliveryMethod", "PriceLevelRef", "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "CustomerMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
             "type": "Element",
         },
     )
@@ -214,12 +648,329 @@ class CustomerBase:
             "max_length": 41,
         },
     )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    suffix: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Suffix",
+            "type": "Element",
+        },
+    )
     job_title: Optional[str] = field(
         default=None,
         metadata={
             "name": "JobTitle",
             "type": "Element",
             "max_length": 41,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_to_address: List[ShipToAddress] = field(
+        default_factory=list,
+        metadata={
+            "name": "ShipToAddress",
+            "type": "Element",
+            "max_occurs": 50,
+        },
+    )
+    print_as: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PrintAs",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    mobile: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Mobile",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    pager: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Pager",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    cc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Cc",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 8,
+        },
+    )
+    contacts_mod: List[ContactsMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ContactsMod",
+            "type": "Element",
+        },
+    )
+    customer_type_ref: Optional[CustomerTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerTypeRef",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    resale_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ResaleNumber",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    credit_limit: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditLimit",
+            "type": "Element",
+        },
+    )
+    preferred_payment_method_ref: Optional[PreferredPaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PreferredPaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    credit_card_info: Optional[CreditCardInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardInfo",
+            "type": "Element",
+        },
+    )
+    job_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobStatus",
+            "type": "Element",
+            "valid_values": ["Awarded", "Closed", "InProgress", "None", "NotAwarded", "Pending"]
+        },
+    )
+    job_start_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "JobStartDate",
+            "type": "Element",
+        },
+    )
+    job_projected_end_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "JobProjectedEndDate",
+            "type": "Element",
+        },
+    )
+    job_end_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "JobEndDate",
+            "type": "Element",
+        },
+    )
+    job_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobDesc",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    job_type_ref: Optional[JobTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "JobTypeRef",
+            "type": "Element",
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    additional_notes_mod: List[AdditionalNotesMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalNotesMod",
+            "type": "Element",
+        },
+    )
+    preferred_delivery_method: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PreferredDeliveryMethod",
+            "type": "Element",
+            "valid_values": ["None", "Email", "Fax"]
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    tax_registration_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TaxRegistrationNumber",
+            "type": "Element",
+            "max_length": 30,
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
         },
     )
 
@@ -476,14 +1227,14 @@ class Customer(QBMixinWithQuery):
             "max_length": 41
         },
     )
-    # additional_contact_ref: List[AdditionalContactRef] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "AdditionalContactRef",
-    #         "type": "Element",
-    #         "max_occurs": 8
-    #     },
-    # )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 8
+        },
+    )
     contacts_ret: List[Contacts] = field(
         default_factory=list,
         metadata={
@@ -526,28 +1277,28 @@ class Customer(QBMixinWithQuery):
             "type": "Element"
         },
     )
-    #todo: Add Field
-    # sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "SalesTaxCodeRef",
-    #         "type": "Element"
-    #     },
-    # )
-    # item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "ItemSalesTaxRef",
-    #         "type": "Element"
-    #     },
-    # )
-    # sales_tax_country: Optional[SalesTaxCountry] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "SalesTaxCountry",
-    #         "type": "Element"
-    #     },
-    # )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element"
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element"
+        },
+    )
+    sales_tax_country: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCountry",
+            "type": "Element",
+            "valid_values": ["Australia", "Canada", "UK", "US"]
+        },
+    )
     resale_number: Optional[str] = field(
         default=None,
         metadata={
@@ -571,28 +1322,27 @@ class Customer(QBMixinWithQuery):
             "type": "Element"
         },
     )
-    #todo: Add Field
-    # preferred_payment_method_ref: Optional[PreferredPaymentMethodRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "PreferredPaymentMethodRef",
-    #         "type": "Element"
-    #     },
-    # )
-    # credit_card_info: Optional[CreditCardInfo] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "CreditCardInfo",
-    #         "type": "Element"
-    #     },
-    # )
-    # job_status: Optional[str] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "JobStatus",
-    #         "type": "Element"
-    #     },
-    # )
+    preferred_payment_method_ref: Optional[PreferredPaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PreferredPaymentMethodRef",
+            "type": "Element"
+        },
+    )
+    credit_card_info: Optional[CreditCardInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardInfo",
+            "type": "Element"
+        },
+    )
+    job_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobStatus",
+            "type": "Element"
+        },
+    )
     job_start_date: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -622,14 +1372,13 @@ class Customer(QBMixinWithQuery):
             "max_length": 99
         },
     )
-    #todo: Add Field
-    # job_type_ref: Optional[JobTypeRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "JobTypeRef",
-    #         "type": "Element"
-    #     },
-    # )
+    job_type_ref: Optional[JobTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "JobTypeRef",
+            "type": "Element"
+        },
+    )
     notes: Optional[str] = field(
         default=None,
         metadata={
@@ -638,14 +1387,13 @@ class Customer(QBMixinWithQuery):
             "max_length": 4095
         },
     )
-    #todo: Add Field
-    # additional_notes_ret: List[AdditionalNotesRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "AdditionalNotesRet",
-    #         "type": "Element"
-    #     },
-    # )
+    additional_notes_ret: List[AdditionalNotesRet] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalNotesRet",
+            "type": "Element"
+        },
+    )
     is_statement_with_parent: Optional[bool] = field(
         default=None,
         metadata={
@@ -653,57 +1401,50 @@ class Customer(QBMixinWithQuery):
             "type": "Element"
         },
     )
-    #todo: Add Field
-    # delivery_method: Optional[DeliveryMethod] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "DeliveryMethod",
-    #         "type": "Element"
-    #     },
-    # )
-    # preferred_delivery_method: Optional[PreferredDeliveryMethod] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "PreferredDeliveryMethod",
-    #         "type": "Element"
-    #     },
-    # )
-    # price_level_ref: Optional[PriceLevelRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "PriceLevelRef",
-    #         "type": "Element"
-    #     },
-    # )
-    # external_guid: Optional[ExternalGuid] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "ExternalGUID",
-    #         "type": "Element"
-    #     },
-    # )
-    # tax_registration_number: Optional[str] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "TaxRegistrationNumber",
-    #         "type": "Element",
-    #         "max_length": 30
-    #     },
-    # )
-    # currency_ref: Optional[CurrencyRef] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "CurrencyRef",
-    #         "type": "Element"
-    #     },
-    # )
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element"
-    #     },
-    # )
+    preferred_delivery_method: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PreferredDeliveryMethod",
+            "type": "Element",
+            "valid_values": ["None", "Email", "Fax"]
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element"
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element"
+        },
+    )
+    tax_registration_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TaxRegistrationNumber",
+            "type": "Element",
+            "max_length": 30
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element"
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element"
+        },
+    )
 
 
 class Customers(PluralMixin):
@@ -711,7 +1452,6 @@ class Customers(PluralMixin):
     class Meta:
         name = "Customer"
         plural_of = Customer
-        # plural_of_db_model = DBCustomer
 
 
 

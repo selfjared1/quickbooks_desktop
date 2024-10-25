@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 from decimal import Decimal
-# from src.quickbooks_desktop.lists.employees import Employee as DBEmployee
 from src.quickbooks_desktop.common.qb_contact_common_fields import EmployeeAddress
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
@@ -29,7 +28,7 @@ def validate_relation(value: Optional[str]) -> Optional[str]:
 @dataclass
 class EmergencyContact(QBMixin):
     class Meta:
-        name = ""
+        name = "EmergencyContact"
 
     VALID_RELATION_VALUES = [
         "Spouse", "Partner", "Mother", "Father", "Sister", "Brother",

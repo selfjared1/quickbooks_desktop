@@ -297,6 +297,81 @@ class Contacts(QBMixin):
     )
 
 @dataclass
+class ContactsMod(QBMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Salutation", "FirstName", "MiddleName",
+        "LastName", "JobTitle", "AdditionalContactRef"
+    ]
+    class Meta:
+        name = "ContactsMod"
+
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "required": True,
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    job_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobTitle",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 5,
+        },
+    )
+
+@dataclass
 class AdditionalNotes(QBMixin):
     class Meta:
         name = "AdditionalNotes"
@@ -327,3 +402,58 @@ class AdditionalNotes(QBMixin):
         },
     )
 
+@dataclass
+class AdditionalNotesMod(QBMixin):
+
+    class Meta:
+        name = "AdditionalNotesMod"
+
+    note_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "NoteID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    note: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Note",
+            "type": "Element",
+            "required": True,
+            "max_length": 4095,
+        },
+    )
+
+
+@dataclass
+class AdditionalNotesRet(QBMixin):
+    class Meta:
+        name = "AdditionalNotesRet"
+
+    note_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "NoteID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "Date",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    note: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Note",
+            "type": "Element",
+            "required": True,
+            "max_length": 4095,
+        },
+    )

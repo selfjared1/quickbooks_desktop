@@ -355,46 +355,6 @@ class QBMixinWithQuery(QBMixin):
         super().__init_subclass__(**kwargs)
         cls.Query.set_name(cls.Meta.name)
 
-@dataclass
-class DataExtRet(QBMixin):
-    owner_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "OwnerID",
-            "type": "Element",
-            "pattern": r"0|(\{[0-9a-fA-F]{8}(\-([0-9a-fA-F]{4})){3}\-[0-9a-fA-F]{12}\})",
-        },
-    )
-    data_ext_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "DataExtName",
-            "type": "Element",
-            "required": True,
-            "max_length": 31,
-        },
-    )
-    data_ext_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "DataExtType",
-            "type": "Element",
-            "required": True,
-            "valid_values": [
-                "AMTTYPE", "DATETIMETYPE", "INTTYPE", "PERCENTTYPE",
-                "PRICETYPE", "QUANTYPE", "STR1024TYPE", "STR255TYPE"
-            ]
-        },
-    )
-    data_ext_value: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "DataExtValue",
-            "type": "Element",
-            "required": True,
-        },
-    )
-
 
 @dataclass
 class QBRefMixin(QBMixin):
