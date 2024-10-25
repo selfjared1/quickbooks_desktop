@@ -10,8 +10,6 @@ from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef
 from src.quickbooks_desktop.lists.currency import CurrencyRef
 
-
-
 VALID_ACCOUNT_TYPE_VALUES = [
     "AccountsPayable", "AccountsReceivable", "Bank", "CostOfGoodsSold", "CreditCard",
     "Equity", "Expense", "FixedAsset", "Income", "LongTermLiability", "NonPosting",
@@ -57,37 +55,36 @@ VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Fina
 
 @dataclass
 class AccountRef(QBRefMixin):
-
     class Meta:
         name = "AccountRef"
+
 
 @dataclass
 class OverrideItemAccountRef(QBRefMixin):
     class Meta:
         name = "OverrideItemAccountRef"
 
+
 @dataclass
 class AraccountRef(QBRefMixin):
-
     class Meta:
         name = "AraccountRef"
 
+
 @dataclass
 class DepositToAccountRef(QBRefMixin):
-
     class Meta:
         name = "DepositToAccountRef"
 
 
 @dataclass
 class ExpenseAccountRef(QBRefMixin):
-
     class Meta:
         name = "ExpenseAccountRef"
 
+
 @dataclass
 class IncomeAccountRef(QBRefMixin):
-
     class Meta:
         name = "IncomeAccountRef"
 
@@ -113,6 +110,7 @@ class TaxLineInfo(QBMixin):
             "max_length": 256,
         },
     )
+
 
 @dataclass
 class AccountBase:
@@ -192,9 +190,9 @@ class AccountBase:
         },
     )
 
+
 @dataclass
 class AccountQuery(QBQueryMixin):
-
     FIELD_ORDER = [
         "list_id", "full_name", "max_returned", "active_status",
         "from_modified_date", "to_modified_date", "name_filter",
@@ -287,7 +285,6 @@ class AccountQuery(QBQueryMixin):
 
 @dataclass
 class AccountAdd(AccountBase, QBAddMixin):
-
     FIELD_ORDER = [
         "name", "is_active", "parent_ref", "account_type", "account_number",
         "bank_number", "desc", "open_balance", "open_balance_date",
@@ -308,7 +305,6 @@ class AccountAdd(AccountBase, QBAddMixin):
 
 @dataclass
 class AccountMod(AccountBase, QBModMixin):
-
     FIELD_ORDER = [
         "list_id", "edit_sequence", "name", "is_active", "parent_ref",
         "account_type", "account_number", "bank_number", "desc",
@@ -347,7 +343,6 @@ class AccountMod(AccountBase, QBModMixin):
 
 @dataclass
 class Account(AccountBase, QBMixinWithQuery):
-
     class Meta:
         name = "Account"
 
@@ -483,8 +478,6 @@ class Account(AccountBase, QBMixinWithQuery):
 
 
 class Accounts(PluralMixin, PluralListSaveMixin):
-
     class Meta:
         name = "Account"
         plural_of = Account
-        #todo: plural_of_db_model = DBAccount

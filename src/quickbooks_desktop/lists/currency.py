@@ -2,14 +2,14 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List, Type
 from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, \
+    QBModMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
 from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
 
 
 @dataclass
 class CurrencyRef(QBRefMixin):
-
     class Meta:
         name = "CurrencyRef"
 
@@ -50,9 +50,12 @@ class CurrencyFormat(QBMixin):
     )
 
 
-
 @dataclass
 class CurrencyQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus", "FromModifiedDate",
+        "ToModifiedDate", "NameFilter", "NameRangeFilter", "IncludeRetElement"
+    ]
 
     class Meta:
         name = "CurrencyQuery"
@@ -136,8 +139,12 @@ class CurrencyQuery(QBQueryMixin):
     #     },
     # )
 
+
 @dataclass
 class CurrencyAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "CurrencyCode", "CurrencyFormat", "IncludeRetElement"
+    ]
 
     class Meta:
         name = "CurrencyAdd"
@@ -175,8 +182,13 @@ class CurrencyAdd(QBAddMixin):
         },
     )
 
+
 @dataclass
 class CurrencyMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive", "CurrencyCode",
+        "CurrencyFormat"
+    ]
 
     class Meta:
         name = "CurrencyMod"
@@ -238,7 +250,6 @@ class Currency(QBMixinWithQuery):
     Query: Type[CurrencyQuery] = CurrencyQuery
     Add: Type[CurrencyAdd] = CurrencyAdd
     Mod: Type[CurrencyMod] = CurrencyMod
-
 
     list_id: Optional[str] = field(
         default=None,
@@ -321,8 +332,8 @@ class Currency(QBMixinWithQuery):
         },
     )
 
-class Currencies(PluralMixin, PluralListSaveMixin):
 
+class Currencies(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "Currency"
         plural_of = Currency
