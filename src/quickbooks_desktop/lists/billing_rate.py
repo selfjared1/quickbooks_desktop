@@ -148,7 +148,14 @@ class BillingRateQuery(QBQueryMixin):
 
 
 @dataclass
-class BillingRateAdd:
+class BillingRateAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "FixedBillingRate", "BillingRatePerItem"
+    ]
+
+    class Meta:
+        name = "BillingRateAdd"
+
     name: Optional[str] = field(
         default=None,
         metadata={
