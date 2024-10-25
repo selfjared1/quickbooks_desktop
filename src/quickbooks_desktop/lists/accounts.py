@@ -192,67 +192,6 @@ class AccountBase:
         },
     )
 
-
-@dataclass
-class AccountAdd(AccountBase, QBAddMixin):
-
-    FIELD_ORDER = [
-        "name", "is_active", "parent_ref", "account_type", "account_number",
-        "bank_number", "desc", "open_balance", "open_balance_date",
-        "tax_line_id", "currency_ref", "include_ret_element"
-    ]
-
-    class Meta:
-        name = "AccountAdd"
-
-    tax_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TaxLineID",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class AccountMod(AccountBase, QBModMixin):
-
-    FIELD_ORDER = [
-        "list_id", "edit_sequence", "name", "is_active", "parent_ref",
-        "account_type", "account_number", "bank_number", "desc",
-        "open_balance", "open_balance_date", "tax_line_id",
-        "currency_ref", "include_ret_element"
-    ]
-
-    class Meta:
-        name = "AccountMod"
-
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    edit_sequence: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "EditSequence",
-            "type": "Element",
-            "required": True,
-            "max_length": 16,
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
-
-
 @dataclass
 class AccountQuery(QBQueryMixin):
 
@@ -344,6 +283,67 @@ class AccountQuery(QBQueryMixin):
             "type": "Attribute",
         },
     )
+
+
+@dataclass
+class AccountAdd(AccountBase, QBAddMixin):
+
+    FIELD_ORDER = [
+        "name", "is_active", "parent_ref", "account_type", "account_number",
+        "bank_number", "desc", "open_balance", "open_balance_date",
+        "tax_line_id", "currency_ref", "include_ret_element"
+    ]
+
+    class Meta:
+        name = "AccountAdd"
+
+    tax_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TaxLineID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AccountMod(AccountBase, QBModMixin):
+
+    FIELD_ORDER = [
+        "list_id", "edit_sequence", "name", "is_active", "parent_ref",
+        "account_type", "account_number", "bank_number", "desc",
+        "open_balance", "open_balance_date", "tax_line_id",
+        "currency_ref", "include_ret_element"
+    ]
+
+    class Meta:
+        name = "AccountMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+
 
 @dataclass
 class Account(AccountBase, QBMixinWithQuery):
@@ -482,7 +482,7 @@ class Account(AccountBase, QBMixinWithQuery):
     # )
 
 
-class Accounts(PluralMixin):
+class Accounts(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "Account"

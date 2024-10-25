@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List, Type
 from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin
+from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
 from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
 
 
@@ -135,6 +136,99 @@ class CurrencyQuery(QBQueryMixin):
     #     },
     # )
 
+@dataclass
+class CurrencyAdd(QBAddMixin):
+
+    class Meta:
+        name = "CurrencyAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 64,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    currency_code: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyCode",
+            "type": "Element",
+            "required": True,
+            "max_length": 3,
+        },
+    )
+    currency_format: Optional[CurrencyFormat] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFormat",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class CurrencyMod(QBModMixin):
+
+    class Meta:
+        name = "CurrencyMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 64,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    currency_code: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyCode",
+            "type": "Element",
+            "max_length": 3,
+        },
+    )
+    currency_format: Optional[CurrencyFormat] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFormat",
+            "type": "Element",
+        },
+    )
+
 
 @dataclass
 class Currency(QBMixinWithQuery):
@@ -142,7 +236,8 @@ class Currency(QBMixinWithQuery):
         name = "Currency"
 
     Query: Type[CurrencyQuery] = CurrencyQuery
-    # Add: Type[CurrencyAdd] = CurrencyAdd
+    Add: Type[CurrencyAdd] = CurrencyAdd
+    Mod: Type[CurrencyMod] = CurrencyMod
 
 
     list_id: Optional[str] = field(
@@ -225,3 +320,9 @@ class Currency(QBMixinWithQuery):
             "type": "Element",
         },
     )
+
+class Currencies(PluralMixin, PluralListSaveMixin):
+
+    class Meta:
+        name = "Currency"
+        plural_of = Currency
