@@ -806,6 +806,17 @@ class InvoiceAdd(QBAddMixin):
     #     },
     # )
 
+    def __post_init__(self):
+        if getattr(self, 'is_paid', False):
+            self.is_to_be_emailed = False
+            self.is_pending = False
+            self.is_to_be_printed = False
+        else:
+            pass
+
+        if getattr(self, 'is_pending', False):
+            self.is_to_be_emailed = False
+
 
 
 @dataclass
