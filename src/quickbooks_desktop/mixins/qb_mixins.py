@@ -1,9 +1,8 @@
 from lxml import etree as et
 from typing import Any, Optional, Union, get_args, get_origin
 from dataclasses import dataclass, field, fields, is_dataclass
-from enum import Enum
 import logging
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.utilities import to_lower_camel_case
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ class ToXmlMixin:
 
         for field in fields:
             value = getattr(self, field.name)
-            if value is not None:
+            if value is not None and not isinstance(value, type):
                 element = self._create_xml_element(root, field, value)
                 if element is not None:
                     root.append(element)
@@ -80,7 +79,14 @@ class ToXmlMixin:
 
         parent_element = et.Element(field.metadata.get("name", field.name))
         for child in value_list:
-            parent_element.append(child)
+            if isinstance(child, et._Element):
+                parent_element.append(child)
+            else:
+                element = child.to_xml()
+                try:
+                    parent_element.append(element)
+                except Exception as e:
+                    logger.error(e)
         return parent_element
 
     def _handle_bool_value(self, field, value):
@@ -213,16 +219,40 @@ class FromXmlMixin:
         field_names = {field.metadata.get("name", field.name): field for field in cls.__dataclass_fields__.values()}
         init_args = cls.__get_init_args(element, field_names)
 
-        # Check for text content in the main element if no child elements matched
-        if element is not None and not len(element) and element.text is not None and len(element.text) and element.text.replace('\n', '').strip() != '' and len(cls.__dataclass_fields__):
+        if element is not None and not len(element) and element.text is not None and len(
+                element.text) and element.text.replace('\n', '').strip() != '' and len(cls.__dataclass_fields__):
             main_field = next(iter(cls.__dataclass_fields__.values()))
             init_args[main_field.name] = element.text
         else:
             pass
 
-        instance = cls(**init_args)
+        instance = cls(**{k: v for k, v in init_args.items() if k in cls.__dataclass_fields__})
+
+        all_xml_fields = {child.tag: child.text for child in element}
+        extra_fields = {k: v for k, v in all_xml_fields.items() if k not in field_names}
+
+        for field_name, field_value in extra_fields.items():
+            setattr(instance, field_name, field_value)
+
         return instance
 
+
+class ReprMixin:
+    def __repr__(self):
+        # Collect all field values dynamically
+        field_strings = []
+
+        for field in self.__dataclass_fields__.values():
+            value = getattr(self, field.name)
+            # If the value is a list, show a summary
+            if isinstance(value, list):
+                field_strings.append(f"{field.name}=[...({len(value)} items)]")
+            else:
+                field_strings.append(f"{field.name}={repr(value)}")
+
+        # Build the final repr string using the class name and its dynamic fields
+        field_str = ", ".join(field_strings)
+        return f"{self.__class__.__name__}({field_str})"
 
 class CopyFromParentMixin:
 
@@ -232,54 +262,71 @@ class CopyFromParentMixin:
         for attr, value in parent.__dict__.items():
             if hasattr(instance, attr):
                 setattr(instance, attr, value)
+            elif attr[-4:] == '_ret' and hasattr(instance, str(attr[:-4]) + '_add') and isinstance(value, list):
+                converted_values = []
+                for sub_instance in value:
+                    add_class = getattr(sub_instance, 'Add')
+                    add_value = add_class.copy_from_parent(sub_instance)
+                    converted_values.append(add_value)
+                setattr(instance, str(attr[:-4]) + '_add', converted_values)
+            else:
+                pass
+
         return instance
 
 
-class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin):
+class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}QueryRq"
 
-class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin):
+class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}AddRq"
 
 
-class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin):
+class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}ModRq"
 
-class ListSaveMixin:
+class SaveMixin:
 
-    def _get_mod_xml(self):
-        mod_class = getattr(self, f'{self.Meta.name}mod', None)
+    def _get_mod_rq_xml(self):
+        mod_class = getattr(self, f'Mod', None)
         mod_instance = mod_class.copy_from_parent(self)
         mod_xml = mod_instance.to_xml()
-        return mod_xml
+        rq_element_name = mod_class.__name__ + 'Rq'
+        rq_element = et.Element(rq_element_name)
+        rq_element.append(mod_xml)
+        return rq_element
 
-    def _get_add_xml(self):
-        add_class = getattr(self, f'{self.Meta.name}mod', None)
+    def _get_add_rq_xml(self):
+        add_class = getattr(self, f'Add', None)
         add_instance = add_class.copy_from_parent(self)
         add_xml = add_instance.to_xml()
+        rq_element_name = add_class.__name__ + 'Rq'
+        rq_element = et.Element(rq_element_name)
+        rq_element.append(add_xml)
+        return rq_element
 
     def save(self, qb):
         if self.list_id is not None:
-            mod_xml = self._get_mod_xml()
+            mod_xml = self._get_mod_rq_xml()
             response = qb.send_xml(mod_xml)
             return response
         else:
-            add_xml = self._get_add_xml()
+            add_xml = self._get_add_rq_xml()
             response = qb.send_xml(add_xml)
             return response
 
 
 
-class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin):
+class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin, ReprMixin, SaveMixin):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -294,64 +341,14 @@ class QBMixinWithQuery(QBMixin):
         super().__init_subclass__(**kwargs)
         cls.Query.set_name(cls.Meta.name)
 
-
-class DataExtTypeValue(Enum):
-    AMTTYPE = "AMTTYPE"
-    DATETIMETYPE = "DATETIMETYPE"
-    INTTYPE = "INTTYPE"
-    PERCENTTYPE = "PERCENTTYPE"
-    PRICETYPE = "PRICETYPE"
-    QUANTYPE = "QUANTYPE"
-    STR1024_TYPE = "STR1024TYPE"
-    STR255_TYPE = "STR255TYPE"
-
-@dataclass
-class DataExtType(QBMixin):
-
-    class Meta:
-        name = "DataExtType"
-
-    _value: Optional[DataExtTypeValue] = field(default=None, init=False)
-
-    @property
-    def value(self) -> Optional[DataExtTypeValue]:
-        return self._value
-
-    @value.setter
-    def value(self, new_value: Any):
-        if new_value is not None and not isinstance(new_value, DataExtTypeValue):
-            raise ValueError(f"Invalid value: {new_value}. Must be an instance of DataExtTypeValue.")
-        self._value = new_value
-
-@dataclass
-class OwnerId(QBMixin):
-    class Meta:
-        name = "OwnerID"
-
-    value: str = field(
-        default="",
-        metadata={
-            "required": True,
-            "pattern": r"0|(\{[0-9a-fA-F]{8}(\-([0-9a-fA-F]{4})){3}\-[0-9a-fA-F]{12}\})",
-        },
-    )
-
-@dataclass
-class DataExtValue(QBMixin):
-    value: str = field(
-        default="",
-        metadata={
-            "required": True,
-        },
-    )
-
 @dataclass
 class DataExtRet(QBMixin):
-    owner_id: Optional[OwnerId] = field(
+    owner_id: Optional[str] = field(
         default=None,
         metadata={
             "name": "OwnerID",
             "type": "Element",
+            "pattern": r"0|(\{[0-9a-fA-F]{8}(\-([0-9a-fA-F]{4})){3}\-[0-9a-fA-F]{12}\})",
         },
     )
     data_ext_name: Optional[str] = field(
@@ -363,15 +360,19 @@ class DataExtRet(QBMixin):
             "max_length": 31,
         },
     )
-    data_ext_type: Optional[DataExtType] = field(
+    data_ext_type: Optional[str] = field(
         default=None,
         metadata={
             "name": "DataExtType",
             "type": "Element",
             "required": True,
+            "valid_values": [
+                "AMTTYPE", "DATETIMETYPE", "INTTYPE", "PERCENTTYPE",
+                "PRICETYPE", "QUANTYPE", "STR1024TYPE", "STR255TYPE"
+            ]
         },
     )
-    data_ext_value: Optional[DataExtValue] = field(
+    data_ext_value: Optional[str] = field(
         default=None,
         metadata={
             "name": "DataExtValue",

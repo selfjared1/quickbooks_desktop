@@ -5,16 +5,16 @@ from typing import Optional, List
 from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
 from src.quickbooks_desktop.lists.terms import TermsRef
-from src.quickbooks_desktop.db_models.lists.customers import Customer as DBCustomer
-from src.quickbooks_desktop.common_and_special_fields.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
+# from src.quickbooks_desktop.db_models.lists.customers import Customer as DBCustomer
+from src.quickbooks_desktop.common.qb_contact_common_fields import BillAddress, BillAddressBlock, ShipAddress, \
     ShipAddressBlock, ShipToAddress, \
     Contacts
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
-from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
+from src.quickbooks_desktop.common.qb_other_common_fields import ParentRef
+from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
     CurrencyFilter, ClassFilter
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from src.quickbooks_desktop.qb_special_fields import QBDates
 
 
 @dataclass
@@ -30,6 +30,13 @@ class CustomerTypeRef(QBRefMixin):
 
 @dataclass
 class CustomerQuery(QBQueryMixin):
+
+    FIELD_ORDER = [
+        "list_id", "full_name", "max_returned", "active_status",
+        "from_modified_date", "to_modified_date", "name_filter",
+        "name_range_filter", "total_balance_filter", "currency_filter",
+        "class_filter", "include_ret_element", "owner_id"
+    ]
 
     class Meta:
         name = "CustomerQuery"
@@ -154,6 +161,67 @@ class CustomerQuery(QBQueryMixin):
     #         "type": "Attribute",
     #     },
     # )
+
+@dataclass
+class CustomerBase:
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[QBClassRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    job_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobTitle",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
 
 
 @dataclass
@@ -643,7 +711,7 @@ class Customers(PluralMixin):
     class Meta:
         name = "Customer"
         plural_of = Customer
-        plural_of_db_model = DBCustomer
+        # plural_of_db_model = DBCustomer
 
 
 

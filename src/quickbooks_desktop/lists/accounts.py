@@ -1,11 +1,12 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List, Type
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin, ListSaveMixin
-from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, CurrencyFilter
+from src.quickbooks_desktop.mixins import (
+    PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery, QBMixin,
+    QBQueryMixin, QBAddMixin, QBModMixin, SaveMixin
+)
+from src.quickbooks_desktop.qb_special_fields import QBDates
+from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef
 from src.quickbooks_desktop.lists.currency import CurrencyRef
 
@@ -59,6 +60,11 @@ class AccountRef(QBRefMixin):
 
     class Meta:
         name = "AccountRef"
+
+@dataclass
+class OverrideItemAccountRef(QBRefMixin):
+    class Meta:
+        name = "OverrideItemAccountRef"
 
 @dataclass
 class AraccountRef(QBRefMixin):
@@ -242,7 +248,7 @@ class AccountMod(AccountBase, QBModMixin):
 
 
 @dataclass
-class AccountQuery(AccountBase, QBQueryMixin):
+class AccountQuery(QBQueryMixin):
 
     FIELD_ORDER = [
         "list_id", "full_name", "max_returned", "active_status",
@@ -334,7 +340,7 @@ class AccountQuery(AccountBase, QBQueryMixin):
     )
 
 @dataclass
-class Account(AccountBase, QBMixinWithQuery, ListSaveMixin):
+class Account(AccountBase, QBMixinWithQuery):
 
     class Meta:
         name = "Account"

@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional, List
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from typing import Optional, List, Type
+from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin
-from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
 
 
 @dataclass
@@ -20,6 +20,7 @@ class CurrencyFormat(QBMixin):
         metadata={
             "name": "ThousandSeparator",
             "type": "Element",
+            "valid_values": ["Comma", "Period", "Space", "Apostrophe"]
         },
     )
     thousand_separator_grouping: Optional[str] = field(
@@ -27,6 +28,7 @@ class CurrencyFormat(QBMixin):
         metadata={
             "name": "ThousandSeparatorGrouping",
             "type": "Element",
+            "valid_values": ["Comma", "Period", "Space", "Apostrophe"]
         },
     )
     decimal_places: Optional[str] = field(
@@ -34,6 +36,7 @@ class CurrencyFormat(QBMixin):
         metadata={
             "name": "DecimalPlaces",
             "type": "Element",
+            "valid_values": ["0", "2"]
         },
     )
     decimal_separator: Optional[str] = field(
@@ -41,19 +44,10 @@ class CurrencyFormat(QBMixin):
         metadata={
             "name": "DecimalSeparator",
             "type": "Element",
+            "valid_values": ["Period", "Comma"]
         },
     )
 
-    VALID_THOUSAND_SEPARATOR_VALUES = ["Comma", "Period", "Space", "Apostrophe"]
-    VALID_THOUSAND_SEPARATOR_GROUPING_VALUES = ["Comma", "Period", "Space", "Apostrophe"]
-    VALID_DECIMAL_PLACES_VALUES = ["0", "2"]
-    VALID_DECIMAL_SEPARATOR_VALUES = ["Period", "Comma"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('thousand_separator', self.thousand_separator, self.VALID_THOUSAND_SEPARATOR_VALUES)
-        self._validate_str_from_list_of_values('thousand_separator_grouping', self.thousand_separator_grouping, self.VALID_THOUSAND_SEPARATOR_GROUPING_VALUES)
-        self._validate_str_from_list_of_values('decimal_places', self.decimal_places, self.VALID_DECIMAL_PLACES_VALUES)
-        self._validate_str_from_list_of_values('decimal_separator', self.decimal_separator, self.VALID_DECIMAL_SEPARATOR_VALUES)
 
 
 @dataclass
@@ -147,8 +141,8 @@ class Currency(QBMixinWithQuery):
     class Meta:
         name = "Currency"
 
-    class Query(CurrencyQuery):
-        pass
+    Query: Type[CurrencyQuery] = CurrencyQuery
+    # Add: Type[CurrencyAdd] = CurrencyAdd
 
 
     list_id: Optional[str] = field(

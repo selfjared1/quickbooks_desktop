@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin
 
 @dataclass
-class TemplateRef(QBRefMixin):
+class CustomerMsgRef(QBRefMixin):
 
     class Meta:
-        name = "TemplateRef"
-
-#todo: Templates
+        name = "CustomerMsgRef"

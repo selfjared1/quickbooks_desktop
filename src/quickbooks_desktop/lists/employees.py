@@ -2,11 +2,11 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from decimal import Decimal
 # from src.quickbooks_desktop.lists.employees import Employee as DBEmployee
-from src.quickbooks_desktop.common_and_special_fields.qb_contact_common_fields import EmployeeAddress
+from src.quickbooks_desktop.common.qb_contact_common_fields import EmployeeAddress
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates, QBTime
-from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
 from src.quickbooks_desktop.lists.qb_classes import QBClassRef
 
 
@@ -895,5 +895,5 @@ class Employees(PluralMixin):
     class Meta:
         name = "Employee"
         plural_of = Employee
-        plural_of_db_model = DBEmployee
+        # plural_of_db_model = DBEmployee
 

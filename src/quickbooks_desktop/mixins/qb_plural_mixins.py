@@ -1,7 +1,7 @@
 from lxml import etree as et
 from sqlalchemy import func
 
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.conversions import qb_to_sql
 from src.quickbooks_desktop.mixins.qb_mixins import logger
 
@@ -33,17 +33,36 @@ class PluralMixin:
         self._items.append(item)
 
     @classmethod
-    def get_all_from_qb(cls, qb, include_custom_fields=False):
+    def get_all_from_qb(cls, qb, include_custom_fields=False, include_line_items=False, include_linked_txns=False):
         QueryRq = et.Element(f'{cls.Meta.name}QueryRq')
+        if include_line_items:
+            custom_query = et.SubElement(QueryRq, 'IncludeLineItems')
+            custom_query.text = 'true'
+        else:
+            pass
+
+        if include_linked_txns:
+            custom_query = et.SubElement(QueryRq, 'IncludeLinkedTxns')
+            custom_query.text = 'true'
+        else:
+            pass
+
         if include_custom_fields:
             custom_query = et.SubElement(QueryRq, 'OwnerID')
             custom_query.text = '0' #zero is the ownerID for all custom fields (not private fields)
-        QueryRs = qb.send_xml(QueryRq)
-        plural_instance = cls()
-        for Ret in QueryRs:
-            obj = plural_instance.Meta.plural_of.from_xml(Ret)
-            plural_instance._items.append(obj)
-        return plural_instance
+        else:
+            pass
+
+        QueryRs_list = qb.send_xml(QueryRq)
+        if type(QueryRs_list) == list and len(QueryRs_list) == 1:
+            QueryRs = QueryRs_list[0]
+            plural_instance = cls()
+            for Ret in QueryRs:
+                obj = plural_instance.Meta.plural_of.from_xml(Ret)
+                plural_instance._items.append(obj)
+            return plural_instance
+        else:
+            logger.debug(f"QueryRs_list is of type {type(QueryRs_list)} instead of list type")
 
     def to_list(self):
         return self._items
@@ -127,16 +146,77 @@ class PluralMixin:
         else:
             cls.populate_db(qb, session)
 
+    def to_xml(self):
+        """
+        Converts all items in the plural mixin into a list of lxml elements
+        by calling each child's `to_xml` method.
+        """
+        xml_elements = []
+        for item in self._items:
+            xml_element = item.to_xml()  # Each item must implement `to_xml`
+            xml_elements.append(xml_element)
+        return xml_elements
+
+    def to_xml_file(self, file_path: str) -> None:
+        """
+        Generates an XML file with the plural objects.
+        Creates a root element based on the Meta class name, appends all items, and writes to the file path.
+
+        Args:
+            file_path (str): The path of the file to write the XML to. The file will be replaced if it exists.
+        """
+        # Convert each child to an XML element
+        list_of_xml = self.to_xml()
+
+        # Create the root element using the Meta class name
+        root = et.Element(f"{self.Meta.name}QueryRs")
+
+        # Append each child XML element to the root
+        for xml_element in list_of_xml:
+            root.append(xml_element)
+
+        # Convert the root element to a formatted XML string
+        xml_str = et.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode()
+
+        # Write the XML string to the specified file path, replacing the file if it exists
+        with open(file_path, "w") as file:
+            file.write(xml_str)
+
+        logger.debug('Finished to_xml_file')
+
 
 class PluralListSaveMixin:
     def save_all(self, qb):
         xml_requests = []
         for item in self:
             if item.list_id is not None:
-                mod_xml = item._get_mod_xml()
+                mod_xml = item._get_mod_rq_xml()
                 xml_requests.append(mod_xml)
             else:
-                add_xml = item._get_add_xml()
+                add_xml = item._get_add_rq_xml()
                 xml_requests.append(add_xml)
         response = qb.send_xml(xml_requests)
         return response
+
+class PluralTrxnSaveMixin:
+    def save_all(self, qb):
+        xml_requests = []
+        for trxn in self:
+            if trxn.trxn_id is not None:
+                mod_xml = trxn._get_mod_rq_xml()
+                xml_requests.append(mod_xml)
+            else:
+                add_xml = trxn._get_add_rq_xml()
+                xml_requests.append(add_xml)
+        response = qb.send_xml(xml_requests)
+        return response
+
+    def add_all(self, qb):
+        xml_requests = []
+        for trxn in self:
+            add_xml = trxn._get_add_rq_xml()
+            xml_requests.append(add_xml)
+        response = qb.send_xml(xml_requests)
+        return response
+
+

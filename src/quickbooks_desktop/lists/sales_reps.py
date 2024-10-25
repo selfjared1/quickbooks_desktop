@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 from sqlalchemy import Column, String, DateTime, Integer, Boolean
 
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin
 
 @dataclass

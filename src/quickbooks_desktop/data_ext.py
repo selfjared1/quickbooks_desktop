@@ -1,10 +1,10 @@
 
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin, ListSaveMixin
+from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralListSaveMixin
 
 
 @dataclass
-class DataExt(QBMixinWithQuery, ListSaveMixin):
+class DataExt(QBMixinWithQuery):
 
     class Meta:
         name = "Account"

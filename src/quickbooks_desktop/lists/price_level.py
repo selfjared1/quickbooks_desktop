@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin
 
-
 @dataclass
-class ParentRef(QBRefMixin):
+class PriceLevelRef(QBRefMixin):
 
     class Meta:
-        name = "ParentRef"
+        name = "PriceLevelRef"
+
+#todo: Templates

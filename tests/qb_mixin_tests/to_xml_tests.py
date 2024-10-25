@@ -1,8 +1,12 @@
 import unittest
+from decimal import Decimal
 import xml.etree.ElementTree as et
 from dataclasses import dataclass, field, fields, is_dataclass
 from typing import List, Optional, Any
 from src.quickbooks_desktop.mixins.qb_mixins import ToXmlMixin
+from src.quickbooks_desktop.common import LinkedTxn
+from src.quickbooks_desktop.qb_special_fields import QBDates
+from datetime import datetime
 
 # Sample dataclass to use with ToXmlMixin
 @dataclass
@@ -81,6 +85,53 @@ class TestToXmlMixin(unittest.TestCase):
         data.is_active = False
         xml_element = data.to_xml()
         self.assertEqual(xml_element.find("IsActive").text, "No")
+
+
+class TestToXmlMixin(unittest.TestCase):
+
+    def setUp(self):
+        # Create an instance of the class you're testing
+        self.obj = ToXmlMixin()
+
+        # Define the field that will be passed to the _handle_list_value
+        self.field = type('Field', (object,), {
+            'name': 'linked_txn',
+            'metadata': {'name': 'LinkedTxn'}
+        })()
+
+        # Create the exact value_list you provided
+        self.value_list = [
+            LinkedTxn(
+                txn_id='1043-1071523943',
+                txn_type='ReceivePayment',
+                txn_date=QBDates(date=datetime(2023, 8, 25, 0, 0)),
+                ref_number=None,
+                link_type='AMTTYPE',
+                amount=Decimal('-480.00'),
+                txn_line_detail=[]
+            )
+        ]
+
+    def test_handle_list_value(self):
+        root = et.Element('Invoice')
+
+        # Call the method with the exact value_list you provided
+        element = self.obj._handle_list_value(root, self.field, self.value_list)
+
+        # Check if the element is created correctly
+        self.assertIsNotNone(element)
+        self.assertEqual(element.tag, 'LinkedTxn')
+        self.assertEqual(len(element), 1)  # One linked transaction
+
+        # Check the child elements inside LinkedTxn
+        txn_id = element[0].find('TxnID').text
+        self.assertEqual(txn_id, '1043-1071523943')
+        txn_type = element[0].find('TxnType').text
+        self.assertEqual(txn_type, 'ReceivePayment')
+        link_type = element[0].find('LinkType').text
+        self.assertEqual(link_type, 'AMTTYPE')
+        amount = element[0].find('Amount').text
+        self.assertEqual(amount, '-480.00')
 
 
 if __name__ == "__main__":

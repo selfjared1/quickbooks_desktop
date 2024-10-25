@@ -150,10 +150,6 @@ def pass_02_mod_line_groups():
     convert_ret_to_add_or_mod(qbxml_msgs, session, 'Add')
 
 
-
-
-
-
     session.close()
 
 

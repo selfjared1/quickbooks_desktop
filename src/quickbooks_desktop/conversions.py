@@ -2,14 +2,15 @@ from typing import Type, Any
 from sqlalchemy.orm import Session
 from dataclasses import fields, is_dataclass, MISSING
 from src.quickbooks_desktop.db_models.base import Base
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates, QBTime
-from src.quickbooks_desktop.common_and_special_fields.qb_contact_common_fields import Address
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 def create_address(dataclass_instance):
+    from src.quickbooks_desktop.common.qb_contact_common_fields import Address
     address = Address()
     try:
         for field in fields(dataclass_instance):

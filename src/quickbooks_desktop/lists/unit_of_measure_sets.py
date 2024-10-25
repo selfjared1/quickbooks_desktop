@@ -1,15 +1,17 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
-import re
 
-from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
-from src.quickbooks_desktop.lists.customers import Customer as DBCustomer
 from src.quickbooks_desktop.mixins.qb_mixins import QBMixin, QBRefMixin, QBMixinWithQuery, QBQueryMixin
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
-from src.quickbooks_desktop.common_and_special_fields.qb_other_common_fields import ParentRef
-from src.quickbooks_desktop.common_and_special_fields.qb_query_common_fields import NameFilter, NameRangeFilter, TotalBalanceFilter, \
-    ClassFilter
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates, QBPriceType
+from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
+
+
+@dataclass
+class OverrideUomsetRef(QBRefMixin):
+
+    class Meta:
+        name = "OverrideUomsetRef"
+
 
 @dataclass
 class DefaultUnit(QBMixin):

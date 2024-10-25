@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Optional
-from src.quickbooks_desktop.common_and_special_fields.qb_special_fields import QBDates
+from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.mixins.qb_mixins import QBMixin
 from src.quickbooks_desktop.lists.accounts import ExpenseAccountRef
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin

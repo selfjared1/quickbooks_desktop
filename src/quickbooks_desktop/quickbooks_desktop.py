@@ -2,6 +2,7 @@ import win32com.client
 from lxml import etree as et
 import xml.etree.ElementTree as ETree
 import logging
+import easygui
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -132,7 +133,7 @@ class QuickbooksDesktop():
             return requestXML
 
         else:
-            raise TypeError("requestXML must be either a string, xml.etree.ElementTree.Element, lxml.etree.Element, or a list of these types")
+            raise TypeError(f"requestXML is {type(requestXML)} type but it must be either a string, xml.etree.ElementTree.Element, lxml.etree.Element, or a list of these types")
 
 
 
@@ -144,7 +145,10 @@ class QuickbooksDesktop():
         :return: A properly structured lxml.etree.Element with QBXML as the root and QBXMLMsgsRq inside.
         """
         # Initialize the root structure
-        if requestXML.tag == 'QBXML':
+        if isinstance(requestXML, list):
+            QBXML = et.Element('QBXML')
+            QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
+        elif requestXML.tag == 'QBXML':
             QBXML = requestXML
             QBXMLMsgsRq = QBXML.find('QBXMLMsgsRq')
         elif requestXML.tag == 'QBXMLMsgsRq':
