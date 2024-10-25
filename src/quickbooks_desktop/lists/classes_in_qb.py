@@ -1,22 +1,25 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Type
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin
+from src.quickbooks_desktop.mixins.qb_mixins import (
+    QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBAddMixin, QBModMixin
+)
 from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
-from src.quickbooks_desktop.db_models.lists.qb_classes import DBofQBClass as DBClass
-
-
-
+from src.quickbooks_desktop.common import ParentRef
 
 @dataclass
-class QBClassRef(QBRefMixin):
+class ClassInQBRef(QBRefMixin):
     class Meta:
         name = "ClassRef"
 
 
 @dataclass
-class ClassQuery(QBQueryMixin):
+class ClassInQBQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus", "FromModifiedDate",
+        "ToModifiedDate", "NameFilter", "NameRangeFilter", "IncludeRetElement"
+    ]
 
     class Meta:
         name = "ClassQuery"
@@ -97,22 +100,101 @@ class ClassQuery(QBQueryMixin):
         metadata={
             "name": "metaData",
             "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
         },
     )
 
-    VALID_CLASS_QUERY_RQ_TYPE_META_DATA_VALUES = ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"]
+@dataclass
+class ClassInQBAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "ParentRef"
+    ]
 
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('meta_data', self.meta_data, self.VALID_CLASS_QUERY_RQ_TYPE_META_DATA_VALUES)
+    class Meta:
+        name = "ClassAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
 
 
 @dataclass
-class QBClass(QBMixinWithQuery):
+class ClassInQBMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive", "ParentRef"
+    ]
+
+    class Meta:
+        name = "ClassMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+@dataclass
+class ClassInQB(QBMixinWithQuery):
+
     class Meta:
         name = "Class"
 
-    class Query(ClassQuery):
-        pass
+    Query: Type[ClassInQBQuery] = ClassInQBQuery
+    Add: Type[ClassInQBAdd] = ClassInQBAdd
+    Mod: Type[ClassInQBMod] = ClassInQBMod
 
     list_id: Optional[str] = field(
         default=None,
@@ -181,8 +263,9 @@ class QBClass(QBMixinWithQuery):
         },
     )
 
-class QBClasses(PluralMixin):
+
+class ClassesInQB(PluralMixin):
     class Meta:
         name = "Class"
-        plural_of = QBClass
-        plural_of_db_model = DBClass
+        plural_of = ClassInQB
+

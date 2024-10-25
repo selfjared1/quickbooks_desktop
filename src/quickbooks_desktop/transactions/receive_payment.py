@@ -11,7 +11,7 @@ from src.quickbooks_desktop.common import (
     CurrencyFilter
 )
 from src.quickbooks_desktop.lists import (
-    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, QBClassRef, AraccountRef, CurrencyRef, TermsRef,
+    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
     SalesRepRef, ShipMethodRef, CustomerMsgRef, CustomerSalesTaxCodeRef, ItemRef, OverrideUomsetRef, InventorySiteRef,
     InventorySiteLocationRef, ItemGroupRef, PriceLevelRef, OverrideItemAccountRef, AccountRef, PaymentMethodRef, DepositToAccountRef
 )

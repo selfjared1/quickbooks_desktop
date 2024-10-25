@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 
 from src.quickbooks_desktop.lists.accounts import AccountRef, IncomeAccountRef, ExpenseAccountRef
-from src.quickbooks_desktop.lists.qb_classes import QBClassRef
+from src.quickbooks_desktop.lists.classes_in_qb import ClassInQBRef
 from src.quickbooks_desktop.lists.vendors import PrefVendorRef
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef, PurchaseTaxCodeRef
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBMixin
@@ -313,7 +313,7 @@ class ItemMixin:
             "type": "Element",
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",

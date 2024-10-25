@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List
 
-from src.quickbooks_desktop.lists.qb_classes import QBClassRef
+from src.quickbooks_desktop.lists.classes_in_qb import ClassInQBRef
 from src.quickbooks_desktop.lists.sales_reps import SalesRepRef
 from src.quickbooks_desktop.lists.terms import TermsRef
 # from src.quickbooks_desktop.db_models.lists.customers import Customer as DBCustomer
@@ -185,7 +185,7 @@ class CustomerBase:
             "type": "Element",
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",
@@ -284,7 +284,7 @@ class Customer(QBMixinWithQuery):
             "type": "Element"
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",

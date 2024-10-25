@@ -7,7 +7,7 @@ from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin, QBMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
-from src.quickbooks_desktop.lists.qb_classes import QBClassRef
+from src.quickbooks_desktop.lists.classes_in_qb import ClassInQBRef
 
 
 @dataclass
@@ -234,7 +234,7 @@ class EmployeePayrollInfo(QBMixin):
             "type": "Element",
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",

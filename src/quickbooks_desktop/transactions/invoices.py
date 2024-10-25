@@ -10,7 +10,7 @@ from src.quickbooks_desktop.common import (
     CurrencyFilter
 )
 from src.quickbooks_desktop.lists import (
-    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, QBClassRef, AraccountRef, CurrencyRef, TermsRef,
+    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
     SalesRepRef, ShipMethodRef, CustomerMsgRef, CustomerSalesTaxCodeRef, ItemRef, OverrideUomsetRef, InventorySiteRef,
     InventorySiteLocationRef, ItemGroupRef, PriceLevelRef, OverrideItemAccountRef, AccountRef
 )
@@ -85,7 +85,7 @@ class InvoiceLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",
@@ -281,7 +281,7 @@ class InvoiceLine(QBMixin):
             "type": "Element",
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",
@@ -564,7 +564,7 @@ class InvoiceAdd(QBAddMixin):
             "required": True,
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",
@@ -1026,7 +1026,7 @@ class Invoice(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    class_ref: Optional[QBClassRef] = field(
+    class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
             "name": "ClassRef",
