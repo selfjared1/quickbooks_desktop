@@ -23,7 +23,7 @@ class MaxLengthMixin:
 class ToXmlMixin:
     IS_YES_NO_FIELD_LIST = []
 
-    def to_xml(self) -> et.Element:
+    def to_xml(self):
         root = et.Element(self.Meta.name)
 
         # Retrieve the custom field order if available, otherwise use natural order
@@ -60,7 +60,8 @@ class ToXmlMixin:
         Create an XML element based on the field and value.
         """
         if isinstance(value, list):
-            return self._handle_list_value(root, field, value)
+            element = self._handle_list_value(root, field, value)
+            return element
         elif isinstance(value, bool):
             return self._handle_bool_value(field, value)
         elif isinstance(value, QBDates) or isinstance(value, QBTime):
@@ -83,10 +84,7 @@ class ToXmlMixin:
                 parent_element.append(child)
             else:
                 element = child.to_xml()
-                try:
-                    parent_element.append(element)
-                except Exception as e:
-                    logger.error(e)
+                return element
         return parent_element
 
     def _handle_bool_value(self, field, value):
@@ -219,10 +217,17 @@ class FromXmlMixin:
         field_names = {field.metadata.get("name", field.name): field for field in cls.__dataclass_fields__.values()}
         init_args = cls.__get_init_args(element, field_names)
 
-        if element is not None and not len(element) and element.text is not None and len(
-                element.text) and element.text.replace('\n', '').strip() != '' and len(cls.__dataclass_fields__):
-            main_field = next(iter(cls.__dataclass_fields__.values()))
-            init_args[main_field.name] = element.text
+        if element is not None:
+            if not len(element) and element.text is not None and len(element.text) and element.text.replace('\n', '').strip() != '' and len(cls.__dataclass_fields__):
+                main_field = next(iter(cls.__dataclass_fields__.values()))
+                init_args[main_field.name] = element.text
+            elif element.tag in ['InvoiceLineRet']:
+                from src.quickbooks_desktop.transactions.invoices import InvoiceLine
+                for line in element:
+                    invoice_line = InvoiceLine.from_xml(line)
+                    return invoice_line
+            else:
+                pass
         else:
             pass
 

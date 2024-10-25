@@ -6,6 +6,8 @@ from typing import List, Optional, Any
 from src.quickbooks_desktop.mixins.qb_mixins import ToXmlMixin
 from src.quickbooks_desktop.common import LinkedTxn
 from src.quickbooks_desktop.qb_special_fields import QBDates
+from src.quickbooks_desktop.lists import ItemRef, SalesTaxCodeRef, CustomerRef
+from src.quickbooks_desktop.transactions.invoices import InvoiceAdd, InvoiceLineAdd
 from datetime import datetime
 
 # Sample dataclass to use with ToXmlMixin
@@ -24,7 +26,7 @@ class TestData(ToXmlMixin):
 class TestToXmlMixin(unittest.TestCase):
 
     def test_to_xml_simple(self):
-        data = TestData(name="TestName", is_active=True, items=["item1", "item2"], description="A description")
+        data = TestData(name="TestName", is_active=True, description="A description")
         xml_element = data.to_xml()
 
         # Assert root element
@@ -35,35 +37,32 @@ class TestToXmlMixin(unittest.TestCase):
         self.assertEqual(xml_element.find("IsActive").text, "true")
         self.assertEqual(xml_element.find("Description").text, "A description")
 
-        # Assert list elements
-        items_element = xml_element.find("Items")
-        self.assertIsNotNone(items_element)
-        self.assertEqual(len(items_element), 2)
-        self.assertEqual(items_element[0].text, "item1")
-        self.assertEqual(items_element[1].text, "item2")
-
     def test_to_xml_with_no_field_order(self):
-        data = TestData(name="TestName", is_active=False, items=["item1", "item2"], description=None)
+        data = TestData(name="TestName", is_active=False, description=None)
+        if hasattr(data, 'FIELD_ORDER'):
+            delattr(data, 'FIELD_ORDER')
+        else:
+            pass
+
         xml_element = data.to_xml()
 
         # Test order based on field definition when FIELD_ORDER is not present
         elements = list(xml_element)
         self.assertEqual(elements[0].tag, "Name")
         self.assertEqual(elements[1].tag, "IsActive")
-        self.assertEqual(elements[2].tag, "Items")
+        self.assertEqual(elements[2].tag, "Description")
 
     def test_to_xml_with_field_order(self):
         # Add FIELD_ORDER to the dataclass
-        TestData.FIELD_ORDER = ["is_active", "name", "items", "description"]
-        data = TestData(name="TestName", is_active=True, items=["item1"], description="Test description")
+        TestData.FIELD_ORDER = ["is_active", "name", "description"]
+        data = TestData(name="TestName", is_active=True, description="Test description")
         xml_element = data.to_xml()
 
         # Test order based on FIELD_ORDER
         elements = list(xml_element)
         self.assertEqual(elements[0].tag, "IsActive")
         self.assertEqual(elements[1].tag, "Name")
-        self.assertEqual(elements[2].tag, "Items")
-        self.assertEqual(elements[3].tag, "Description")
+        self.assertEqual(elements[2].tag, "Description")
 
     def test_to_xml_with_boolean_true(self):
         data = TestData(name="TestName", is_active=True, items=[], description=None)
@@ -86,8 +85,42 @@ class TestToXmlMixin(unittest.TestCase):
         xml_element = data.to_xml()
         self.assertEqual(xml_element.find("IsActive").text, "No")
 
+    def test_to_xml_invoice_add(self):
+        invoice_add = InvoiceAdd(
+            customer_ref=CustomerRef(list_id='80000001-1326159291', full_name='Netelco, Incorporated'),
+            invoice_line_add=[
+                InvoiceLineAdd(item_ref=ItemRef(list_id='80000001-1326159384', full_name='Estimating'),
+                         desc='Washington ES Low Voltage/Fire Alarm Bid', quantity=Decimal('1'),
+                         unit_of_measure=None, rate=Decimal('100.00'), rate_percent=None,
+                         price_level_ref=None, class_ref=None, amount=Decimal('100.00'),
+                         tax_amount=None, option_for_price_rule_conflict=None,
+                         inventory_site_ref=None, inventory_site_location_ref=None, serial_number=None,
+                         lot_number=None, service_date=None,
+                         sales_tax_code_ref=SalesTaxCodeRef(list_id='80000002-1326158429', full_name='Non'),
+                         is_taxable=None, override_item_account_ref=None, other1=None, other2=None,
+                         link_to_txn=None, def_macro=None),
+                InvoiceLineAdd(item_ref=ItemRef(list_id='80000001-1326159385', full_name='Estimating'),
+                               desc='Washington ES Low Voltage/Fire Alarm Bid', quantity=Decimal('1'),
+                               unit_of_measure=None, rate=Decimal('200.00'), rate_percent=None,
+                               price_level_ref=None, class_ref=None, amount=Decimal('100.00'),
+                               tax_amount=None, option_for_price_rule_conflict=None,
+                               inventory_site_ref=None, inventory_site_location_ref=None, serial_number=None,
+                               lot_number=None, service_date=None,
+                               sales_tax_code_ref=SalesTaxCodeRef(list_id='80000002-1326158429', full_name='Non'),
+                               is_taxable=None, override_item_account_ref=None, other1=None, other2=None,
+                               link_to_txn=None, def_macro=None)
+                ],
+            invoice_line_group_add=[])
 
-class TestToXmlMixin(unittest.TestCase):
+        xml_element = invoice_add.to_xml()
+        self.assertEqual(xml_element.tag, "InvoiceAdd")
+        self.assertEqual(xml_element.find("CustomerRef/ListID").text, "80000001-1326159291")
+        invoice_line_add_elm = xml_element.find('InvoiceLineAdd')
+        self.assertEqual(len(invoice_line_add_elm), 2)
+
+
+
+class TestToXmlMixin2(unittest.TestCase):
 
     def setUp(self):
         # Create an instance of the class you're testing

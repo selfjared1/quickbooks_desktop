@@ -219,4 +219,49 @@ class PluralTrxnSaveMixin:
         response = qb.send_xml(xml_requests)
         return response
 
+    def set_ids_to_none(self, id_name):
+        # Iterate over each item in the _items list, assuming they are instances of some class
+        for item in self:
+            self._set_list_id_in_instance_to_none(item, id_name)
+
+    def _set_list_id_in_instance_to_none(self, obj, id_name):
+        # Iterate through all attributes of the object
+        for attr_name in dir(obj):
+            if attr_name.startswith('__'):
+                pass
+            elif attr_name.startswith('_'):
+                pass
+            elif attr_name in ['Add', 'Mod', 'Query', 'Meta', 'IS_YES_NO_FIELD_LIST']:
+                pass
+            elif attr_name.endswith('Ref') or attr_name.endswith('ref'):
+                ref = getattr(obj, attr_name)
+                if hasattr(ref, id_name):
+                    ref.list_id = None
+                else:
+                    pass
+            else:
+                attr_value = getattr(obj, attr_name)
+
+                # If the attribute is a list, iterate through the list items
+                if isinstance(attr_value, list):
+                    for sub_item in attr_value:
+                        if hasattr(sub_item, id_name):
+                            setattr(sub_item, id_name, None)
+                        else:
+                            pass
+                        self._set_list_id_in_instance_to_none(sub_item, id_name)  # Recurse for nested objects
+
+                # If the attribute itself has a 'list_id', set it to None
+                elif hasattr(attr_value, id_name):
+                    setattr(attr_value, id_name, None)
+
+                else:
+
+                    # If the attribute is 'list_id', set it to None
+                    if attr_name == id_name:
+                        setattr(obj, attr_name, None)
+                    else:
+                        pass
+
+
 

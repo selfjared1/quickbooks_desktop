@@ -3,6 +3,8 @@ from lxml import etree as et
 from dataclasses import dataclass, field
 from typing import Optional, List
 from src.quickbooks_desktop.mixins.qb_mixins import FromXmlMixin
+from src.quickbooks_desktop.lists import CustomerRef
+from src.quickbooks_desktop.transactions.invoices import Invoice
 
 
 # Import the FromXmlMixin
@@ -54,6 +56,64 @@ class TestFromXmlMixin(unittest.TestCase):
 
         self.assertEqual(instance.name, "TestName")
         self.assertEqual(instance.value, 123)
+
+    def test_basic_from_xml_03(self):
+        # Test case for a simple XML element matching defined fields
+        xml_str = """
+        <CustomerRef>
+              <ListID>80000001-1326159291</ListID>
+              <FullName>Netelco, Incorporated</FullName>
+        </CustomerRef>
+        """
+        element = et.fromstring(xml_str)
+        instance = CustomerRef.from_xml(element)
+
+        self.assertEqual(instance.list_id, "80000001-1326159291")
+        self.assertEqual(instance.full_name, "Netelco, Incorporated")
+
+    def test_basic_from_xml_04(self):
+        # Test case for a simple XML element matching defined fields
+        xml_str = """
+        <InvoiceRet>
+            <InvoiceLineRet>      
+                <InvoiceLine>        
+                    <TxnLineID>3-1326159535</TxnLineID>        
+                    <ItemRef>          
+                        <ListID>80000001-1326159384</ListID>          
+                        <FullName>Estimating</FullName>        
+                    </ItemRef>        
+                    <Desc>Washington ES Low Voltage/Fire Alarm Bid</Desc>        
+                    <Quantity>1</Quantity>        
+                    <Rate>100.00</Rate>        
+                    <Amount>100.00</Amount>        
+                    <SalesTaxCodeRef>          
+                        <ListID>80000002-1326158429</ListID>          
+                        <FullName>Non</FullName>        
+                    </SalesTaxCodeRef>      
+                </InvoiceLine>      
+                <InvoiceLine>        
+                    <TxnLineID>4-1326159535</TxnLineID>        
+                    <ItemRef>          
+                    <ListID>80000001-1326159384</ListID>          
+                    <FullName>Estimating</FullName>        
+                    </ItemRef>        
+                    <Desc>Seasons 52 Fire Alarm - Fire Lite</Desc>        
+                    <Quantity>1</Quantity>        
+                    <Rate>100.00</Rate>        
+                    <Amount>100.00</Amount>        
+                    <SalesTaxCodeRef>          
+                    <ListID>80000002-1326158429</ListID>          
+                    <FullName>Non</FullName>        
+                    </SalesTaxCodeRef>      
+                </InvoiceLine>    
+            </InvoiceLineRet>
+        </InvoiceRet>
+        """
+        element = et.fromstring(xml_str)
+        instance = Invoice.from_xml(element)
+
+        self.assertEqual(instance.list_id, "80000001-1326159291")
+        self.assertEqual(instance.full_name, "Netelco, Incorporated")
 
     def test_handle_unexpected_field(self):
         # Test case where the XML contains an unexpected field

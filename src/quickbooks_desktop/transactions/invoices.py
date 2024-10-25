@@ -626,7 +626,7 @@ class InvoiceAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    ponumber: Optional[str] = field(
+    po_number: Optional[str] = field(
         default=None,
         metadata={
             "name": "PONumber",
@@ -1024,7 +1024,7 @@ class Invoice(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    araccount_ref: Optional[AraccountRef] = field(
+    ar_account_ref: Optional[AraccountRef] = field(
         default=None,
         metadata={
             "name": "ARAccountRef",
@@ -1302,7 +1302,7 @@ class Invoice(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    invoice_line_group_ret: List[InvoiceLineGroup] = field(
+    invoice_line_groups: List[InvoiceLineGroup] = field(
         default_factory=list,
         metadata={
             "name": "InvoiceLineGroupRet",
