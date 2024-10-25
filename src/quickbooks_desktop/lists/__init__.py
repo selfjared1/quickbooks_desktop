@@ -1,5 +1,6 @@
 
 from .accounts import Account, Accounts, AraccountRef, OverrideItemAccountRef, AccountRef, DepositToAccountRef
+from .billing_rate import BillingRate, BillingRateRef
 from .currency import Currency, CurrencyRef
 from .customer_msgs import CustomerMsgRef
 from .customer_sales_tax_codes import CustomerSalesTaxCodeRef

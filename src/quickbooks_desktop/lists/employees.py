@@ -2,38 +2,41 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from decimal import Decimal
 from src.quickbooks_desktop.common.qb_contact_common_fields import EmployeeAddress
+from src.quickbooks_desktop.lists import BillingRateRef, ClassInQBRef
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
-from src.quickbooks_desktop.lists.classes_in_qb import ClassInQBRef
+from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 
+
+
+VALID_RELATION_VALUES = [
+        "Spouse", "Partner", "Mother", "Father", "Sister", "Brother",
+        "Son", "Daughter", "Friend", "Other"
+    ]
 
 @dataclass
 class EntityRef(QBRefMixin):
     class Meta:
         name = "EntityRef"
 
+@dataclass
+class SupervisorRef(QBRefMixin):
+    class Meta:
+        name = "SupervisorRef"
 
-def validate_relation(value: Optional[str]) -> Optional[str]:
-    VALID_RELATION_VALUES = [
-        "Spouse", "Partner", "Mother", "Father", "Sister", "Brother",
-        "Son", "Daughter", "Friend", "Other"
-    ]
-    if value is not None and value not in VALID_RELATION_VALUES:
-        raise ValueError(f"Invalid relation: {value}. Must be one of {VALID_RELATION_VALUES}.")
-    return value
+
+@dataclass
+class PayrollItemWageRef(QBRefMixin):
+    class Meta:
+        name = "PayrollItemWageRef"
 
 
 @dataclass
 class EmergencyContact(QBMixin):
+    # this class is meant to be inherited
     class Meta:
-        name = "EmergencyContact"
-
-    VALID_RELATION_VALUES = [
-        "Spouse", "Partner", "Mother", "Father", "Sister", "Brother",
-        "Son", "Daughter", "Friend", "Other"
-    ]
+        name = ""
 
     contact_name: Optional[str] = field(
         default=None,
@@ -58,17 +61,9 @@ class EmergencyContact(QBMixin):
         metadata={
             "name": "Relation",
             "type": "Element",
+            "valid_values": VALID_RELATION_VALUES
         },
     )
-
-    def __post_init__(self):
-        self._validate_relation(self.relation)
-
-    def _validate_relation(self, value: Optional[str]) -> None:
-        if value is not None and value not in self.VALID_RELATION_VALUES:
-            raise ValueError(f"Invalid relation: {value}. Must be one of {self.VALID_RELATION_VALUES}.")
-        else:
-            pass
 
 @dataclass
 class PrimaryContact(EmergencyContact):
@@ -101,16 +96,7 @@ class EmergencyContacts(QBMixin):
         },
     )
 
-@dataclass
-class SupervisorRef(QBRefMixin):
-    class Meta:
-        name = "SupervisorRef"
 
-
-@dataclass
-class PayrollItemWageRef(QBRefMixin):
-    class Meta:
-        name = "PayrollItemWageRef"
 
 @dataclass
 class Earnings(QBMixin):
@@ -158,6 +144,7 @@ class AccruedHours(QBMixin):
         metadata={
             "name": "AccrualPeriod",
             "type": "Element",
+            "valid_values": ["BeginningOfYear", "EveryHourOnPaycheck", "EveryPaycheck"]
         },
     )
     hours_accrued: Optional[QBTime] = field(
@@ -198,10 +185,6 @@ class AccruedHours(QBMixin):
         },
     )
 
-    VALID_ACCRUAL_PERIOD_VALUES = ["BeginningOfYear", "EveryHourOnPaycheck", "EveryPaycheck"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('accrual_period', self.accrual_period, self.VALID_ACCRUAL_PERIOD_VALUES)
 
 @dataclass
 class SickHours(AccruedHours):
@@ -209,7 +192,13 @@ class SickHours(AccruedHours):
     class Meta:
         name = "SickHours"
 
-    employee_payroll_info_id: Optional[int] = None
+    employee_payroll_info_id: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "EmployeePayrollInfoId",
+            "type": "Element",
+        },
+    )
 
 
 @dataclass
@@ -218,7 +207,13 @@ class VacationHours(AccruedHours):
     class Meta:
         name = "VacationHours"
 
-    employee_payroll_info_id: Optional[int] = None
+    employee_payroll_info_id: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "EmployeePayrollInfoId",
+            "type": "Element",
+        },
+    )
 
 @dataclass
 class EmployeePayrollInfo(QBMixin):
@@ -231,6 +226,7 @@ class EmployeePayrollInfo(QBMixin):
         metadata={
             "name": "PayPeriod",
             "type": "Element",
+            "valid_values": ["Daily", "Weekly", "Biweekly", "Semimonthly", "Monthly", "Quarterly", "Yearly"]
         },
     )
     class_ref: Optional[ClassInQBRef] = field(
@@ -259,6 +255,7 @@ class EmployeePayrollInfo(QBMixin):
         metadata={
             "name": "UseTimeDataToCreatePaychecks",
             "type": "Element",
+            "valid_values": ["NotSet", "UseTimeData", "DoNotUseTimeData"]
         },
     )
     sick_hours: Optional[SickHours] = field(
@@ -275,92 +272,6 @@ class EmployeePayrollInfo(QBMixin):
             "type": "Element",
         },
     )
-
-    VALID_PAY_PERIOD_VALUES = ["Daily", "Weekly", "Biweekly", "Semimonthly", "Monthly", "Quarterly", "Yearly"]
-    VALID_USE_TIME_DATA_TO_CREATE_PAYCHECKS_VALUES = ["NotSet", "UseTimeData", "DoNotUseTimeData"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('pay_period', self.pay_period,
-                                               self.VALID_PAY_PERIOD_VALUES)
-        self._validate_str_from_list_of_values('use_time_data_to_create_paychecks', self.use_time_data_to_create_paychecks,
-                                               self.VALID_USE_TIME_DATA_TO_CREATE_PAYCHECKS_VALUES)
-
-
-@dataclass
-class BillingRateRef(QBRefMixin):
-
-    class Meta:
-        name = "BillingRateRef"
-
-@dataclass
-class BillingRate(QBMixin):
-    class Meta:
-        name = "BillingRate"
-
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    time_created: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "TimeCreated",
-            "type": "Element",
-        },
-    )
-    time_modified: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "TimeModified",
-            "type": "Element",
-        },
-    )
-    edit_sequence: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "EditSequence",
-            "type": "Element",
-            "max_length": 16,
-        },
-    )
-    name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Name",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    billing_rate_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BillingRateType",
-            "type": "Element",
-        },
-    )
-    #todo: Add Field
-    # fixed_billing_rate: Optional[FixedBillingRate] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "FixedBillingRate",
-    #         "type": "Element",
-    #     },
-    # )
-    # billing_rate_per_item_ret: List[BillingRatePerItemRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "BillingRatePerItemRet",
-    #         "type": "Element",
-    #     },
-    # )
-
-    VALID_BILLING_RATE_TYPES = ["FixedRate", "PerItem"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('billing_rate_type', self.billing_rate_type, self.VALID_BILLING_RATE_TYPES)
 
 
 @dataclass
