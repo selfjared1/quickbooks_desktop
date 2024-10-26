@@ -276,6 +276,12 @@ class EmployeePayrollInfo(QBMixin):
 
 @dataclass
 class EmployeeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus", "FromModifiedDate",
+        "ToModifiedDate", "NameFilter", "NameRangeFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "EmployeeQuery"
 
@@ -348,34 +354,6 @@ class EmployeeQuery(QBQueryMixin):
         metadata={
             "name": "OwnerID",
             "type": "Element",
-        },
-    )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    # meta_data: Optional[str] = field(
-    #     default='NoMetaData',
-    #     metadata={
-    #         "name": "metaData",
-    #         "type": "Attribute",
-    #     },
-    # )
-    #
-    # VALID_META_DATA_VALUES = ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"]
-    #
-    # def __post_init__(self):
-    #     self._validate_str_from_list_of_values('meta_data', self.meta_data, self.VALID_META_DATA_VALUES)
-
-    department_code: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Department Code",
-            "type": "Element",
-            "max_length": 99
         },
     )
 
