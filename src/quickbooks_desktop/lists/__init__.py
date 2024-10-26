@@ -20,7 +20,7 @@ from .ship_method import ShipMethodRef
 from .templates import TemplateRef
 from .terms import TermsRef
 from .unit_of_measure_sets import OverrideUomsetRef
-from .vendors import PrefVendorRef
+from .vendors import PrefVendorRef, TaxVendorRef
 
 
 

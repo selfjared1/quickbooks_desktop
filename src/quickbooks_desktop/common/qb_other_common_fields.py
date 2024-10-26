@@ -31,6 +31,14 @@ class ListObjRef(QBRefMixin):
     class Meta:
         name = "ListObjRef"
 
+
+@dataclass
+class SalesTaxReturnLineRef(QBRefMixin):
+
+    class Meta:
+        name = "SalesTaxReturnLineRef"
+
+
 @dataclass
 class PreferredPaymentMethodRef(QBRefMixin):
 

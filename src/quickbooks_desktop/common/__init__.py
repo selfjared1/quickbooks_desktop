@@ -6,7 +6,7 @@ from .qb_contact_common_fields import (
 
 from .qb_other_common_fields import (
     ParentRef, TxnLineDetail, LinkedTxn, SetCredit, PreferredPaymentMethodRef, CreditCardInfo,
-    JobTypeRef, ListObjRef
+    JobTypeRef, ListObjRef, SalesTaxReturnLineRef
 )
 
 from .qb_query_common_fields import (
