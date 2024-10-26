@@ -49,7 +49,7 @@ class InvoiceLineAdd(QBAddMixin):
             "max_length": 4095,
         },
     )
-    quantity: Optional[Decimal] = field(
+    quantity: Optional[float] = field(
         default=None,
         metadata={
             "name": "Quantity",
@@ -71,7 +71,7 @@ class InvoiceLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    rate_percent: Optional[Decimal] = field(
+    rate_percent: Optional[float] = field(
         default=None,
         metadata={
             "name": "RatePercent",
@@ -245,7 +245,7 @@ class InvoiceLine(QBMixin):
             "max_length": 4095,
         },
     )
-    quantity: Optional[Decimal] = field(
+    quantity: Optional[float] = field(
         default=None,
         metadata={
             "name": "Quantity",
@@ -274,7 +274,7 @@ class InvoiceLine(QBMixin):
             "type": "Element",
         },
     )
-    rate_percent: Optional[Decimal] = field(
+    rate_percent: Optional[float] = field(
         default=None,
         metadata={
             "name": "RatePercent",
@@ -404,7 +404,7 @@ class InvoiceLineGroupAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    quantity: Optional[Decimal] = field(
+    quantity: Optional[float] = field(
         default=None,
         metadata={
             "name": "Quantity",
@@ -479,7 +479,7 @@ class InvoiceLineGroup(QBMixin):
             "max_length": 4095,
         },
     )
-    quantity: Optional[Decimal] = field(
+    quantity: Optional[float] = field(
         default=None,
         metadata={
             "name": "Quantity",
@@ -1169,7 +1169,7 @@ class Invoice(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    sales_tax_percentage: Optional[Decimal] = field(
+    sales_tax_percentage: Optional[float] = field(
         default=None,
         metadata={
             "name": "SalesTaxPercentage",

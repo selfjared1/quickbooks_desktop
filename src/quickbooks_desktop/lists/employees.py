@@ -118,7 +118,7 @@ class Earnings(QBMixin):
             "type": "Element",
         },
     )
-    rate_percent: Optional[Decimal] = field(
+    rate_percent: Optional[float] = field(
         default=None,
         metadata={
             "name": "RatePercent",

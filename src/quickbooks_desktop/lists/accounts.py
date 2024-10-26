@@ -58,6 +58,15 @@ class AccountRef(QBRefMixin):
     class Meta:
         name = "AccountRef"
 
+@dataclass
+class CogsaccountRef(QBRefMixin):
+    class Meta:
+        name = "CogsaccountRef"
+
+@dataclass
+class AssetAccountRef(QBRefMixin):
+    class Meta:
+        name = "AssetAccountRef"
 
 @dataclass
 class OverrideItemAccountRef(QBRefMixin):

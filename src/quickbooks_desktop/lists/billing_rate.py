@@ -46,14 +46,14 @@ class BillingRatePerItem(QBMixin):
             "type": "Element",
         },
     )
-    custom_rate_percent: Optional[Decimal] = field(
+    custom_rate_percent: Optional[float] = field(
         default=None,
         metadata={
             "name": "CustomRatePercent",
             "type": "Element",
         },
     )
-    adjust_percentage: Optional[Decimal] = field(
+    adjust_percentage: Optional[float] = field(
         default=None,
         metadata={
             "name": "AdjustPercentage",
