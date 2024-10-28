@@ -10,7 +10,24 @@ from .customer_sales_tax_codes import CustomerSalesTaxCodeRef
 from .customers import Customer, Customers, CustomerRef
 from .employees import Employee, Employees, EntityRef
 from .inventory_site import InventorySiteRef, InventorySiteLocationRef
-from .items import UnitOfMeasureSetRef, ItemServiceRef, ItemSalesTaxRef, ItemService, ItemServices, ItemRef, ItemGroupRef
+from .items import (
+    UnitOfMeasureSetRef, ItemRef, ItemGroupRef, ItemServiceRef, ItemSalesTaxRef, ItemInventoryRef,
+    ItemGroupLine, ItemInventoryAssemblyLine, BarCode, SalesAndPurchase, SalesOrPurchase,
+    ItemDiscountQuery, ItemGroupQuery, ItemServiceQuery,
+    ItemInventoryAssemblyQuery, ItemInventoryQuery, ItemNonInventoryQuery, ItemOtherChargeQuery,
+    ItemPaymentQuery, ItemSalesTaxGroupQuery, ItemSalesTaxQuery, ItemSubtotalQuery,
+    ItemDiscountAdd, ItemGroupAdd, ItemInventoryAdd,
+    ItemInventoryAssemblyAdd, ItemNonInventoryAdd, ItemOtherChargeAdd, ItemPaymentAdd,
+    ItemSalesTaxAdd, ItemSalesTaxGroupAdd, ItemServiceAdd, ItemSubtotalAdd,
+    ItemDiscountMod, ItemGroupMod, ItemInventoryMod,
+    ItemInventoryAssemblyMod, ItemNonInventoryMod, ItemOtherChargeMod, ItemPaymentMod,
+    ItemSalesTaxMod, ItemSalesTaxGroupMod, ItemServiceMod, ItemSubtotalMod,
+    ItemDiscount, ItemDiscounts, ItemGroup, ItemGroups,
+    ItemInventory, ItemInventories, ItemInventoryAssembly, ItemInventoryAssemblies, ItemNonInventory,
+    ItemNonInventories, ItemOtherCharge, ItemOtherCharges, ItemPayment, ItemPayments,
+    ItemSalesTax, ItemSalesTaxes, ItemSalesTaxGroup, ItemSalesTaxGroups, ItemService, ItemServices,
+    ItemSubtotal, ItemSubtotals
+)
 from .payment_method import PaymentMethodRef
 from .price_level import PriceLevelRef
 from .classes_in_qb import ClassInQB, ClassesInQB, ClassInQBRef
