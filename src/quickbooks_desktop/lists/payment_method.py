@@ -120,7 +120,7 @@ class PaymentMethodQuery(QBQueryMixin):
 
 
 @dataclass
-class PaymentMethodAdd:
+class PaymentMethodAdd(QBAddMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "PaymentMethodType"
     ]
