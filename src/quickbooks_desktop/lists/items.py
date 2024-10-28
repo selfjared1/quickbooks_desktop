@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Type
 from decimal import Decimal
 from src.quickbooks_desktop.lists import (
     AccountRef, IncomeAccountRef, ExpenseAccountRef, ClassInQBRef, PrefVendorRef, SalesTaxCodeRef,
@@ -10,6 +10,7 @@ from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
 from src.quickbooks_desktop.common import ParentRef, SalesTaxReturnLineRef, NameFilter, NameRangeFilter, ClassFilter
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
+from src.quickbooks_desktop.data_ext import DataExt
 
 
 
@@ -659,7 +660,7 @@ class ItemInventoryAddMixin(ItemAddWithClassAndTaxMixin):
             "type": "Element",
         },
     )
-    quantity_on_hand: Optional[int] = field(
+    quantity_on_hand: Optional[float] = field(
         default=None,
         metadata={
             "name": "QuantityOnHand",
@@ -965,6 +966,20 @@ class ItemServiceAdd(ItemAddMixin):
     class Meta:
         name = "ItemServiceAdd"
 
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
     unit_of_measure_set_ref: Optional[UnitOfMeasureSetRef] = field(
         default=None,
         metadata={
@@ -976,6 +991,13 @@ class ItemServiceAdd(ItemAddMixin):
         default=None,
         metadata={
             "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
             "type": "Element",
         },
     )
@@ -994,7 +1016,7 @@ class ItemServiceAdd(ItemAddMixin):
         },
     )
 
-
+@dataclass
 class ItemSubtotalAdd(ItemAddMixin):
     FIELD_ORDER = [
         "Name", "BarCode", "IsActive", "ItemDesc", "ExternalGUID"
@@ -1012,7 +1034,7 @@ class ItemSubtotalAdd(ItemAddMixin):
         },
     )
 
-
+@dataclass
 class ItemModMixin(QBModMixin):
     FIELD_ORDER = []
     class Meta:
@@ -1080,7 +1102,6 @@ class ItemModWithClassAndTaxMixin(ItemModMixin):
         },
     )
 
-#******************************************************
 
 @dataclass
 class ItemDiscountMod(ItemModWithClassAndTaxMixin):
@@ -1393,15 +1414,14 @@ class ItemInventoryAssemblyMod(ItemInventoryModMixin):
         },
     )
 
-#todo:  Finish comparing Mods from here.
-#todo: Create the classes that hold query, add, and Mod
 
 @dataclass
 class ItemNonInventoryMod(ItemModWithClassAndTaxMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ParentRef", "ClassRef",
-        "ManufacturerPartNumber", "UnitOfMeasureSetRef", "SalesTaxCodeRef",
-        "SalesOrPurchase", "SalesAndPurchase", "ExternalGUID"
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef",
+        "ParentRef", "ManufacturerPartNumber", "UnitOfMeasureSetRef",
+        "ForceUOMChange", "SalesTaxCodeRef", "SalesOrPurchaseMod",
+        "SalesAndPurchaseMod"
     ]
     class Meta:
         name = "ItemNonInventoryMod"
@@ -1426,6 +1446,13 @@ class ItemNonInventoryMod(ItemModWithClassAndTaxMixin):
         default=None,
         metadata={
             "name": "UnitOfMeasureSetRef",
+            "type": "Element",
+        },
+    )
+    force_uomchange: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ForceUOMChange",
             "type": "Element",
         },
     )
@@ -1455,8 +1482,9 @@ class ItemNonInventoryMod(ItemModWithClassAndTaxMixin):
 @dataclass
 class ItemOtherChargeMod(ItemModWithClassAndTaxMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef", "ParentRef",
-        "SalesTaxCodeRef", "SalesOrPurchase", "SalesAndPurchase", "ExternalGUID"
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef",
+        "ParentRef", "SalesTaxCodeRef", "SalesOrPurchaseMod",
+        "SalesAndPurchaseMod"
     ]
 
     class Meta:
@@ -1495,8 +1523,8 @@ class ItemOtherChargeMod(ItemModWithClassAndTaxMixin):
 @dataclass
 class ItemPaymentMod(ItemModMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef", "ItemDesc",
-        "DepositToAccountRef", "PaymentMethodRef", "ExternalGUID"
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef",
+        "ItemDesc", "DepositToAccountRef", "PaymentMethodRef"
     ]
 
     class Meta:
@@ -1535,8 +1563,8 @@ class ItemPaymentMod(ItemModMixin):
 @dataclass
 class ItemSalesTaxMod(ItemModMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef", "ItemDesc",
-        "TaxRate", "TaxVendorRef", "ExternalGUID"
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef",
+        "ItemDesc", "TaxRate", "TaxVendorRef"
     ]
 
     class Meta:
@@ -1583,7 +1611,7 @@ class ItemSalesTaxMod(ItemModMixin):
 @dataclass
 class ItemSalesTaxGroupMod(ItemModMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ItemDesc", "ExternalGUID",
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ItemDesc",
         "ItemSalesTaxRef"
     ]
 
@@ -1609,11 +1637,11 @@ class ItemSalesTaxGroupMod(ItemModMixin):
 
 
 @dataclass
-class ItemServiceMod(ItemModMixin):
+class ItemServiceMod(ItemModWithClassAndTaxMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef", "ParentRef",
-        "UnitOfMeasureSetRef", "SalesTaxCodeRef", "SalesOrPurchase",
-        "SalesAndPurchase", "ExternalGUID"
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ClassRef",
+        "ParentRef", "UnitOfMeasureSetRef", "ForceUOMChange", "SalesTaxCodeRef",
+        "SalesOrPurchaseMod", "SalesAndPurchaseMod"
     ]
 
     class Meta:
@@ -1648,10 +1676,10 @@ class ItemServiceMod(ItemModMixin):
         },
     )
 
-
+@dataclass
 class ItemSubtotalMod(ItemModMixin):
     FIELD_ORDER = [
-        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ItemDesc", "ExternalGUID"
+        "ListID", "EditSequence", "Name", "BarCode", "IsActive", "ItemDesc"
     ]
 
     class Meta:
@@ -1665,9 +1693,6 @@ class ItemSubtotalMod(ItemModMixin):
             "max_length": 4095,
         },
     )
-
-
-#******************************************************
 
 @dataclass
 class ItemMixin:
@@ -1734,6 +1759,11 @@ class ItemMixin:
             "type": "Element",
         },
     )
+
+@dataclass
+def ItemWithClassAndTaxMixin(ItemMixin):
+
+
     class_ref: Optional[ClassInQBRef] = field(
         default=None,
         metadata={
@@ -1741,6 +1771,845 @@ class ItemMixin:
             "type": "Element",
         },
     )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemDiscount"
+
+    Query: Type[ItemDiscountQuery] = ItemDiscountQuery
+    Add: Type[ItemDiscountAdd] = ItemDiscountAdd
+    Mod: Type[ItemDiscountMod] = ItemDiscountMod
+
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+    item_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    discount_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "DiscountRate",
+            "type": "Element",
+        },
+    )
+    discount_rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "DiscountRatePercent",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemDiscounts(PluralMixin):
+
+    class Meta:
+        name = "ItemDiscount"
+        plural_of = ItemDiscount
+
+
+@dataclass
+class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemGroup"
+
+    Query: Type[ItemGroupQuery] = ItemGroupQuery
+    Add: Type[ItemGroupAdd] = ItemGroupAdd
+    Mod: Type[ItemGroupMod] = ItemGroupMod
+
+    item_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    unit_of_measure_set_ref: Optional[UnitOfMeasureSetRef] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+        },
+    )
+    special_item_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SpecialItemType",
+            "type": "Element",
+            "valid_values": ["FinanceCharge", "ReimbursableExpenseGroup", "ReimbursableExpenseSubtotal"]
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    item_group_line: List[ItemGroupLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLine",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemGroups(PluralMixin):
+
+    class Meta:
+        name = "ItemGroup"
+        plural_of = ItemGroup
+
+
+@dataclass
+class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemInventory"
+
+    Query: Type[ItemInventoryQuery] = ItemInventoryQuery
+    Add: Type[ItemInventoryAdd] = ItemInventoryAdd
+    Mod: Type[ItemInventoryMod] = ItemInventoryMod
+
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+    manufacturer_part_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ManufacturerPartNumber",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    unit_of_measure_set_ref: Optional[UnitOfMeasureSetRef] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureSetRef",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SalesDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    sales_price: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesPrice",
+            "type": "Element",
+        },
+    )
+    income_account_ref: Optional[IncomeAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "IncomeAccountRef",
+            "type": "Element",
+        },
+    )
+    purchase_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PurchaseDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    purchase_cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "PurchaseCost",
+            "type": "Element",
+        },
+    )
+    purchase_tax_code_ref: Optional[PurchaseTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "PurchaseTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    cogsaccount_ref: Optional[CogsaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "COGSAccountRef",
+            "type": "Element",
+        },
+    )
+    pref_vendor_ref: Optional[PrefVendorRef] = field(
+        default=None,
+        metadata={
+            "name": "PrefVendorRef",
+            "type": "Element",
+        },
+    )
+    asset_account_ref: Optional[AssetAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AssetAccountRef",
+            "type": "Element",
+        },
+    )
+    reorder_point: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "ReorderPoint",
+            "type": "Element",
+        },
+    )
+    max: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Max",
+            "type": "Element",
+        },
+    )
+    quantity_on_hand: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnHand",
+            "type": "Element",
+        },
+    )
+    average_cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AverageCost",
+            "type": "Element",
+        },
+    )
+    quantity_on_order: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnOrder",
+            "type": "Element",
+        },
+    )
+    quantity_on_sales_order: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnSalesOrder",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemInventories(PluralMixin):
+
+    class Meta:
+        name = "ItemInventory"
+        plural_of = ItemInventory
+
+
+@dataclass
+class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemInventoryAssembly"
+
+    Query: Type[ItemInventoryAssemblyQuery] = ItemInventoryAssemblyQuery
+    Add: Type[ItemInventoryAssemblyAdd] = ItemInventoryAssemblyAdd
+    Mod: Type[ItemInventoryAssemblyMod] = ItemInventoryAssemblyMod
+
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+    manufacturer_part_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ManufacturerPartNumber",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    unit_of_measure_set_ref: Optional[UnitOfMeasureSetRef] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureSetRef",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SalesDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    sales_price: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesPrice",
+            "type": "Element",
+        },
+    )
+    income_account_ref: Optional[IncomeAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "IncomeAccountRef",
+            "type": "Element",
+        },
+    )
+    purchase_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PurchaseDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    purchase_cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "PurchaseCost",
+            "type": "Element",
+        },
+    )
+    purchase_tax_code_ref: Optional[PurchaseTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "PurchaseTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    cogsaccount_ref: Optional[CogsaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "COGSAccountRef",
+            "type": "Element",
+        },
+    )
+    pref_vendor_ref: Optional[PrefVendorRef] = field(
+        default=None,
+        metadata={
+            "name": "PrefVendorRef",
+            "type": "Element",
+        },
+    )
+    asset_account_ref: Optional[AssetAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AssetAccountRef",
+            "type": "Element",
+        },
+    )
+    build_point: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "BuildPoint",
+            "type": "Element",
+        },
+    )
+    max: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Max",
+            "type": "Element",
+        },
+    )
+    quantity_on_hand: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnHand",
+            "type": "Element",
+        },
+    )
+    average_cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AverageCost",
+            "type": "Element",
+        },
+    )
+    quantity_on_order: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnOrder",
+            "type": "Element",
+        },
+    )
+    quantity_on_sales_order: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnSalesOrder",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    item_inventory_assembly_line: List[ItemInventoryAssemblyLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemInventoryAssemblyLine",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemInventoryAssemblies(PluralMixin):
+
+    class Meta:
+        name = "ItemInventoryAssembly"
+        plural_of = ItemInventoryAssembly
+
+
+@dataclass
+class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemNonInventory"
+
+    Query: Type[ItemNonInventoryQuery] = ItemNonInventoryQuery
+    Add: Type[ItemNonInventoryAdd] = ItemNonInventoryAdd
+    Mod: Type[ItemNonInventoryMod] = ItemNonInventoryMod
+
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+    manufacturer_part_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ManufacturerPartNumber",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    unit_of_measure_set_ref: Optional[UnitOfMeasureSetRef] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureSetRef",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_or_purchase: Optional[SalesOrPurchase] = field(
+        default=None,
+        metadata={
+            "name": "SalesOrPurchase",
+            "type": "Element",
+        },
+    )
+    sales_and_purchase: Optional[SalesAndPurchase] = field(
+        default=None,
+        metadata={
+            "name": "SalesAndPurchase",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemNonInventories(PluralMixin):
+
+    class Meta:
+        name = "ItemNonInventory"
+        plural_of = ItemNonInventory
+
+
+@dataclass
+class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemOtherCharge"
+
+    Query: Type[ItemOtherChargeQuery] = ItemOtherChargeQuery
+    Add: Type[ItemOtherChargeAdd] = ItemOtherChargeAdd
+    Mod: Type[ItemOtherChargeMod] = ItemOtherChargeMod
+
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_or_purchase: Optional[SalesOrPurchase] = field(
+        default=None,
+        metadata={
+            "name": "SalesOrPurchase",
+            "type": "Element",
+        },
+    )
+    sales_and_purchase: Optional[SalesAndPurchase] = field(
+        default=None,
+        metadata={
+            "name": "SalesAndPurchase",
+            "type": "Element",
+        },
+    )
+    special_item_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SpecialItemType",
+            "type": "Element",
+            "valid_values": ["FinanceCharge", "ReimbursableExpenseGroup", "ReimbursableExpenseSubtotal"]
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemOtherCharges(PluralMixin):
+
+    class Meta:
+        name = "ItemOtherCharge"
+        plural_of = ItemOtherCharge
+
+
+@dataclass
+class ItemPayment(ItemMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemPayment"
+
+    Query: Type[ItemPaymentQuery] = ItemPaymentQuery
+    Add: Type[ItemPaymentAdd] = ItemPaymentAdd
+    Mod: Type[ItemPaymentMod] = ItemPaymentMod
+
+    item_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemPayments(PluralMixin):
+
+    class Meta:
+        name = "ItemPayment"
+        plural_of = ItemPayment
+
+@dataclass
+class ItemSalesTax(ItemMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemSalesTax"
+
+    Query: Type[ItemSalesTaxQuery] = ItemSalesTaxQuery
+    Add: Type[ItemSalesTaxAdd] = ItemSalesTaxAdd
+    Mod: Type[ItemSalesTaxMod] = ItemSalesTaxMod
+
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    item_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    tax_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "TaxRate",
+            "type": "Element",
+        },
+    )
+    tax_vendor_ref: Optional[TaxVendorRef] = field(
+        default=None,
+        metadata={
+            "name": "TaxVendorRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_return_line_ref: Optional[SalesTaxReturnLineRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxReturnLineRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemSalesTaxes(PluralMixin):
+
+    class Meta:
+        name = "ItemSalesTax"
+        plural_of = ItemSalesTax
+
+
+@dataclass
+class ItemSalesTaxGroup(ItemMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemSalesTaxGroup"
+
+    Query: Type[ItemSalesTaxGroupQuery] = ItemSalesTaxGroupQuery
+    Add: Type[ItemSalesTaxGroupAdd] = ItemSalesTaxGroupAdd
+    Mod: Type[ItemSalesTaxGroupMod] = ItemSalesTaxGroupMod
+
+    item_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemDesc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: List[ItemSalesTaxRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemSalesTaxGroups(PluralMixin):
+
+    class Meta:
+        name = "ItemSalesTaxGroup"
+        plural_of = ItemSalesTaxGroup
+
+
+@dataclass
+class ItemService(ItemMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemService"
+
+    Query: Type[ItemServiceQuery] = ItemServiceQuery
+    Add: Type[ItemServiceAdd] = ItemServiceAdd
+    Mod: Type[ItemServiceMod] = ItemServiceMod
+
     parent_ref: Optional[ParentRef] = field(
         default=None,
         metadata={
@@ -1769,13 +2638,7 @@ class ItemMixin:
             "type": "Element",
         },
     )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
+
     sales_or_purchase: Optional[SalesOrPurchase] = field(
         default=None,
         metadata={
@@ -1790,34 +2653,20 @@ class ItemMixin:
             "type": "Element",
         },
     )
-
-    #todo:
-    # external_guid: Optional[ExternalGuid] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "ExternalGUID",
-    #         "type": "Element",
-    #     },
-    # )
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element",
-    #     },
-    # )
-
-
-
-
-
-@dataclass
-class ItemService(ItemMixin, QBMixinWithQuery):
-    class Meta:
-        name = "ItemService"
-
-    class Query(ItemServiceQuery):
-        pass
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
 
 
 class ItemServices(PluralMixin):
@@ -1825,6 +2674,52 @@ class ItemServices(PluralMixin):
     class Meta:
         name = "ItemService"
         plural_of = ItemService
-        # plural_of_db_model = DBItemService
+
+
+@dataclass
+class ItemSubtotal(ItemMixin, QBMixinWithQuery):
+    class Meta:
+        name = "ItemSubtotal"
+
+    Query: Type[ItemSubtotalQuery] = ItemSubtotalQuery
+    Add: Type[ItemSubtotalAdd] = ItemSubtotalAdd
+    Mod: Type[ItemSubtotalMod] = ItemSubtotalMod
+
+    item_desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemDesc",
+            "type": "Element",
+        },
+    )
+    special_item_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SpecialItemType",
+            "type": "Element",
+            "valid_values": ["FinanceCharge", "ReimbursableExpenseGroup", "ReimbursableExpenseSubtotal"]
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemSubtotals(PluralMixin):
+
+    class Meta:
+        name = "ItemSubtotal"
+        plural_of = ItemSubtotal
 
 
