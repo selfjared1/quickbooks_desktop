@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Type
 from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin
+from src.quickbooks_desktop.mixins import (
+    PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery,
+    QBQueryMixin, QBAddMixin, QBModMixin
+)
 from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
 
 @dataclass
@@ -21,7 +24,19 @@ class SalesTaxCodeRef(QBRefMixin):
         name = "SalesTaxCodeRef"
 
 @dataclass
+class ItemSalesTaxRef(QBRefMixin):
+    class Meta:
+        name = "ItemSalesTaxRef"
+
+
+@dataclass
 class SalesTaxCodeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
     class Meta:
         name = "SalesTaxCodeQuery"
 
@@ -96,20 +111,144 @@ class SalesTaxCodeQuery(QBQueryMixin):
             "type": "Attribute",
         },
     )
-    #todo: Add Field
-    # meta_data: SalesTaxCodeQueryRqTypeMetaData = field(
-    #     default=SalesTaxCodeQueryRqTypeMetaData.NO_META_DATA,
-    #     metadata={
-    #         "name": "metaData",
-    #         "type": "Attribute",
-    #     },
-    # )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+@dataclass
+class SalesTaxCodeAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "IsTaxable", "Desc"
+    ]
+    
+    class Meta:
+        name = "SalesTaxCodeAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 3,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    item_purchase_tax_ref: Optional[ItemPurchaseTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemPurchaseTaxRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
 
 
 @dataclass
-class ItemSalesTaxRef(QBRefMixin):
+class SalesTaxCodeMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive",
+        "IsTaxable", "Desc"
+    ]
+
     class Meta:
-        name = "ItemSalesTaxRef"
+        name = "SalesTaxCodeMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 3,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    item_purchase_tax_ref: Optional[ItemPurchaseTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemPurchaseTaxRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+
 
 
 @dataclass
@@ -117,8 +256,9 @@ class SalesTaxCode(QBMixinWithQuery):
     class Meta:
         name = "SalesTaxCode"
 
-    class Query(SalesTaxCodeQuery):
-        pass
+    Query: Type[SalesTaxCodeQuery] = SalesTaxCodeQuery
+    Add: Type[SalesTaxCodeAdd] = SalesTaxCodeAdd
+    Mod: Type[SalesTaxCodeMod] = SalesTaxCodeMod
 
     list_id: Optional[str] = field(
         default=None,
@@ -193,3 +333,8 @@ class SalesTaxCode(QBMixinWithQuery):
             "type": "Element",
         },
     )
+
+class SalesTaxCodes(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "SalesTaxCode"
+        plural_of = SalesTaxCode
