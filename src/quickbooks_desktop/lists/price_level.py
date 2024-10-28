@@ -6,7 +6,7 @@ from src.quickbooks_desktop.mixins import (
     QBQueryMixin, QBAddMixin, QBMixin, QBModMixin
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
-from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter, CurrencyFilter
+from src.quickbooks_desktop.common import NameFilter, NameRangeFilter, CurrencyFilter
 from src.quickbooks_desktop.lists import ItemRef, CurrencyRef
 
 
