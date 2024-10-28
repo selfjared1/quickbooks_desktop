@@ -28,6 +28,7 @@ from .items import (
     ItemSalesTax, ItemSalesTaxes, ItemSalesTaxGroup, ItemSalesTaxGroups, ItemService, ItemServices,
     ItemSubtotal, ItemSubtotals
 )
+from .job_type import JobType, JobTypes, JobTypeQuery, JobTypeAdd, JobTypeRef
 from .payment_method import PaymentMethodRef
 from .price_level import PriceLevelRef
 from .classes_in_qb import ClassInQB, ClassesInQB, ClassInQBRef
