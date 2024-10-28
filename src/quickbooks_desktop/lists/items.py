@@ -337,6 +337,12 @@ class ItemQueryMixinWithClass(ItemQueryMixin):
 
 @dataclass
 class ItemDiscountQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
 
     class Meta:
         name = "ItemDiscountQuery"
@@ -344,50 +350,88 @@ class ItemDiscountQuery(ItemQueryMixinWithClass):
 
 @dataclass
 class ItemGroupQuery(ItemQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement", "OwnerID"
+    ]
 
     class Meta:
         name = "ItemGroupQuery"
 
 
 @dataclass
-class ItemServiceQuery(ItemQueryMixinWithClass):
-
-    class Meta:
-        name = "ItemServiceQuery"
-
-
-@dataclass
 class ItemInventoryAssemblyQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemInventoryAssemblyQuery"
 
 
 @dataclass
 class ItemInventoryQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemInventoryQuery"
 
 
 @dataclass
 class ItemNonInventoryQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemNonInventoryQuery"
 
 
 @dataclass
 class ItemOtherChargeQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemOtherChargeQuery"
 
 
 @dataclass
 class ItemPaymentQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemPaymentQuery"
 
 
 @dataclass
 class ItemSalesTaxGroupQuery(ItemQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement", "OwnerID"
+    ]
 
     class Meta:
         name = "ItemSalesTaxGroupQuery"
@@ -395,17 +439,36 @@ class ItemSalesTaxGroupQuery(ItemQueryMixin):
 
 @dataclass
 class ItemSalesTaxQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemSalesTaxQuery"
 
 @dataclass
 class ItemServiceQuery(ItemQueryMixinWithClass):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ClassFilter", "IncludeRetElement",
+        "OwnerID"
+    ]
+
     class Meta:
         name = "ItemServiceQuery"
 
 
 @dataclass
 class ItemSubtotalQuery(ItemQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement", "OwnerID"
+    ]
 
     class Meta:
         name = "ItemSubtotalQuery"
