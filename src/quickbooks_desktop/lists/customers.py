@@ -980,8 +980,9 @@ class Customer(QBMixinWithQuery):
     class Meta:
         name = "Customer"
 
-    class Query(CustomerQuery):
-        pass
+    Query: Type[CustomerQuery] = CustomerQuery
+    Add: Type[CustomerAdd] = CustomerAdd
+    Mod: Type[CustomerMod] = CustomerMod
 
     list_id: Optional[str] = field(
         default=None,
