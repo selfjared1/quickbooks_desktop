@@ -325,6 +325,10 @@ class InventorySite(QBMixinWithQuery):
     class Meta:
         name = "InventorySite"
 
+    Query: Type[InventorySiteQuery] = InventorySiteQuery
+    Add: Type[InventorySiteAdd] = InventorySiteAdd
+    Mod: Type[InventorySiteMod] = InventorySiteMod
+
     list_id: Optional[str] = field(
         default=None,
         metadata={
