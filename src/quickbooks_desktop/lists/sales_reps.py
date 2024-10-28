@@ -1,13 +1,11 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Optional, List, Type
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery,
-    QBQueryMixin, QBAddMixin, QBMixin, QBModMixin
+    QBQueryMixin, QBAddMixin, QBModMixin
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
-from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter, CurrencyFilter
-from src.quickbooks_desktop.lists import ItemRef, CurrencyRef
+from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 
 
 
