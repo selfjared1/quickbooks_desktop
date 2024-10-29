@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Type
 
 from src.quickbooks_desktop.mixins.qb_mixins import QBMixin, QBRefMixin, QBMixinWithQuery, QBQueryMixin
 from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
@@ -25,6 +25,7 @@ class DefaultUnit(QBMixin):
             "name": "UnitUsedFor",
             "type": "Element",
             "required": True,
+            "valid_values": ["Purchase", "Sales", "Shipping"]
         },
     )
     unit: Optional[str] = field(
@@ -36,12 +37,6 @@ class DefaultUnit(QBMixin):
             "max_length": 31,
         },
     )
-
-    VALID_UNIT_USED_FOR_VALUES = ["Purchase", "Sales", "Shipping"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('unit_used_for', self.unit_used_for, self.VALID_UNIT_USED_FOR_VALUES)
-
 
 
 @dataclass
@@ -106,6 +101,11 @@ class RelatedUnit(QBMixin):
 
 @dataclass
 class UnitOfMeasureSetQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
 
     class Meta:
         name = "UnitOfMeasureSetQuery"
@@ -182,24 +182,84 @@ class UnitOfMeasureSetQuery(QBQueryMixin):
             "type": "Attribute",
         },
     )
-    #todo:
-    # meta_data: UnitOfMeasureSetQueryRqTypeMetaData = field(
-    #     default=UnitOfMeasureSetQueryRqTypeMetaData.NO_META_DATA,
-    #     metadata={
-    #         "name": "metaData",
-    #         "type": "Attribute",
-    #     },
-    # )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class UnitOfMeasureSetAdd:
+    FIELD_ORDER = [
+        "Name", "IsActive", "UnitOfMeasureType", "BaseUnit",
+        "RelatedUnit", "DefaultUnit"
+    ]
+
+    class Meta:
+        name = "UnitOfMeasureSetAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    unit_of_measure_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureType",
+            "type": "Element",
+            "required": True,
+            "valid_values": ["Area", "Count", "Length", "Other", "Time", "Volume", "Weight"],
+        },
+    )
+    base_unit: Optional[BaseUnit] = field(
+        default=None,
+        metadata={
+            "name": "BaseUnit",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    related_unit: List[RelatedUnit] = field(
+        default_factory=list,
+        metadata={
+            "name": "RelatedUnit",
+            "type": "Element",
+        },
+    )
+    default_unit: List[DefaultUnit] = field(
+        default_factory=list,
+        metadata={
+            "name": "DefaultUnit",
+            "type": "Element",
+        },
+    )
 
 
 @dataclass
 class UnitOfMeasureSet(QBMixinWithQuery):
 
-    class Query(UnitOfMeasureSetQuery):
-        pass
-
     class Meta:
         name = "Unit Of Measure Set"
+
+    Query: Type[UnitOfMeasureSetQuery] = UnitOfMeasureSetQuery
+    Add: Type[UnitOfMeasureSetAdd] = UnitOfMeasureSetAdd
+    # No Mod
 
     list_id: Optional[str] = field(
         default=None,
@@ -250,6 +310,7 @@ class UnitOfMeasureSet(QBMixinWithQuery):
         metadata={
             "name": "UnitOfMeasureType",
             "type": "Element",
+            "valid_values": ["Area", "Count", "Length", "Other", "Time", "Volume", "Weight"]
         },
     )
     base_unit: Optional[BaseUnit] = field(
@@ -273,8 +334,3 @@ class UnitOfMeasureSet(QBMixinWithQuery):
             "type": "Element",
         },
     )
-
-    VALID_UNIT_OF_MEASURE_TYPE_VALUES = ["Area", "Count", "Length", "Other", "Time", "Volume", "Weight"]
-
-    def __post_init__(self):
-        self._validate_str_from_list_of_values('unit_of_measure_type', self.unit_of_measure_type, self.VALID_UNIT_OF_MEASURE_TYPE_VALUES)
