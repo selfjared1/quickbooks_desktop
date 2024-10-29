@@ -5,12 +5,12 @@ from collections import defaultdict
 
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
-    LinkedTxn, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, SetCredit,
+    LinkedTxn, BillAddress, CreditCardTxnInfo, ShipAddress, ShipAddressBlock, SetCredit,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter
+    CurrencyFilter, Address, RefundAppliedToTxnAdd
 )
 from src.quickbooks_desktop.lists import (
-    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
+    RefundFromAccountRef, PaymentMethodRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
     SalesRepRef, ShipMethodRef, CustomerMsgRef, CustomerSalesTaxCodeRef, ItemRef, OverrideUomsetRef, InventorySiteRef,
     InventorySiteLocationRef, ItemGroupRef, PriceLevelRef, OverrideItemAccountRef, AccountRef
 )
@@ -166,7 +166,7 @@ class ARRefundCreditCardAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    txn_date: Optional[TxnDate] = field(
+    txn_date: Optional[QBDates] = field(
         default=None,
         metadata={
             "name": "TxnDate",
@@ -210,14 +210,14 @@ class ARRefundCreditCardAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    exchange_rate: Optional[ExchangeRate] = field(
+    exchange_rate: Optional[float] = field(
         default=None,
         metadata={
             "name": "ExchangeRate",
             "type": "Element",
         },
     )
-    external_guid: Optional[ExternalGuid] = field(
+    external_guid: Optional[str] = field(
         default=None,
         metadata={
             "name": "ExternalGUID",
@@ -239,3 +239,6 @@ class ARRefundCreditCardAdd(QBAddMixin):
             "type": "Attribute",
         },
     )
+
+
+#todo: Mod, Base, and Plural
