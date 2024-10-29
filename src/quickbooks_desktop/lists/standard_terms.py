@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Type
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery,
-    QBQueryMixin, QBAddMixin, QBModMixin
+    QBQueryMixin, QBAddMixin
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
@@ -227,7 +227,7 @@ class StandardTerm(QBMixinWithQuery):
 
 
 @dataclass
-class StandardTerms(PluralMixin):
+class StandardTerms(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "StandardTerms"

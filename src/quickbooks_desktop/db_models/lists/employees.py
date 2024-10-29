@@ -163,7 +163,7 @@ class BillingRate(Base):
     billing_rate_type = Column(String, nullable=True)
 
 
-class Employees(PluralMixin):
+class Employees(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "employees"
         plural_of_db_model = Employee

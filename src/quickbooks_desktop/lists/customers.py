@@ -1449,7 +1449,7 @@ class Customer(QBMixinWithQuery):
     )
 
 
-class Customers(PluralMixin):
+class Customers(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "Customer"

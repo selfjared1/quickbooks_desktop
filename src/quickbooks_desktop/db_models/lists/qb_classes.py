@@ -16,7 +16,7 @@ class DBofQBClass(Base):
     parent_ref = Column(String)
     sublevel = Column(Integer)
 
-class DBofQBClasses(PluralMixin):
+class DBofQBClasses(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "qb_class"
         plural_of_db_model = DBofQBClass

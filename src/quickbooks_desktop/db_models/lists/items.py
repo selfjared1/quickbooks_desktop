@@ -50,7 +50,7 @@ class ItemService(Base):
     qb_id_tracker = relationship('QBIDTracker', back_populates='qb_item_service')
 
 
-class ItemServices(PluralMixin):
+class ItemServices(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "qb_item_service"
         plural_of_db_model = ItemService

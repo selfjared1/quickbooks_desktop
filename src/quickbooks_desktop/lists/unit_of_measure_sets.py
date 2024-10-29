@@ -337,7 +337,7 @@ class UnitOfMeasureSet(QBMixinWithQuery):
 
 
 @dataclass
-class UnitOfMeasureSets(PluralMixin):
+class UnitOfMeasureSets(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "UnitOfMeasureSet"

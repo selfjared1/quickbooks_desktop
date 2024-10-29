@@ -18,7 +18,7 @@ class DBCurrency(Base):
     exchange_rate = Column(DECIMAL, nullable=True)
     as_of_date = Column(DateTime, nullable=True)  # Assuming QBDates is compatible with DateTime, adjust if necessary
 
-class DBCurrencies(PluralMixin):
+class DBCurrencies(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "qb_currency"
         plural_of_db_model = DBCurrency

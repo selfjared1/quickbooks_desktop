@@ -604,7 +604,7 @@ class OtherName(QBMixinWithQuery):
     )
 
 
-class OtherNames(PluralMixin):
+class OtherNames(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "OtherName"

@@ -223,7 +223,7 @@ class PaymentMethod(QBMixinWithQuery):
         },
     )
     
-class PaymentMethods(PluralMixin):
+class PaymentMethods(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "PaymentMethod"

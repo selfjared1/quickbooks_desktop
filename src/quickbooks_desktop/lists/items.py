@@ -6,8 +6,9 @@ from src.quickbooks_desktop.lists import (
     PurchaseTaxCodeRef, CogsaccountRef, AssetAccountRef, DepositToAccountRef,
     PaymentMethodRef, TaxVendorRef
 )
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBMixin, QBAddMixin, QBModMixin
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.mixins import (
+    QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBMixin, QBAddMixin, QBModMixin, PluralMixin, PluralListSaveMixin
+)
 from src.quickbooks_desktop.common import ParentRef, SalesTaxReturnLineRef, NameFilter, NameRangeFilter, ClassFilter
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
 from src.quickbooks_desktop.data_ext import DataExt
@@ -1904,7 +1905,7 @@ class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemDiscounts(PluralMixin):
+class ItemDiscounts(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemDiscount"
@@ -1973,7 +1974,7 @@ class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemGroups(PluralMixin):
+class ItemGroups(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemGroup"
@@ -2148,7 +2149,7 @@ class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemInventories(PluralMixin):
+class ItemInventories(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemInventory"
@@ -2330,7 +2331,7 @@ class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemInventoryAssemblies(PluralMixin):
+class ItemInventoryAssemblies(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemInventoryAssembly"
@@ -2413,7 +2414,7 @@ class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithQuery):
 
 
 @dataclass
-class ItemNonInventories(PluralMixin):
+class ItemNonInventories(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemNonInventory"
@@ -2489,7 +2490,7 @@ class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithQuery):
 
 
 @dataclass
-class ItemOtherCharges(PluralMixin):
+class ItemOtherCharges(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemOtherCharge"
@@ -2543,7 +2544,7 @@ class ItemPayment(ItemMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemPayments(PluralMixin):
+class ItemPayments(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemPayment"
@@ -2611,7 +2612,7 @@ class ItemSalesTax(ItemMixin, QBMixinWithQuery):
 
 
 @dataclass
-class ItemSalesTaxes(PluralMixin):
+class ItemSalesTaxes(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemSalesTax"
@@ -2658,7 +2659,7 @@ class ItemSalesTaxGroup(ItemMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemSalesTaxGroups(PluralMixin):
+class ItemSalesTaxGroups(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemSalesTaxGroup"
@@ -2733,7 +2734,8 @@ class ItemService(ItemMixin, QBMixinWithQuery):
     )
 
 
-class ItemServices(PluralMixin):
+@dataclass
+class ItemServices(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemService"
@@ -2780,7 +2782,7 @@ class ItemSubtotal(ItemMixin, QBMixinWithQuery):
     )
 
 @dataclass
-class ItemSubtotals(PluralMixin):
+class ItemSubtotals(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "ItemSubtotal"

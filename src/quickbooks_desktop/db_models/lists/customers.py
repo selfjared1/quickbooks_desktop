@@ -67,7 +67,7 @@ class Customer(Base):
     sales_rep_ref_full_name = Column(Text, nullable=True)
 
 
-class Customers(PluralMixin):
+class Customers(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "customers"
         # plural_of_db_model = Customer

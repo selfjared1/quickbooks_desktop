@@ -3,8 +3,9 @@ from typing import List, Optional
 from decimal import Decimal
 from src.quickbooks_desktop.common.qb_contact_common_fields import EmployeeAddress
 from src.quickbooks_desktop.lists import BillingRateRef, ClassInQBRef
-from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
+from src.quickbooks_desktop.mixins import (
+    QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin, PluralMixin, PluralListSaveMixin
+)
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 
@@ -779,7 +780,7 @@ class Employee(QBMixinWithQuery):
         self._validate_str_from_list_of_values('ethnicity', self.ethnicity, self.VALID_ETHNICITY_VALUES)
         self._validate_str_from_list_of_values('military_status', self.military_status, self.VALID_MILITARY_STATUS_VALUES)
 
-class Employees(PluralMixin):
+class Employees(PluralMixin, PluralListSaveMixin):
 
     class Meta:
         name = "Employee"
