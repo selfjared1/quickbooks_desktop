@@ -1,22 +1,9 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
-from typing import Optional, List, Type
-from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin
-from src.quickbooks_desktop.data_ext import DataExt
-from src.quickbooks_desktop.mixins.qb_mixins import (
-    QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBAddMixin, QBModMixin, QBMixin
-)
-from src.quickbooks_desktop.lists import (
-    ClassInQBRef, SalesRepRef, TermsRef, SalesTaxCodeRef, ItemSalesTaxRef, PriceLevelRef, CurrencyRef,
-)
+from typing import Optional, Type
 
-from src.quickbooks_desktop.common import (
-    ParentRef, NameFilter, NameRangeFilter, TotalBalanceFilter, CurrencyFilter, Contacts,
-    ClassFilter, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, ShipToAddress,
-    AdditionalContactRef, PreferredPaymentMethodRef, CreditCardInfo, JobTypeRef, AdditionalNotes,
-    ContactsMod, AdditionalNotesMod, AdditionalNotesRet, ListObjRef
-)
+from src.quickbooks_desktop.mixins.qb_mixins import (QBAddMixin, QBMixin)
+
+from src.quickbooks_desktop.common import (ListObjRef)
 
 VALID_TXN_DATA_EXT_TYPE_VALUES = [
     "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",

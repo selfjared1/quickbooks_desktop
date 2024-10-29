@@ -9,6 +9,7 @@ from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter
 from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef
 from src.quickbooks_desktop.lists.currency import CurrencyRef
+from src.quickbooks_desktop.data_ext import DataExt
 
 VALID_ACCOUNT_TYPE_VALUES = [
     "AccountsPayable", "AccountsReceivable", "Bank", "CostOfGoodsSold", "CreditCard",
@@ -313,6 +314,41 @@ class AccountAdd(AccountBase, QBAddMixin):
 
 
 @dataclass
+class SpecialAccountAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "SpecialAccountType", "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "SpecialAccountAdd"
+
+    special_account_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SpecialAccountType",
+            "type": "Element",
+            "required": True,
+            "valid_values": [
+                "AccountsPayable", "AccountsReceivable", "CondenseItemAdjustmentExpenses",
+                "CostOfGoodsSold", "DirectDepositLiabilities", "Estimates",
+                "ExchangeGainLoss", "InventoryAssets", "ItemReceiptAccount",
+                "OpeningBalanceEquity", "PayrollExpenses", "PayrollLiabilities",
+                "PettyCash", "PurchaseOrders", "ReconciliationDifferences",
+                "RetainedEarnings", "SalesOrders", "SalesTaxPayable",
+                "UncategorizedExpenses", "UncategorizedIncome", "UndepositedFunds"
+            ],
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
 class AccountMod(AccountBase, QBModMixin):
     FIELD_ORDER = [
         "list_id", "edit_sequence", "name", "is_active", "parent_ref",
@@ -357,6 +393,7 @@ class Account(AccountBase, QBMixinWithQuery):
 
     Query: Type[AccountQuery] = AccountQuery
     Add: Type[AccountAdd] = AccountAdd
+    SpecialAccountAdd: Type[SpecialAccountAdd] = SpecialAccountAdd
     Mod: Type[AccountMod] = AccountMod
 
     list_id: Optional[str] = field(
@@ -477,13 +514,13 @@ class Account(AccountBase, QBMixinWithQuery):
         },
     )
 
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element",
-    #     },
-    # )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
 
 
 class Accounts(PluralMixin, PluralListSaveMixin):
