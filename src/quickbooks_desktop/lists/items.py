@@ -264,11 +264,12 @@ class ItemQueryMixin(QBQueryMixin):
             "type": "Element",
         },
     )
-    active_status: Optional[bool] = field(
+    active_status: Optional[str] = field(
         default=None,
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
         },
     )
     from_modified_date: Optional[QBDates] = field(
