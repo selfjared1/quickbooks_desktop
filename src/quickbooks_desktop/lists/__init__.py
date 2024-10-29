@@ -1,6 +1,6 @@
 
 from .accounts import (
-    AccountRef, RefundFromAccountRef, CogsaccountRef, AssetAccountRef,
+    AccountRef, PrefillAccountRef, RefundFromAccountRef, CogsaccountRef, AssetAccountRef,
     OverrideItemAccountRef, AraccountRef, DepositToAccountRef, ExpenseAccountRef,
     IncomeAccountRef, TaxLineInfo, AccountQuery, AccountAdd, SpecialAccountAdd,
     AccountMod, Account, Accounts,
@@ -71,6 +71,7 @@ from .unit_of_measure_sets import (
     OverrideUomsetRef, DefaultUnit, BaseUnit, RelatedUnit, UnitOfMeasureSetQuery,
     UnitOfMeasureSetAdd, UnitOfMeasureSet
 )
+from .vendor_type import VendorTypeRef, VendorTypeQuery, VendorTypeAdd, VendorType, VendorTypes
 from .vendors import PrefVendorRef, TaxVendorRef
 
 

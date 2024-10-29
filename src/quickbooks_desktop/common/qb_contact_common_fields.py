@@ -84,6 +84,10 @@ class OtherNameAddressBlock(AddressBlock):
     class Meta:
         name = "OtherNameAddressBlock"
 
+@dataclass
+class VendorAddressBlock(AddressBlock):
+    class Meta:
+        name = "VendorAddressBlock"
 
 @dataclass
 class ShipAddressBlock(AddressBlock):
@@ -188,6 +192,12 @@ class ShipAddress(Address):
 class OtherNameAddress(Address):
     class Meta:
         name = "OtherNameAddress"
+
+
+@dataclass
+class VendorAddress(Address):
+    class Meta:
+        name = "VendorAddress"
 
 @dataclass
 class ShipToAddress(Address):

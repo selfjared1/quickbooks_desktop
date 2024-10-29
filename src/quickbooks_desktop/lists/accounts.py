@@ -3,12 +3,11 @@ from decimal import Decimal
 from typing import Optional, List, Type
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery, QBMixin,
-    QBQueryMixin, QBAddMixin, QBModMixin, SaveMixin
+    QBQueryMixin, QBAddMixin, QBModMixin
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter
-from src.quickbooks_desktop.lists.sales_tax_codes import SalesTaxCodeRef
-from src.quickbooks_desktop.lists.currency import CurrencyRef
+from src.quickbooks_desktop.lists import SalesTaxCodeRef, CurrencyRef
 from src.quickbooks_desktop.data_ext import DataExt
 
 VALID_ACCOUNT_TYPE_VALUES = [
@@ -58,6 +57,13 @@ VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Fina
 class AccountRef(QBRefMixin):
     class Meta:
         name = "AccountRef"
+
+
+@dataclass
+class PrefillAccountRef(QBRefMixin):
+    class Meta:
+        name = "PrefillAccountRef"
+
 
 
 @dataclass
