@@ -339,3 +339,10 @@ class SalesTaxCodes(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "SalesTaxCode"
         plural_of = SalesTaxCode
+
+
+@dataclass
+class CustomerSalesTaxCodeRef(QBRefMixin):
+
+    class Meta:
+        name = "CustomerSalesTaxCodeRef"

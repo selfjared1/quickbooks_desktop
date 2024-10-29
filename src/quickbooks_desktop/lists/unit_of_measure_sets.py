@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Optional, List, Type
 
-from src.quickbooks_desktop.mixins.qb_mixins import QBMixin, QBRefMixin, QBMixinWithQuery, QBQueryMixin
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.mixins import QBMixin, QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBAddMixin, PluralMixin
+from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
 
 
@@ -193,7 +193,7 @@ class UnitOfMeasureSetQuery(QBQueryMixin):
 
 
 @dataclass
-class UnitOfMeasureSetAdd:
+class UnitOfMeasureSetAdd(QBAddMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "UnitOfMeasureType", "BaseUnit",
         "RelatedUnit", "DefaultUnit"
@@ -334,3 +334,11 @@ class UnitOfMeasureSet(QBMixinWithQuery):
             "type": "Element",
         },
     )
+
+
+@dataclass
+class UnitOfMeasureSets(PluralMixin):
+
+    class Meta:
+        name = "UnitOfMeasureSet"
+        plural_of = UnitOfMeasureSet

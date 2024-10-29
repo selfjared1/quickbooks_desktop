@@ -59,6 +59,13 @@ class AccountRef(QBRefMixin):
     class Meta:
         name = "AccountRef"
 
+
+@dataclass
+class RefundFromAccountRef(QBRefMixin):
+    class Meta:
+        name = "RefundFromAccountRef"
+
+
 @dataclass
 class CogsaccountRef(QBRefMixin):
     class Meta:
