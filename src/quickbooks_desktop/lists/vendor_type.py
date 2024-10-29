@@ -1,19 +1,13 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Optional, List, Type
 from src.quickbooks_desktop.mixins import (
-    PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery, QBMixin,
-    QBQueryMixin, QBAddMixin, QBModMixin
+    PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery,
+    QBQueryMixin, QBAddMixin
 )
 from src.quickbooks_desktop.common import (
-    ParentRef, NameFilter, NameRangeFilter, TotalBalanceFilter, CurrencyFilter, Contacts,
-    ClassFilter, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, ShipToAddress,
-    AdditionalContactRef, PreferredPaymentMethodRef, CreditCardInfo, JobTypeRef, AdditionalNotes,
-    ContactsMod, AdditionalNotesMod, AdditionalNotesRet, VendorAddress, VendorAddressBlock,
+    ParentRef, NameFilter, NameRangeFilter
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
-from src.quickbooks_desktop.lists import SalesTaxCodeRef, CurrencyRef, ClassInQBRef
-from src.quickbooks_desktop.data_ext import DataExt
 
 @dataclass
 class VendorTypeRef(QBRefMixin):

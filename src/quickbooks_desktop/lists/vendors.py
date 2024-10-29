@@ -1,19 +1,19 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional, List, Type
+from typing import Optional, List
 from src.quickbooks_desktop.mixins import (
-    PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery, QBMixin,
+    PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery,
     QBQueryMixin, QBAddMixin, QBModMixin
 )
 from src.quickbooks_desktop.common import (
-    ParentRef, NameFilter, NameRangeFilter, TotalBalanceFilter, CurrencyFilter, Contacts,
-    ClassFilter, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, ShipToAddress,
-    AdditionalContactRef, PreferredPaymentMethodRef, CreditCardInfo, JobTypeRef, AdditionalNotes,
+    NameFilter, NameRangeFilter, TotalBalanceFilter, CurrencyFilter, Contacts,
+    ClassFilter, ShipAddress,
+    AdditionalContactRef, AdditionalNotes,
     ContactsMod, AdditionalNotesMod, AdditionalNotesRet, VendorAddress, VendorAddressBlock,
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.lists import (
-    SalesTaxCodeRef, CurrencyRef, ClassInQBRef, VendorTypeRef, TermsRef, BillingRateRef, PrefillAccountRef
+    CurrencyRef, ClassInQBRef, VendorTypeRef, TermsRef, BillingRateRef, PrefillAccountRef
 )
 from src.quickbooks_desktop.data_ext import DataExt
 
