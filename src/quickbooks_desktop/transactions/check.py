@@ -11,9 +11,7 @@ from src.quickbooks_desktop.common import (
     ExpenseLine, ItemLine, ItemGroupLine
 )
 from src.quickbooks_desktop.lists import (
-    CustomerRef, ItemRef, InventorySiteRef, AccountRef,
-    InventorySiteLocationRef, AraccountRef, SalesTaxCodeRef,
-    ClassInQBRef, OverrideItemAccountRef, OverrideUomsetRef, CurrencyRef
+    AccountRef, SalesTaxCodeRef, CurrencyRef
 )
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralTrxnSaveMixin, QBMixinWithQuery,
