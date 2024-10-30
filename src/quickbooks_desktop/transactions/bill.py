@@ -147,21 +147,7 @@ class BillQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+
 
 @dataclass
 class BillAdd(QBAddMixin):
