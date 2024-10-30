@@ -7,12 +7,11 @@ from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter,
     AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, Address, AddressBlock, PayeeEntityRef,
-    AppliedToTxnAdd, AppliedToTxnMod, AppliedToTxn
+    CurrencyFilter, PayeeEntityRef,
+    AppliedToTxnAdd, AppliedToTxn
 )
 from src.quickbooks_desktop.lists import (
-    CurrencyRef, VendorRef, BankAccountRef,
-    ApaccountRef, TermsRef, SalesTaxCodeRef, CreditCardAccountRef
+    CurrencyRef, ApaccountRef, CreditCardAccountRef
 )
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralTrxnSaveMixin, QBMixinWithQuery,
