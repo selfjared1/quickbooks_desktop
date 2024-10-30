@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def create_address(dataclass_instance):
-    from src.quickbooks_desktop.common.qb_contact_common_fields import Address
+    from src.quickbooks_desktop.common.qb_contact_common import Address
     address = Address()
     try:
         for field in fields(dataclass_instance):

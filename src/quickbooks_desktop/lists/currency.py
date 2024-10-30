@@ -6,7 +6,7 @@ from src.quickbooks_desktop.mixins.qb_mixins import (
     QBRefMixin, QBMixinWithQuery, QBMixin, QBQueryMixin, QBAddMixin, QBModMixin
 )
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.common.qb_query_common import NameFilter, NameRangeFilter
 
 
 @dataclass
@@ -319,7 +319,7 @@ class Currency(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    exchange_rate: Optional[Decimal] = field(
+    exchange_rate: Optional[float] = field(
         default=None,
         metadata={
             "name": "ExchangeRate",

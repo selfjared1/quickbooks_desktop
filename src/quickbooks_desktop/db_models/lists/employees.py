@@ -2,7 +2,7 @@ from sqlalchemy import Column, String, Boolean, Integer, DECIMAL, DateTime, Text
 from sqlalchemy.orm import relationship
 from src.quickbooks_desktop.db_models.base import Base
 from src.quickbooks_desktop.db_models.db_models_mixins import PluralMixin
-from src.quickbooks_desktop.common.qb_contact_common_fields import AdditionalContactRef
+from src.quickbooks_desktop.common.qb_contact_common import AdditionalContactRef
 
 class Employee(Base):
     __tablename__ = 'qb_employees'

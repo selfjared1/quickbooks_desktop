@@ -5,7 +5,7 @@ from src.quickbooks_desktop.qb_special_fields import QBDates
 from src.quickbooks_desktop.mixins.qb_mixins import (
     QBRefMixin, QBMixinWithQuery, QBQueryMixin, QBAddMixin, QBModMixin
 )
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.common.qb_query_common import NameFilter, NameRangeFilter
 from src.quickbooks_desktop.common import ParentRef
 
 @dataclass

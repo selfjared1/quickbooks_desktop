@@ -5,7 +5,7 @@ from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralListSaveMixin, QBRefMixin, QBMixinWithQuery,
     QBQueryMixin, QBAddMixin, QBModMixin
 )
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.common.qb_query_common import NameFilter, NameRangeFilter
 
 @dataclass
 class ItemPurchaseTaxRef(QBRefMixin):

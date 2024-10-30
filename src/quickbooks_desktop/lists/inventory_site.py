@@ -7,7 +7,7 @@ from src.quickbooks_desktop.mixins.qb_mixins import (
 )
 from src.quickbooks_desktop.common import AddressBlock
 from src.quickbooks_desktop.mixins.qb_plural_mixins import PluralMixin, PluralListSaveMixin
-from src.quickbooks_desktop.common.qb_query_common_fields import NameFilter, NameRangeFilter
+from src.quickbooks_desktop.common.qb_query_common import NameFilter, NameRangeFilter
 
 
 @dataclass

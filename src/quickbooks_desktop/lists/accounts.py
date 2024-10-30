@@ -64,6 +64,10 @@ class PrefillAccountRef(QBRefMixin):
     class Meta:
         name = "PrefillAccountRef"
 
+@dataclass
+class ApaccountRef(QBRefMixin):
+    class Meta:
+        name = "ApaccountRef"
 
 
 @dataclass

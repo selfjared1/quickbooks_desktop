@@ -3,7 +3,7 @@ from .accounts import (
     AccountRef, PrefillAccountRef, RefundFromAccountRef, CogsaccountRef, AssetAccountRef,
     OverrideItemAccountRef, AraccountRef, DepositToAccountRef, ExpenseAccountRef,
     IncomeAccountRef, TaxLineInfo, AccountQuery, AccountAdd, SpecialAccountAdd,
-    AccountMod, Account, Accounts,
+    AccountMod, Account, Accounts, ApaccountRef
 )
 from .billing_rate import (
     BillingRateRef, BillingRatePerItem, BillingRateQuery, BillingRateAdd, BillingRate,
@@ -72,7 +72,9 @@ from .unit_of_measure_sets import (
     UnitOfMeasureSetAdd, UnitOfMeasureSet
 )
 from .vendor_type import VendorTypeRef, VendorTypeQuery, VendorTypeAdd, VendorType, VendorTypes
-from .vendors import PrefVendorRef, TaxVendorRef
+from .vendors import (
+    PrefVendorRef, TaxVendorRef, VendorRef, VendorQuery, VendorAdd, VendorMod, Vendor, Vendors
+)
 
 
 

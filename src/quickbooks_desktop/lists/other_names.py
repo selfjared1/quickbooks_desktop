@@ -8,8 +8,8 @@ from src.quickbooks_desktop.mixins.qb_mixins import (
 )
 
 from src.quickbooks_desktop.common import (OtherNameAddress, OtherNameAddressBlock,
-    NameFilter, NameRangeFilter
-)
+                                           NameFilter, NameRangeFilter
+                                           )
 
 
 

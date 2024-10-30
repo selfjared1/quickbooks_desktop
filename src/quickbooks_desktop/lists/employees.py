@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 from decimal import Decimal
-from src.quickbooks_desktop.common.qb_contact_common_fields import EmployeeAddress
+from src.quickbooks_desktop.common.qb_contact_common import EmployeeAddress
 from src.quickbooks_desktop.lists import BillingRateRef, ClassInQBRef
 from src.quickbooks_desktop.mixins import (
     QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin, PluralMixin, PluralListSaveMixin
