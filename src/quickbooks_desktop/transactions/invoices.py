@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List, Type, Dict
 from collections import defaultdict
-
+from src.quickbooks_desktop.data_ext import DataExt
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     LinkedTxn, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, SetCredit,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter
+    CurrencyFilter, LinkToTxn
 )
 from src.quickbooks_desktop.lists import (
     SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
@@ -190,7 +190,7 @@ class InvoiceLineAdd(QBAddMixin):
             "max_length": 29,
         },
     )
-    link_to_txn: Optional[str] = field(
+    link_to_txn: Optional[LinkToTxn] = field(
         default=None,
         metadata={
             "name": "LinkToTxn",
@@ -369,13 +369,13 @@ class InvoiceLine(QBMixin):
             "max_length": 29,
         },
     )
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element",
-    #     },
-    # )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
 
 
 @dataclass
@@ -531,13 +531,13 @@ class InvoiceLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element",
-    #     },
-    # )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
 
 
 @dataclass
@@ -1319,13 +1319,13 @@ class Invoice(QBMixinWithQuery):
         },
     )
 
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element",
-    #     },
-    # )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
 
 class Invoices(PluralMixin, PluralTrxnSaveMixin):
 

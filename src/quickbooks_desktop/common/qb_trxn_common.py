@@ -4,6 +4,12 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin
+from src.quickbooks_desktop.lists import (
+    AccountRef, CustomerRef, ClassInQBRef, SalesTaxCodeRef, SalesRepRef, ItemRef,
+    InventorySiteRef, InventorySiteLocationRef, OverrideItemAccountRef, ItemGroupRef,
+    OverrideUomsetRef
+)
+from src.quickbooks_desktop.data_ext import DataExt
 
 
 @dataclass
@@ -332,4 +338,937 @@ class RefundAppliedToTxn(QBMixin):
                 "type": "Element",
             },
         )
+    )
+
+@dataclass
+class LinkToTxn(QBMixin):
+    FIELD_ORDER = [
+        "TxnID", "TxnLineID"
+    ]
+
+    class Meta:
+        name = "LinkToTxn"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+
+@dataclass
+class ExpenseLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "AccountRef", "Amount", "Memo", "CustomerRef",
+        "ClassRef", "BillableStatus", "SalesRepRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "ExpenseLineAdd"
+
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+@dataclass
+class ItemLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemRef", "InventorySiteRef", "InventorySiteLocationRef",
+        "SerialNumber", "LotNumber", "Desc", "Quantity",
+        "UnitOfMeasure", "Cost", "Amount", "CustomerRef",
+        "ClassRef", "BillableStatus", "OverrideItemAccountRef",
+        "LinkToTxn", "SalesRepRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "ItemLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Cost",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    link_to_txn: Optional[LinkToTxn] = field(
+        default=None,
+        metadata={
+            "name": "LinkToTxn",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemGroupLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "ItemGroupLineAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ExpenseLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "AccountRef", "Amount", "Memo",
+        "CustomerRef", "ClassRef", "BillableStatus", "SalesRepRef"
+    ]
+
+    class Meta:
+        name = "ExpenseLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "InventorySiteRef", "InventorySiteLocationRef",
+        "SerialNumber", "LotNumber", "Desc", "Quantity",
+        "UnitOfMeasure", "OverrideUOMSetRef", "Cost", "Amount",
+        "CustomerRef", "ClassRef", "BillableStatus", "OverrideItemAccountRef",
+        "SalesRepRef"
+    ]
+
+    class Meta:
+        name = "ItemLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Cost",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemGroupLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "ItemLineMod"
+    ]
+
+    class Meta:
+        name = "ItemGroupLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ExpenseLine(QBMixin):
+
+    class Meta:
+        name = "ExpenseLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemLine(QBMixin):
+
+    class Meta:
+        name = "ItemLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    cost: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Cost",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemGroupLine(QBMixin):
+
+    class Meta:
+        name = "ItemGroupLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_line_ret: List[ItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
     )
