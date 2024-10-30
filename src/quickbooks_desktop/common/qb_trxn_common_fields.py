@@ -212,7 +212,10 @@ class CreditCardTxnResultInfo(QBMixin):
 
 
 @dataclass
-class CreditCardTxnInfo:
+class CreditCardTxnInfo(QBMixin):
+    class Meta:
+        name = "CreditCardTxnInfo"
+
     credit_card_txn_input_info: Optional[CreditCardTxnInputInfo] = field(
         default=None,
         metadata={
@@ -231,7 +234,10 @@ class CreditCardTxnInfo:
     )
 
 @dataclass
-class RefundAppliedToTxnAdd:
+class RefundAppliedToTxnAdd(QBMixin):
+    class Meta:
+        name = "RefundAppliedToTxnAdd"
+
     txn_id: Optional[str] = field(
         default=None,
         metadata={
@@ -249,3 +255,81 @@ class RefundAppliedToTxnAdd:
         },
     )
 
+@dataclass
+class RefundAppliedToTxn(QBMixin):
+    class Meta:
+        name = "RefundAppliedToTxnAdd"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    txn_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnType",
+            "type": "Element",
+            "required": True,
+            "valid_values": [
+                "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+                "BuildAssembly", "Charge", "Check", "CreditCardCharge",
+                "CreditCardCredit", "CreditMemo", "Deposit", "Estimate",
+                "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry",
+                "LiabilityAdjustment", "Paycheck", "PayrollLiabilityCheck",
+                "PurchaseOrder", "ReceivePayment", "SalesOrder", "SalesReceipt",
+                "SalesTaxPaymentCheck", "Transfer", "VendorCredit", "YTDAdjustment"
+            ],
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    credit_remaining: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditRemaining",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    refund_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "RefundAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    credit_remaining_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditRemainingInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    refund_amount_in_home_currency: Optional[Decimal] = (
+        field(
+            default=None,
+            metadata={
+                "name": "RefundAmountInHomeCurrency",
+                "type": "Element",
+            },
+        )
+    )

@@ -15,5 +15,6 @@ from .qb_query_common_fields import (
     TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
 )
 
-from .qb_trxn_common_fields import CreditCardTxnInfo, CreditCardTxnInputInfo, RefundAppliedToTxnAdd
-
+from .qb_trxn_common_fields import (
+    CreditCardTxnInfo, CreditCardTxnInputInfo, RefundAppliedToTxnAdd, RefundAppliedToTxn,
+)

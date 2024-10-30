@@ -2,12 +2,13 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Optional, List, Type, Dict
 from collections import defaultdict
+from src.quickbooks_desktop.data_ext import DataExt
 
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     LinkedTxn, BillAddress, CreditCardTxnInfo, ShipAddress, ShipAddressBlock, SetCredit,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, Address, RefundAppliedToTxnAdd
+    CurrencyFilter, Address, RefundAppliedToTxnAdd, AddressBlock, RefundAppliedToTxn
 )
 from src.quickbooks_desktop.lists import (
     RefundFromAccountRef, PaymentMethodRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
@@ -232,13 +233,173 @@ class ARRefundCreditCardAdd(QBAddMixin):
             "min_occurs": 1,
         },
     )
-    def_macro: Optional[str] = field(
+
+@dataclass
+class ARRefundCreditCard(QBMixinWithQuery):
+    class Meta:
+        name = "ARRefundCreditCard"
+
+    txn_id: Optional[str] = field(
         default=None,
         metadata={
-            "name": "defMacro",
-            "type": "Attribute",
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    refund_from_account_ref: Optional[RefundFromAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "RefundFromAccountRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    address_block: Optional[AddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "AddressBlock",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    refund_applied_to_txn_ret: List[RefundAppliedToTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefundAppliedToTxnRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
         },
     )
 
 
-#todo: Mod, Base, and Plural
+class ARRefundCreditCards(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "ARRefundCreditCard"
+        plural_of = ARRefundCreditCard
