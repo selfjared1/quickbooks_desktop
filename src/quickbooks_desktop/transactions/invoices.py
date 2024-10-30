@@ -945,33 +945,6 @@ class InvoiceQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    # request_id: Optional[str] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "requestID",
-    #         "type": "Attribute",
-    #     },
-    # )
-    # meta_data: InvoiceQueryRqTypeMetaData = field(
-    #     default=InvoiceQueryRqTypeMetaData.NO_META_DATA,
-    #     metadata={
-    #         "name": "metaData",
-    #         "type": "Attribute",
-    #     },
-    # )
-    # iterator: Optional[InvoiceQueryRqTypeIterator] = field(
-    #     default=None,
-    #     metadata={
-    #         "type": "Attribute",
-    #     },
-    # )
-    # iterator_id: Optional[str] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "iteratorID",
-    #         "type": "Attribute",
-    #     },
-    # )
 
 @dataclass
 class Invoice(QBMixinWithQuery):
@@ -981,7 +954,7 @@ class Invoice(QBMixinWithQuery):
 
     Query: Type[InvoiceQuery] = InvoiceQuery
     Add: Type[InvoiceAdd] = InvoiceAdd
-    # Mod: Type[InvoiceMod] = InvoiceMod
+    Mod: Type[InvoiceMod] = InvoiceMod
 
     txn_id: Optional[str] = field(
         default=None,

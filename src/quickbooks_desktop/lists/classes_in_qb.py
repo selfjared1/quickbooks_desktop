@@ -15,6 +15,12 @@ class ClassInQBRef(QBRefMixin):
 
 
 @dataclass
+class DiscountClassRef(QBRefMixin):
+    class Meta:
+        name = "DiscountClassRef"
+
+
+@dataclass
 class ClassInQBQuery(QBQueryMixin):
     FIELD_ORDER = [
         "ListID", "FullName", "MaxReturned", "ActiveStatus", "FromModifiedDate",

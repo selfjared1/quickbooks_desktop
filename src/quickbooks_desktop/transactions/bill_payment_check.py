@@ -7,12 +7,12 @@ from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     ExpenseLineMod,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, VendorAddress,
+    CurrencyFilter, VendorAddress, Address, AddressBlock,
     ItemLineAdd, ExpenseLineAdd, ItemGroupLineAdd, ItemLineMod, ItemGroupLineMod, LinkedTxn, ExpenseLine,
-    ItemLine, ItemGroupLine
+    ItemLine, ItemGroupLine, PayeeEntityRef, AppliedToTxnAdd, AppliedToTxnMod, AppliedToTxn
 )
 from src.quickbooks_desktop.lists import (
-    CurrencyRef, VendorRef,
+    CurrencyRef, VendorRef, BankAccountRef,
     ApaccountRef, TermsRef, SalesTaxCodeRef
 )
 from src.quickbooks_desktop.mixins import (
@@ -21,17 +21,16 @@ from src.quickbooks_desktop.mixins import (
 )
 
 @dataclass
-class BillQuery(QBQueryMixin):
+class BillPaymentCheckQuery(QBQueryMixin):
     FIELD_ORDER = [
         "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
         "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
         "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
-        "CurrencyFilter", "PaidStatus", "IncludeLineItems",
-        "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
     ]
 
     class Meta:
-        name = "BillQuery"
+        name = "BillPaymentCheckQuery"
 
     txn_id: List[str] = field(
         default_factory=list,
@@ -110,25 +109,10 @@ class BillQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    paid_status: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "PaidStatus",
-            "type": "Element",
-            "valid_values": ["All", "PaidOnly", "NotPaidOnly"],
-        },
-    )
     include_line_items: Optional[bool] = field(
         default=None,
         metadata={
             "name": "IncludeLineItems",
-            "type": "Element",
-        },
-    )
-    include_linked_txns: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IncludeLinkedTxns",
             "type": "Element",
         },
     )
@@ -150,30 +134,22 @@ class BillQuery(QBQueryMixin):
 
 
 @dataclass
-class BillAdd(QBAddMixin):
+class BillPaymentCheckAdd(QBAddMixin):
     FIELD_ORDER = [
-        "VendorRef", "VendorAddress", "APAccountRef", "TxnDate",
-        "DueDate", "RefNumber", "TermsRef", "Memo", "ExchangeRate",
-        "ExternalGUID", "LinkToTxnID", "ExpenseLineAdd", "ItemLineAdd",
-        "ItemGroupLineAdd"
+        "PayeeEntityRef", "APAccountRef", "TxnDate", "BankAccountRef",
+        "IsToBePrinted", "RefNumber", "Memo", "ExchangeRate",
+        "ExternalGUID", "AppliedToTxnAdd"
     ]
 
     class Meta:
-        name = "BillAdd"
+        name = "BillPaymentCheckAdd"
 
-    vendor_ref: Optional[VendorRef] = field(
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
         default=None,
         metadata={
-            "name": "VendorRef",
+            "name": "PayeeEntityRef",
             "type": "Element",
             "required": True,
-        },
-    )
-    vendor_address: Optional[VendorAddress] = field(
-        default=None,
-        metadata={
-            "name": "VendorAddress",
-            "type": "Element",
         },
     )
     apaccount_ref: Optional[ApaccountRef] = field(
@@ -190,10 +166,18 @@ class BillAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    due_date: Optional[QBDates] = field(
+    bank_account_ref: Optional[BankAccountRef] = field(
         default=None,
         metadata={
-            "name": "DueDate",
+            "name": "BankAccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
             "type": "Element",
         },
     )
@@ -202,14 +186,7 @@ class BillAdd(QBAddMixin):
         metadata={
             "name": "RefNumber",
             "type": "Element",
-            "max_length": 20,
-        },
-    )
-    terms_ref: Optional[TermsRef] = field(
-        default=None,
-        metadata={
-            "name": "TermsRef",
-            "type": "Element",
+            "max_length": 11,
         },
     )
     memo: Optional[str] = field(
@@ -218,20 +195,6 @@ class BillAdd(QBAddMixin):
             "name": "Memo",
             "type": "Element",
             "max_length": 4095,
-        },
-    )
-    is_tax_included: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsTaxIncluded",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
         },
     )
     exchange_rate: Optional[float] = field(
@@ -248,32 +211,12 @@ class BillAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    link_to_txn_id: List[str] = field(
+    applied_to_txn_add: List[AppliedToTxnAdd] = field(
         default_factory=list,
         metadata={
-            "name": "LinkToTxnID",
+            "name": "AppliedToTxnAdd",
             "type": "Element",
-        },
-    )
-    expense_line_add: List[ExpenseLineAdd] = field(
-        default_factory=list,
-        metadata={
-            "name": "ExpenseLineAdd",
-            "type": "Element",
-        },
-    )
-    item_line_add: List[ItemLineAdd] = field(
-        default_factory=list,
-        metadata={
-            "name": "ItemLineAdd",
-            "type": "Element",
-        },
-    )
-    item_group_line_add: List[ItemGroupLineAdd] = field(
-        default_factory=list,
-        metadata={
-            "name": "ItemGroupLineAdd",
-            "type": "Element",
+            "min_occurs": 1,
         },
     )
     def_macro: Optional[str] = field(
@@ -286,17 +229,15 @@ class BillAdd(QBAddMixin):
 
 
 @dataclass
-class BillMod(QBModMixin):
+class BillPaymentCheckMod(QBModMixin):
     FIELD_ORDER = [
-        "TxnID", "EditSequence", "VendorRef", "VendorAddress",
-        "APAccountRef", "TxnDate", "DueDate", "RefNumber",
-        "TermsRef", "Memo", "ExchangeRate", "ClearExpenseLines",
-        "ExpenseLineMod", "ClearItemLines", "ItemLineMod",
-        "ItemGroupLineMod"
+        "TxnID", "EditSequence", "TxnDate", "BankAccountRef",
+        "Amount", "ExchangeRate", "IsToBePrinted", "RefNumber",
+        "Memo", "AppliedToTxnMod"
     ]
 
     class Meta:
-        name = "BillMod"
+        name = "BillPaymentCheckMod"
 
     txn_id: Optional[str] = field(
         default=None,
@@ -315,27 +256,6 @@ class BillMod(QBModMixin):
             "max_length": 16,
         },
     )
-    vendor_ref: Optional[VendorRef] = field(
-        default=None,
-        metadata={
-            "name": "VendorRef",
-            "type": "Element",
-        },
-    )
-    vendor_address: Optional[VendorAddress] = field(
-        default=None,
-        metadata={
-            "name": "VendorAddress",
-            "type": "Element",
-        },
-    )
-    apaccount_ref: Optional[ApaccountRef] = field(
-        default=None,
-        metadata={
-            "name": "APAccountRef",
-            "type": "Element",
-        },
-    )
     txn_date: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -343,47 +263,17 @@ class BillMod(QBModMixin):
             "type": "Element",
         },
     )
-    due_date: Optional[QBDates] = field(
+    bank_account_ref: Optional[BankAccountRef] = field(
         default=None,
         metadata={
-            "name": "DueDate",
+            "name": "BankAccountRef",
             "type": "Element",
         },
     )
-    ref_number: Optional[str] = field(
+    amount: Optional[Decimal] = field(
         default=None,
         metadata={
-            "name": "RefNumber",
-            "type": "Element",
-            "max_length": 20,
-        },
-    )
-    terms_ref: Optional[TermsRef] = field(
-        default=None,
-        metadata={
-            "name": "TermsRef",
-            "type": "Element",
-        },
-    )
-    memo: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Memo",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    is_tax_included: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsTaxIncluded",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
+            "name": "Amount",
             "type": "Element",
         },
     )
@@ -394,53 +284,48 @@ class BillMod(QBModMixin):
             "type": "Element",
         },
     )
-    clear_expense_lines: Optional[bool] = field(
+    is_to_be_printed: Optional[bool] = field(
         default=None,
         metadata={
-            "name": "ClearExpenseLines",
+            "name": "IsToBePrinted",
             "type": "Element",
         },
     )
-    expense_line_mod: List[ExpenseLineMod] = field(
-        default_factory=list,
-        metadata={
-            "name": "ExpenseLineMod",
-            "type": "Element",
-        },
-    )
-    clear_item_lines: Optional[bool] = field(
+    ref_number: Optional[str] = field(
         default=None,
         metadata={
-            "name": "ClearItemLines",
+            "name": "RefNumber",
             "type": "Element",
+            "max_length": 11,
         },
     )
-    item_line_mod: List[ItemLineMod] = field(
-        default_factory=list,
+    memo: Optional[str] = field(
+        default=None,
         metadata={
-            "name": "ItemLineMod",
+            "name": "Memo",
             "type": "Element",
+            "max_length": 4095,
         },
     )
-    item_group_line_mod: List[ItemGroupLineMod] = field(
+    applied_to_txn_mod: List[AppliedToTxnMod] = field(
         default_factory=list,
         metadata={
-            "name": "ItemGroupLineMod",
+            "name": "AppliedToTxnMod",
             "type": "Element",
         },
     )
 
 
 @dataclass
-class Bill(QBMixinWithQuery):
-
+class BillPaymentCheck(QBMixinWithQuery):
+    
     class Meta:
-        name = "Bill"
+        name = "BillPaymentCheck"
 
-    Query: Type[BillQuery] = BillQuery
-    Add: Type[BillAdd] = BillAdd
-    Mod: Type[BillMod] = BillMod
-
+    Query: Type[BillPaymentCheckQuery] = BillPaymentCheckQuery
+    Add: Type[BillPaymentCheckAdd] = BillPaymentCheckAdd
+    Mod: Type[BillPaymentCheckMod] = BillPaymentCheckMod
+    
     txn_id: Optional[str] = field(
         default=None,
         metadata={
@@ -477,17 +362,10 @@ class Bill(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    vendor_ref: Optional[VendorRef] = field(
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
         default=None,
         metadata={
-            "name": "VendorRef",
-            "type": "Element",
-        },
-    )
-    vendor_address: Optional[VendorAddress] = field(
-        default=None,
-        metadata={
-            "name": "VendorAddress",
+            "name": "PayeeEntityRef",
             "type": "Element",
         },
     )
@@ -505,17 +383,17 @@ class Bill(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    due_date: Optional[QBDates] = field(
+    bank_account_ref: Optional[BankAccountRef] = field(
         default=None,
         metadata={
-            "name": "DueDate",
+            "name": "BankAccountRef",
             "type": "Element",
         },
     )
-    amount_due: Optional[Decimal] = field(
+    amount: Optional[Decimal] = field(
         default=None,
         metadata={
-            "name": "AmountDue",
+            "name": "Amount",
             "type": "Element",
         },
     )
@@ -533,10 +411,10 @@ class Bill(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    amount_due_in_home_currency: Optional[Decimal] = field(
+    amount_in_home_currency: Optional[Decimal] = field(
         default=None,
         metadata={
-            "name": "AmountDueInHomeCurrency",
+            "name": "AmountInHomeCurrency",
             "type": "Element",
         },
     )
@@ -545,14 +423,7 @@ class Bill(QBMixinWithQuery):
         metadata={
             "name": "RefNumber",
             "type": "Element",
-            "max_length": 20,
-        },
-    )
-    terms_ref: Optional[TermsRef] = field(
-        default=None,
-        metadata={
-            "name": "TermsRef",
-            "type": "Element",
+            "max_length": 11,
         },
     )
     memo: Optional[str] = field(
@@ -563,24 +434,24 @@ class Bill(QBMixinWithQuery):
             "max_length": 4095,
         },
     )
-    is_tax_included: Optional[bool] = field(
+    address: Optional[Address] = field(
         default=None,
         metadata={
-            "name": "IsTaxIncluded",
+            "name": "Address",
             "type": "Element",
         },
     )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+    address_block: Optional[AddressBlock] = field(
         default=None,
         metadata={
-            "name": "SalesTaxCodeRef",
+            "name": "AddressBlock",
             "type": "Element",
         },
     )
-    is_paid: Optional[bool] = field(
+    is_to_be_printed: Optional[bool] = field(
         default=None,
         metadata={
-            "name": "IsPaid",
+            "name": "IsToBePrinted",
             "type": "Element",
         },
     )
@@ -591,52 +462,17 @@ class Bill(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    linked_txn: List[LinkedTxn] = field(
+    applied_to_txn_ret: List[AppliedToTxn] = field(
         default_factory=list,
         metadata={
-            "name": "LinkedTxn",
+            "name": "AppliedToTxnRet",
             "type": "Element",
         },
     )
-    expense_line: List[ExpenseLine] = field(
-        default_factory=list,
-        metadata={
-            "name": "ExpenseLineRet",
-            "type": "Element",
-        },
-    )
-    item_line_ret: List[ItemLine] = field(
-        default_factory=list,
-        metadata={
-            "name": "ItemLineRet",
-            "type": "Element",
-        },
-    )
-    item_group_line_ret: List[ItemGroupLine] = field(
-        default_factory=list,
-        metadata={
-            "name": "ItemGroupLineRet",
-            "type": "Element",
-        },
-    )
-    open_amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "OpenAmount",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
+    data_ext_ret: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
             "type": "Element",
         },
     )
-
-
-class Bills(PluralMixin, PluralTrxnSaveMixin):
-
-    class Meta:
-        name = "Bill"
-        plural_of = Bill

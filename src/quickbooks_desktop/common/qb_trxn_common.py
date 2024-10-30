@@ -7,10 +7,25 @@ from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin
 from src.quickbooks_desktop.lists import (
     AccountRef, CustomerRef, ClassInQBRef, SalesTaxCodeRef, SalesRepRef, ItemRef,
     InventorySiteRef, InventorySiteLocationRef, OverrideItemAccountRef, ItemGroupRef,
-    OverrideUomsetRef
+    OverrideUomsetRef, DiscountAccountRef, DiscountClassRef
 )
+from src.quickbooks_desktop.common import LinkedTxn
 from src.quickbooks_desktop.data_ext import DataExt
 
+
+VALID_TXN_TYPE_VALUE = [
+    "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+    "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
+    "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
+    "ItemReceipt", "JournalEntry", "LiabilityAdjustment", "Paycheck",
+    "PayrollLiabilityCheck", "PurchaseOrder", "ReceivePayment", "SalesOrder",
+    "SalesReceipt", "SalesTaxPaymentCheck", "Transfer", "VendorCredit", "YTDAdjustment"
+]
+
+@dataclass
+class PayeeEntityRef(QBRefMixin):
+    class Meta:
+        name = "PayeeEntityRef"
 
 @dataclass
 class CreditCardTxnInputInfo(QBMixin):
@@ -238,6 +253,301 @@ class CreditCardTxnInfo(QBMixin):
             "required": True,
         },
     )
+
+
+@dataclass
+class TxnLineDetail(QBMixin):
+
+    class Meta:
+        name = "TxnLineDetail"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+
+@dataclass
+class SetCreditCreditTxnId(QBMixin):
+    class Meta:
+        name = "SetCreditCreditTxnId"
+
+    value: str = field(
+        default="",
+        metadata={
+            "required": True,
+            "max_length": 36,
+        },
+    )
+    use_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "useMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class SetCredit(QBMixin):
+
+    class Meta:
+        name = "SetCredit"
+
+    credit_txn_id: Optional[SetCreditCreditTxnId] = field(
+        default=None,
+        metadata={
+            "name": "CreditTxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+        },
+    )
+    applied_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AppliedAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    override: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "Override",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AppliedToTxnAdd(QBMixin):
+    FIELD_ORDER = [
+        "TxnID", "PaymentAmount", "SetCredit", "DiscountAmount",
+        "DiscountAccountRef", "DiscountClassRef"
+    ]
+
+    class Meta:
+        name = "AppliedToTxnAdd"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payment_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "PaymentAmount",
+            "type": "Element",
+        },
+    )
+    txn_line_detail: List[TxnLineDetail] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnLineDetail",
+            "type": "Element",
+        },
+    )
+    set_credit: List[SetCredit] = field(
+        default_factory=list,
+        metadata={
+            "name": "SetCredit",
+            "type": "Element",
+        },
+    )
+    discount_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "DiscountAmount",
+            "type": "Element",
+        },
+    )
+    discount_account_ref: Optional[DiscountAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DiscountAccountRef",
+            "type": "Element",
+        },
+    )
+    discount_class_ref: Optional[DiscountClassRef] = field(
+        default=None,
+        metadata={
+            "name": "DiscountClassRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AppliedToTxnMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnID", "PaymentAmount", "SetCredit", "DiscountAmount",
+        "DiscountAccountRef", "DiscountClassRef"
+    ]
+
+    class Meta:
+        name = "AppliedToTxnMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payment_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "PaymentAmount",
+            "type": "Element",
+        },
+    )
+    set_credit: List[SetCredit] = field(
+        default_factory=list,
+        metadata={
+            "name": "SetCredit",
+            "type": "Element",
+        },
+    )
+    discount_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "DiscountAmount",
+            "type": "Element",
+        },
+    )
+    discount_account_ref: Optional[DiscountAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DiscountAccountRef",
+            "type": "Element",
+        },
+    )
+    discount_class_ref: Optional[DiscountClassRef] = field(
+        default=None,
+        metadata={
+            "name": "DiscountClassRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class AppliedToTxn(QBMixin):
+    FIELD_ORDER = [
+        "TxnID", "TxnType", "TxnDate", "RefNumber", "BalanceRemaining",
+        "Amount", "DiscountAmount", "DiscountAccountRef",
+        "DiscountClassRef", "LinkedTxn"
+    ]
+
+    class Meta:
+        name = "AppliedToTxn"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    txn_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_TXN_TYPE_VALUE
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    balance_remaining: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "BalanceRemaining",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    txn_line_detail: List[TxnLineDetail] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnLineDetail",
+            "type": "Element",
+        },
+    )
+    discount_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "DiscountAmount",
+            "type": "Element",
+        },
+    )
+    discount_account_ref: Optional[DiscountAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DiscountAccountRef",
+            "type": "Element",
+        },
+    )
+    discount_class_ref: Optional[DiscountClassRef] = field(
+        default=None,
+        metadata={
+            "name": "DiscountClassRef",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+
 
 @dataclass
 class RefundAppliedToTxnAdd(QBMixin):

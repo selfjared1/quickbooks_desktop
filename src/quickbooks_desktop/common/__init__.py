@@ -18,5 +18,6 @@ from .qb_query_common import (
 from .qb_trxn_common import (
     CreditCardTxnInfo, CreditCardTxnInputInfo, RefundAppliedToTxnAdd, RefundAppliedToTxn,
     LinkToTxn, ExpenseLineAdd, ItemLineAdd, ItemGroupLineAdd, ExpenseLineMod, ItemLineMod,
-    ItemGroupLineMod, ExpenseLine, ItemLine, ItemGroupLine
+    ItemGroupLineMod, ExpenseLine, ItemLine, ItemGroupLine, PayeeEntityRef, AppliedToTxnAdd,
+    AppliedToTxnMod, AppliedToTxn
 )

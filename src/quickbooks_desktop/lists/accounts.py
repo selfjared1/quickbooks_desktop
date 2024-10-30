@@ -71,6 +71,18 @@ class ApaccountRef(QBRefMixin):
 
 
 @dataclass
+class BankAccountRef(QBRefMixin):
+    class Meta:
+        name = "BankAccountRef"
+
+
+@dataclass
+class DiscountAccountRef(QBRefMixin):
+    class Meta:
+        name = "DiscountAccountRef"
+
+
+@dataclass
 class RefundFromAccountRef(QBRefMixin):
     class Meta:
         name = "RefundFromAccountRef"
