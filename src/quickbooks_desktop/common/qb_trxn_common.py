@@ -1582,3 +1582,34 @@ class ItemGroupLine(QBMixin):
             "type": "Element",
         },
     )
+
+@dataclass
+class DiscountLineAdd(QBMixin):
+    amount: Optional[Amount] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[RatePercent] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[IsTaxable] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
