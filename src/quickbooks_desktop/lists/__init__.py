@@ -3,7 +3,8 @@ from .accounts import (
     AccountRef, PrefillAccountRef, RefundFromAccountRef, CogsaccountRef, AssetAccountRef,
     OverrideItemAccountRef, AraccountRef, DepositToAccountRef, ExpenseAccountRef,
     IncomeAccountRef, TaxLineInfo, AccountQuery, AccountAdd, SpecialAccountAdd,
-    AccountMod, Account, Accounts, ApaccountRef, BankAccountRef, DiscountAccountRef
+    AccountMod, Account, Accounts, ApaccountRef, BankAccountRef, DiscountAccountRef,
+    CreditCardAccountRef
 )
 from .billing_rate import (
     BillingRateRef, BillingRatePerItem, BillingRateQuery, BillingRateAdd, BillingRate,

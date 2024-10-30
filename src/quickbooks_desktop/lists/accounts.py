@@ -77,6 +77,12 @@ class BankAccountRef(QBRefMixin):
 
 
 @dataclass
+class CreditCardAccountRef(QBRefMixin):
+    class Meta:
+        name = "CreditCardAccountRef"
+
+
+@dataclass
 class DiscountAccountRef(QBRefMixin):
     class Meta:
         name = "DiscountAccountRef"
