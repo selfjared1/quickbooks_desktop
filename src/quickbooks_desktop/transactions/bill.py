@@ -5,14 +5,14 @@ from src.quickbooks_desktop.data_ext import DataExt
 
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
-    CreditCardTxnInfo, ExpenseLineMod,
+    ExpenseLineMod,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, Address, RefundAppliedToTxnAdd, AddressBlock, RefundAppliedToTxn, VendorAddress,
+    CurrencyFilter, VendorAddress,
     ItemLineAdd, ExpenseLineAdd, ItemGroupLineAdd, ItemLineMod, ItemGroupLineMod, LinkedTxn, ExpenseLine,
     ItemLine, ItemGroupLine
 )
 from src.quickbooks_desktop.lists import (
-    RefundFromAccountRef, PaymentMethodRef, CustomerRef, AraccountRef, CurrencyRef, VendorRef,
+    CurrencyRef, VendorRef,
     ApaccountRef, TermsRef, SalesTaxCodeRef
 )
 from src.quickbooks_desktop.mixins import (
