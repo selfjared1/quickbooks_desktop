@@ -476,3 +476,9 @@ class BillPaymentCheck(QBMixinWithQuery):
             "type": "Element",
         },
     )
+
+class BillPaymentChecks(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "BillPaymentCheck"
+        plural_of = BillPaymentCheck
