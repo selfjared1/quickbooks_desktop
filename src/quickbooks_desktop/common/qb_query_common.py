@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
-from enum import Enum
 from src.quickbooks_desktop.mixins.qb_mixins import ToXmlMixin, QBRefMixin
 from src.quickbooks_desktop.qb_special_fields import QBDates
 from decimal import Decimal
