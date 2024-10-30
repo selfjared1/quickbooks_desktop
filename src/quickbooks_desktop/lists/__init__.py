@@ -43,7 +43,7 @@ from .items import (
     ItemInventory, ItemInventories, ItemInventoryAssembly, ItemInventoryAssemblies, ItemNonInventory,
     ItemNonInventories, ItemOtherCharge, ItemOtherCharges, ItemPayment, ItemPayments,
     ItemSalesTax, ItemSalesTaxes, ItemSalesTaxGroup, ItemSalesTaxGroups, ItemService, ItemServices,
-    ItemSubtotal, ItemSubtotals
+    ItemSubtotal, ItemSubtotals, ItemInventoryAssemblyRef
 )
 from .job_type import JobType, JobTypes, JobTypeQuery, JobTypeAdd, JobTypeRef
 from .other_names import (

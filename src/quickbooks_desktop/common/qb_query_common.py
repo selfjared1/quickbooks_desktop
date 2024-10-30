@@ -15,6 +15,10 @@ class CurrencyFilter(QBRefMixin):
 
 @dataclass
 class NameFilter(ToXmlMixin):
+
+    class Meta:
+        name = "NameFilter"
+
     match_criterion: Optional[str] = field(
         default=None,
         metadata={
@@ -36,6 +40,10 @@ class NameFilter(ToXmlMixin):
 
 @dataclass
 class NameRangeFilter(ToXmlMixin):
+
+    class Meta:
+        name = "NameRangeFilter"
+
     from_name: Optional[str] = field(
         default=None,
         metadata={
@@ -56,6 +64,10 @@ VALID_OPERATOR_VALUES = ["LessThan", "LessThanEqual", "Equal", "GreaterThan", "G
 
 @dataclass
 class TotalBalanceFilter(ToXmlMixin):
+
+    class Meta:
+        name = "TotalBalanceFilter"
+
     operator: Optional[str] = field(
         default=None,
         metadata={
@@ -76,6 +88,10 @@ class TotalBalanceFilter(ToXmlMixin):
 
 @dataclass
 class ClassFilter(ToXmlMixin):
+
+    class Meta:
+        name = "ClassFilter"
+
     list_id: List[str] = field(
         default_factory=list,
         metadata={
@@ -107,6 +123,10 @@ class ClassFilter(ToXmlMixin):
 
 @dataclass
 class ModifiedDateRangeFilter(ToXmlMixin):
+
+    class Meta:
+        name = "ModifiedDateRangeFilter"
+
     from_modified_date: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -124,6 +144,10 @@ class ModifiedDateRangeFilter(ToXmlMixin):
 
 @dataclass
 class TxnDateRangeFilter(ToXmlMixin):
+
+    class Meta:
+        name = "TxnDateRangeFilter"
+
     from_txn_date: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -162,6 +186,9 @@ class TxnDateRangeFilter(ToXmlMixin):
 @dataclass
 class EntityFilter(ToXmlMixin):
 
+    class Meta:
+        name = "EntityFilter"
+
     list_id: List[str] = field(
         default_factory=list,
         metadata={
@@ -193,6 +220,9 @@ class EntityFilter(ToXmlMixin):
 
 @dataclass
 class AccountFilter(ToXmlMixin):
+
+    class Meta:
+        name = "AccountFilter"
 
     list_id: List[str] = field(
         default_factory=list,
@@ -226,6 +256,9 @@ class AccountFilter(ToXmlMixin):
 @dataclass
 class RefNumberFilter(ToXmlMixin):
 
+    class Meta:
+        name = "RefNumberFilter"
+
     match_criterion: Optional[str] = field(
         default=None,
         metadata={
@@ -246,6 +279,10 @@ class RefNumberFilter(ToXmlMixin):
 
 @dataclass
 class RefNumberRangeFilter(ToXmlMixin):
+
+    class Meta:
+        name = "RefNumberRangeFilter"
+
     from_ref_number: Optional[str] = field(
         default=None,
         metadata={
@@ -258,5 +295,42 @@ class RefNumberRangeFilter(ToXmlMixin):
         metadata={
             "name": "ToRefNumber",
             "type": "Element",
+        },
+    )
+
+@dataclass
+class ItemFilter(ToXmlMixin):
+
+    class Meta:
+        name = "ItemFilter"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+            "max_length": 159,
+        },
+    )
+    list_idwith_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListIDWithChildren",
+            "type": "Element",
+        },
+    )
+    full_name_with_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullNameWithChildren",
+            "type": "Element",
+            "max_length": 159,
         },
     )

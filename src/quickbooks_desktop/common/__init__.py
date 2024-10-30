@@ -13,6 +13,7 @@ from .qb_other_common import (
 from .qb_query_common import (
     CurrencyFilter, NameFilter, NameRangeFilter, TotalBalanceFilter, ClassFilter, ModifiedDateRangeFilter,
     TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
+    ItemFilter
 )
 
 from .qb_trxn_common import (

@@ -27,6 +27,12 @@ class ItemRef(QBRefMixin):
 
 
 @dataclass
+class ItemInventoryAssemblyRef(QBRefMixin):
+    class Meta:
+        name = "ItemInventoryAssemblyRef"
+
+
+@dataclass
 class ItemGroupRef(QBRefMixin):
     class Meta:
         name = "ItemGroupRef"
