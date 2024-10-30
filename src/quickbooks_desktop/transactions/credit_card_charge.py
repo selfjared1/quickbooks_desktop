@@ -6,7 +6,7 @@ from src.quickbooks_desktop.data_ext import DataExt
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    LinkedTxn, CurrencyFilter, PayeeEntityRef, Address, AddressBlock, ExpenseLineAdd,
+    CurrencyFilter, PayeeEntityRef, ExpenseLineAdd,
     ItemLineAdd, ItemGroupLineAdd, ExpenseLineMod, ItemLineMod, ItemGroupLineMod,
     ExpenseLine, ItemLine, ItemGroupLine
 )
