@@ -5,15 +5,12 @@ from src.quickbooks_desktop.data_ext import DataExt
 
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
-    ExpenseLineMod,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, VendorAddress,
-    ItemLineAdd, ExpenseLineAdd, ItemGroupLineAdd, ItemLineMod, ItemGroupLineMod, LinkedTxn, ExpenseLine,
-    ItemLine, ItemGroupLine
+    LinkedTxn,
 )
 from src.quickbooks_desktop.lists import (
-    CurrencyRef, VendorRef, CustomerRef, ItemRef, InventorySiteRef,
-    ApaccountRef, TermsRef, SalesTaxCodeRef, InventorySiteLocationRef, AraccountRef,
+    CustomerRef, ItemRef, InventorySiteRef,
+    InventorySiteLocationRef, AraccountRef,
     ClassInQBRef, OverrideItemAccountRef, OverrideUomsetRef
 )
 from src.quickbooks_desktop.mixins import (
