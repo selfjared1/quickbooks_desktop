@@ -4,18 +4,16 @@ from typing import Optional, List, Type
 from src.quickbooks_desktop.data_ext import DataExt
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
-    LinkedTxn, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, SetCredit,
-    ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, ItemFilter
+    ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter,
+    RefNumberFilter, RefNumberRangeFilter, ItemFilter,
 )
 from src.quickbooks_desktop.lists import (
-    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, CurrencyRef, TermsRef,
-    SalesRepRef, CustomerMsgRef, CustomerSalesTaxCodeRef, ItemRef, OverrideUomsetRef, InventorySiteRef,
-    InventorySiteLocationRef, ItemGroupRef, PriceLevelRef, OverrideItemAccountRef, AccountRef,
+    CustomerRef, ClassInQBRef, ItemRef, InventorySiteRef,
+    InventorySiteLocationRef, AccountRef,
 )
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralTrxnSaveMixin, QBMixinWithQuery, QBMixin,
-    QBQueryMixin, QBAddMixin, QBModMixin
+    QBQueryMixin, QBAddMixin, QBModMixin,
 )
 
 
