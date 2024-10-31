@@ -15,8 +15,8 @@ from src.quickbooks_desktop.lists import (
     InventorySiteLocationRef, ItemGroupRef, PriceLevelRef, OverrideItemAccountRef, AccountRef
 )
 from src.quickbooks_desktop.mixins import (
-    PluralMixin, PluralTrxnSaveMixin, QBRefMixin, QBMixinWithQuery, QBMixin,
-    QBQueryMixin, QBAddMixin, QBModMixin, SaveMixin
+    PluralMixin, PluralTrxnSaveMixin, QBMixinWithQuery, QBMixin,
+    QBQueryMixin, QBAddMixin, QBModMixin
 )
 
 
