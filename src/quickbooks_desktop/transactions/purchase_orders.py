@@ -5,11 +5,8 @@ from src.quickbooks_desktop.data_ext import DataExt
 
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
-    ExpenseLineMod, VendorAddress, VendorAddressBlock,
-    ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, VendorAddress, ShipAddress, ShipAddressBlock,
-    ItemLineAdd, ExpenseLineAdd, ItemGroupLineAdd, ItemLineMod, ItemGroupLineMod, LinkedTxn, ExpenseLine,
-    ItemLine, ItemGroupLine
+    VendorAddressBlock, ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
+    CurrencyFilter, VendorAddress, ShipAddress, ShipAddressBlock, LinkedTxn,
 )
 from src.quickbooks_desktop.lists import (
     VendorRef, ClassInQBRef, InventorySiteRef, ItemRef, InventorySiteLocationRef,
