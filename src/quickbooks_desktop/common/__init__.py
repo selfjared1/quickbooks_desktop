@@ -20,5 +20,5 @@ from .qb_trxn_common import (
     CreditCardTxnInfo, CreditCardTxnInputInfo, RefundAppliedToTxnAdd, RefundAppliedToTxn,
     LinkToTxn, ExpenseLineAdd, ItemLineAdd, ItemGroupLineAdd, ExpenseLineMod, ItemLineMod,
     ItemGroupLineMod, ExpenseLine, ItemLine, ItemGroupLine, PayeeEntityRef, AppliedToTxnAdd,
-    AppliedToTxnMod, AppliedToTxn
+    AppliedToTxnMod, AppliedToTxn, DiscountLineAdd, DiscountLine
 )
