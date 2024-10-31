@@ -4,14 +4,14 @@ from .accounts import (
     OverrideItemAccountRef, AraccountRef, DepositToAccountRef, ExpenseAccountRef,
     IncomeAccountRef, TaxLineInfo, AccountQuery, AccountAdd, SpecialAccountAdd,
     AccountMod, Account, Accounts, ApaccountRef, BankAccountRef, DiscountAccountRef,
-    CreditCardAccountRef
+    CreditCardAccountRef, DepositToAccountRef
 )
 from .billing_rate import (
     BillingRateRef, BillingRatePerItem, BillingRateQuery, BillingRateAdd, BillingRate,
     BillingRates
 )
 from .classes_in_qb import (
-    ClassInQBRef, ClassInQBQuery, ClassInQBAdd, ClassInQBMod, ClassInQB, ClassesInQB, DiscountClassRef
+    ClassInQBRef, ClassInQBQuery, ClassInQBAdd, ClassInQBMod, ClassInQB, ClassesInQB, DiscountClassRef, OverrideClassRef
 )
 from .currency import (
     CurrencyRef, CurrencyFormat, CurrencyQuery, CurrencyAdd, CurrencyMod, Currency, Currencies
