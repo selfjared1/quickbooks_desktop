@@ -1706,6 +1706,8 @@ class Invoice(QBMixinWithQuery):
         },
     )
 
+
+@dataclass
 class Invoices(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

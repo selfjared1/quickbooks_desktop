@@ -626,6 +626,7 @@ class Check(QBMixinWithQuery):
     )
 
 
+@dataclass
 class Checks(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

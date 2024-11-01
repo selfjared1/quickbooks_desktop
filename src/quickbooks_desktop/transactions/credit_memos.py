@@ -1800,6 +1800,8 @@ class CreditMemo(QBMixinWithQuery):
         },
     )
 
+
+@dataclass
 class CreditMemos(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

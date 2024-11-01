@@ -358,7 +358,7 @@ class BillPaymentCreditCard(QBMixinWithQuery):
         },
     )
 
-
+@dataclass
 class BillPaymentCreditCards(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

@@ -808,7 +808,8 @@ class Deposit(QBMixinWithQuery):
         },
     )
     
-    
+
+@dataclass
 class Deposits(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

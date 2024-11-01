@@ -561,6 +561,7 @@ class BuildAssembly(QBMixinWithQuery):
     )
 
 
+@dataclass
 class BuildAssemblies(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

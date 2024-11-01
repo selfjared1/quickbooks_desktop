@@ -649,6 +649,7 @@ class Charge(QBMixinWithQuery):
     )
 
 
+@dataclass
 class Charges(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

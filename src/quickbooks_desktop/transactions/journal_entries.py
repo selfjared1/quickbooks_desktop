@@ -689,6 +689,7 @@ class JournalEntry(QBMixinWithQuery):
     )
 
 
+@dataclass
 class JournalEntries(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

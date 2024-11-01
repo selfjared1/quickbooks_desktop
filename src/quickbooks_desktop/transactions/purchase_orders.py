@@ -1519,6 +1519,7 @@ class PurchaseOrder(QBMixinWithQuery):
     )
 
 
+@dataclass
 class PurchaseOrders(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

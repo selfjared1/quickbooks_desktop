@@ -395,6 +395,7 @@ class ARRefundCreditCard(QBMixinWithQuery):
     )
 
 
+@dataclass
 class ARRefundCreditCards(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

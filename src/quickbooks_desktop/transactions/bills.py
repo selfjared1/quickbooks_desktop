@@ -634,7 +634,7 @@ class Bill(QBMixinWithQuery):
         },
     )
 
-
+@dataclass
 class Bills(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

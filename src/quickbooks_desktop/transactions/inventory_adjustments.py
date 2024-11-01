@@ -671,7 +671,8 @@ class InventoryAdjustment(QBMixinWithQuery):
         },
     )
     
-    
+
+@dataclass
 class InventoryAdjustments(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

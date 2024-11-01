@@ -496,6 +496,7 @@ class CreditCardCharge(QBMixinWithQuery):
     )
 
 
+@dataclass
 class CreditCardCharges(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

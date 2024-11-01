@@ -751,7 +751,9 @@ class ReceivePayment(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    
+
+
+@dataclass
 class ReceivePayments(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

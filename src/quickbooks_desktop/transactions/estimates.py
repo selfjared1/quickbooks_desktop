@@ -1486,8 +1486,9 @@ class Estimate(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    
-    
+
+
+@dataclass
 class Estimates(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:

@@ -476,6 +476,8 @@ class BillPaymentCheck(QBMixinWithQuery):
         },
     )
 
+
+@dataclass
 class BillPaymentChecks(PluralMixin, PluralTrxnSaveMixin):
 
     class Meta:
