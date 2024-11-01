@@ -3,29 +3,26 @@ from typing import Optional
 from src.quickbooks_desktop.mixins import QBMixin
 
 
-
 @dataclass
-class TxnDel(QBMixin):
+class TxnVoid(QBMixin):
     FIELD_ORDER = [
-        "TxnDelType", "TxnID"
+        "TxnVoidType", "TxnID"
     ]
 
     class Meta:
-        name = "TxnDel"
+        name = "TxnVoid"
 
-    txn_del_type: Optional[str] = field(
+    txn_void_type: Optional[str] = field(
         default=None,
         metadata={
-            "name": "TxnDelType",
+            "name": "TxnVoidType",
             "type": "Element",
             "required": True,
             "valid_values": [
                 "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
-                "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
-                "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
-                "ItemReceipt", "JournalEntry", "PurchaseOrder", "ReceivePayment", "SalesOrder",
-                "SalesReceipt", "SalesTaxPaymentCheck", "TimeTracking", "TransferInventory",
-                "VehicleMileage", "VendorCredit"
+                "Charge", "Check", "CreditCardCharge", "CreditCardCredit", "CreditMemo",
+                "Deposit", "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry",
+                "SalesReceipt", "VendorCredit"
             ],
         },
     )
