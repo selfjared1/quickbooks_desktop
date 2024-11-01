@@ -9,15 +9,6 @@ from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 
 
 
-@dataclass
-class SalesRepEntityRef(QBRefMixin):
-    class Meta:
-        name = "SalesRepEntityRef"
-
-@dataclass
-class SalesRepRef(QBRefMixin):
-    class Meta:
-        name = "SalesRepRef"
 
 
 @dataclass

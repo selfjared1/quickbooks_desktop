@@ -9,10 +9,6 @@ from src.quickbooks_desktop.common import (
 )
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 
-@dataclass
-class VendorTypeRef(QBRefMixin):
-    class Meta:
-        name = "VendorTypeRef"
 
 @dataclass
 class VendorTypeQuery(QBQueryMixin):

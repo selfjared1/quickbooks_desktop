@@ -13,10 +13,6 @@ from src.quickbooks_desktop.common import (OtherNameAddress, OtherNameAddressBlo
 
 
 
-@dataclass
-class OtherNameRef(QBRefMixin):
-    class Meta:
-        name = "OtherNameRef"
 
 
 

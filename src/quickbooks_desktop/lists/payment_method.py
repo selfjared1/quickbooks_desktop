@@ -10,11 +10,6 @@ from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter
 
 
 
-@dataclass
-class PaymentMethodRef(QBRefMixin):
-
-    class Meta:
-        name = "PaymentMethodRef"
 
 @dataclass
 class PaymentMethodQuery(QBQueryMixin):

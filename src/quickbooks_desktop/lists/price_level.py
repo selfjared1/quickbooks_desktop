@@ -11,11 +11,6 @@ from src.quickbooks_desktop.lists import ItemRef, CurrencyRef
 
 
 
-@dataclass
-class PriceLevelRef(QBRefMixin):
-
-    class Meta:
-        name = "PriceLevelRef"
 
 
 @dataclass

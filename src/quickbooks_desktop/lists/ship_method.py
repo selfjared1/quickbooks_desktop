@@ -8,11 +8,6 @@ from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 
 
-@dataclass
-class ShipMethodRef(QBRefMixin):
-
-    class Meta:
-        name = "ShipMethodRef"
 
 @dataclass
 class ShipMethodQuery(QBQueryMixin):

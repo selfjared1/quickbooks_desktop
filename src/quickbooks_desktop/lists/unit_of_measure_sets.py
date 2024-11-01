@@ -6,11 +6,6 @@ from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBPriceType
 
 
-@dataclass
-class OverrideUomsetRef(QBRefMixin):
-
-    class Meta:
-        name = "OverrideUomsetRef"
 
 
 @dataclass

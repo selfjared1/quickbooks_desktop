@@ -7,26 +7,6 @@ from src.quickbooks_desktop.mixins import (
 )
 from src.quickbooks_desktop.common.qb_query_common import NameFilter, NameRangeFilter
 
-@dataclass
-class ItemPurchaseTaxRef(QBRefMixin):
-    class Meta:
-        name = "ItemPurchaseTaxRef"
-
-@dataclass
-class PurchaseTaxCodeRef(QBRefMixin):
-    class Meta:
-        name = "PurchaseTaxCodeRef"
-
-
-@dataclass
-class SalesTaxCodeRef(QBRefMixin):
-    class Meta:
-        name = "SalesTaxCodeRef"
-
-@dataclass
-class ItemSalesTaxRef(QBRefMixin):
-    class Meta:
-        name = "ItemSalesTaxRef"
 
 
 @dataclass

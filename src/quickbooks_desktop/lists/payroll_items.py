@@ -5,10 +5,6 @@ from src.quickbooks_desktop.mixins.qb_mixins import QBMixin
 from src.quickbooks_desktop.lists.accounts import ExpenseAccountRef
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin
 
-@dataclass
-class PayrollItemWageRef(QBRefMixin):
-    class Meta:
-        name = "PayrollItemWage"
 
 @dataclass
 class PayrollItemWage(QBMixin):

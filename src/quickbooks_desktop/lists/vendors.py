@@ -18,21 +18,6 @@ from src.quickbooks_desktop.lists import (
 from src.quickbooks_desktop.data_ext import DataExt
 
 
-@dataclass
-class VendorRef(QBRefMixin):
-    class Meta:
-        name = "VendorRef"
-
-
-@dataclass
-class PrefVendorRef(QBRefMixin):
-    class Meta:
-        name = "PrefVendorRef"
-
-@dataclass
-class TaxVendorRef(QBRefMixin):
-    class Meta:
-        name = "TaxVendorRef"
 
 @dataclass
 class VendorQuery(QBQueryMixin):

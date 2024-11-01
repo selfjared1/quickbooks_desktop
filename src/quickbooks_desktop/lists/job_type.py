@@ -9,10 +9,6 @@ from src.quickbooks_desktop.common import ParentRef, NameFilter, NameRangeFilter
 
 
 
-@dataclass
-class JobTypeRef(QBRefMixin):
-    class Meta:
-        name = "JobTypeRef"
 
 @dataclass
 class JobTypeQuery(QBQueryMixin):

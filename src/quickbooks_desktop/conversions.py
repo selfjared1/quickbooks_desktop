@@ -2,24 +2,11 @@ from typing import Type, Any
 from sqlalchemy.orm import Session
 from dataclasses import fields, is_dataclass, MISSING
 from src.quickbooks_desktop.db_models.base import Base
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-def create_address(dataclass_instance):
-    from src.quickbooks_desktop.common.qb_contact_common import Address
-    address = Address()
-    try:
-        for field in fields(dataclass_instance):
-            field_value = getattr(dataclass_instance, field.name)
-            setattr(address, field.name, field_value)
-        setattr(address, 'address_type', dataclass_instance.Meta.name)
-        return address
-    except Exception as e:
-        return None
 
 def qb_to_sql(dataclass_instance: Any, db_model: Type[Base]) -> Base:
     """
