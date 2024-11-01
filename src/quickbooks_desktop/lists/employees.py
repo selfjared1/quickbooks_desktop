@@ -6,7 +6,7 @@ from src.quickbooks_desktop.lists import BillingRateRef, ClassInQBRef
 from src.quickbooks_desktop.mixins import (
     QBRefMixin, QBMixin, QBMixinWithQuery, QBQueryMixin, PluralMixin, PluralListSaveMixin
 )
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.common import NameFilter, NameRangeFilter
 
 

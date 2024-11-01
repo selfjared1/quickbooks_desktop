@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Union, Dict
 import datetime as dt
 from dateutil import parser
-from datetime import timedelta
+from datetime import timedelta, datetime
 from src.quickbooks_desktop.utilities import snake_to_camel
 import re
 from lxml import etree as et
@@ -120,6 +120,51 @@ class QBDates:
     def from_xml(cls, xml_element):
         qb_date = cls(xml_element.text)
         return qb_date
+
+
+@dataclass
+class QBDateTime:
+    _name = 'QBDateTime'
+    datetime_value: Optional[Union[str, datetime]] = field(default=None)
+
+    @property
+    def datetime_value(self) -> Optional[Union[str, datetime]]:
+        return self._datetime_value
+
+    @datetime_value.setter
+    def datetime_value(self, value: Optional[Union[str, datetime]]):
+        if value is None:
+            raise ValueError("You did not include a datetime value")
+        else:
+            self._datetime_value = self.parse_datetime(value)
+
+    def parse_datetime(self, datetime_str: Union[str, datetime]) -> datetime:
+        if isinstance(datetime_str, str):
+            try:
+                # Parse datetime string in ISO 8601 format
+                return parser.isoparse(datetime_str)
+            except Exception as e:
+                raise ValueError(f'Your datetime parameter "{datetime_str}" could not be parsed: {e}')
+        elif isinstance(datetime_str, datetime):
+            return datetime_str
+        else:
+            raise ValueError(f'Unsupported datetime type: {type(datetime_str)}')
+
+    def __str__(self):
+        if isinstance(self._datetime_value, datetime):
+            # Format as ISO 8601 string
+            return self._datetime_value.isoformat()
+        return str(self._datetime_value)
+
+    def to_xml(self, field_name: str) -> et.Element:
+        element = et.Element(field_name)
+        element.text = self.__str__()
+        return element
+
+    @classmethod
+    def from_xml(cls, xml_element: et.Element) -> 'QBDateTime':
+        datetime_str = xml_element.text
+        return cls(datetime_str)
 
 
 class QBTime:

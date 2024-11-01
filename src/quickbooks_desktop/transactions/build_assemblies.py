@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Type
 from src.quickbooks_desktop.data_ext import DataExt
 
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.common import (
     ModifiedDateRangeFilter, TxnDateRangeFilter, RefNumberFilter, RefNumberRangeFilter,
     ItemFilter,
@@ -408,14 +408,14 @@ class BuildAssembly(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    time_created: Optional[QBTime] = field(
+    time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
             "name": "TimeCreated",
             "type": "Element",
         },
     )
-    time_modified: Optional[QBTime] = field(
+    time_modified: Optional[QBDateTime] = field(
         default=None,
         metadata={
             "name": "TimeModified",

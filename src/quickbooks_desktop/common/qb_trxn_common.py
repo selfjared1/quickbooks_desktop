@@ -2,7 +2,7 @@
 from decimal import Decimal
 from dataclasses import dataclass, field
 from typing import Optional, List
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin
 from src.quickbooks_desktop.lists import (
     AccountRef, CustomerRef, ClassInQBRef, SalesTaxCodeRef, SalesRepRef, ItemRef,

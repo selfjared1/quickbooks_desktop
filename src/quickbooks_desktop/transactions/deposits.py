@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional, List, Type, Dict
 from collections import defaultdict
 from src.quickbooks_desktop.data_ext import DataExt
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.common import (
     LinkedTxn, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, SetCredit,
     ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
@@ -698,14 +698,14 @@ class Deposit(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    time_created: Optional[QBTime] = field(
+    time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
             "name": "TimeCreated",
             "type": "Element",
         },
     )
-    time_modified: Optional[QBTime] = field(
+    time_modified: Optional[QBDateTime] = field(
         default=None,
         metadata={
             "name": "TimeModified",

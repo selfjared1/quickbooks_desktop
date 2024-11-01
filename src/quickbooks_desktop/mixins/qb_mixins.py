@@ -2,7 +2,7 @@ from lxml import etree as et
 from typing import Any, Optional, Union, get_args, get_origin
 from dataclasses import dataclass, field, fields, is_dataclass
 import logging
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.utilities import to_lower_camel_case
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class ToXmlMixin:
             return element
         elif isinstance(value, bool):
             return self._handle_bool_value(field, value)
-        elif isinstance(value, QBDates) or isinstance(value, QBTime):
+        elif isinstance(value, QBDates) or isinstance(value, QBTime) or isinstance(value, QBDateTime):
             return value.to_xml(field.name)
         elif is_dataclass(value):
             return value.to_xml()

@@ -7,7 +7,7 @@ from src.quickbooks_desktop.mixins import (
 from src.quickbooks_desktop.common import (
     ParentRef, NameFilter, NameRangeFilter
 )
-from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
+from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 
 @dataclass
 class VendorTypeRef(QBRefMixin):
@@ -158,14 +158,14 @@ class VendorType(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    time_created: Optional[QBTime] = field(
+    time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
             "name": "TimeCreated",
             "type": "Element",
         },
     )
-    time_modified: Optional[QBTime] = field(
+    time_modified: Optional[QBDateTime] = field(
         default=None,
         metadata={
             "name": "TimeModified",
