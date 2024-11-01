@@ -328,15 +328,25 @@ class SaveMixin:
         rq_element.append(add_xml)
         return rq_element
 
+    def save_as_new(self, qb):
+        add_xml = self._get_add_rq_xml()
+        response = qb.send_xml(add_xml)
+        return response
+
     def save(self, qb):
-        if self.list_id is not None:
+        if hasattr(self, 'list_id') and self.list_id is not None:
+            mod_xml = self._get_mod_rq_xml()
+            response = qb.send_xml(mod_xml)
+            return response
+        elif hasattr(self, 'txn_id') and self.txn_id is not None:
             mod_xml = self._get_mod_rq_xml()
             response = qb.send_xml(mod_xml)
             return response
         else:
-            add_xml = self._get_add_rq_xml()
-            response = qb.send_xml(add_xml)
+            response = self.save_as_new(qb)
             return response
+
+
 
 
 

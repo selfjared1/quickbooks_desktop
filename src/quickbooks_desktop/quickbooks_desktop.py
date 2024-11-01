@@ -196,7 +196,7 @@ class QuickbooksDesktop():
         return QBXML
 
 
-    def send_xml(self, requestXML):
+    def send_xml(self, requestXML, encoding="utf-8"):
         """
         This method
             1. finishes the XML build
@@ -208,8 +208,8 @@ class QuickbooksDesktop():
 
         QBXML = self._prepare_request(requestXML)
 
-        declaration = f"""<?xml version="1.0" encoding="utf-8"?><?qbxml version="{self.SDK_version}"?>"""
-        full_request = declaration + et.tostring(QBXML, encoding='unicode')
+        declaration = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="{self.SDK_version}"?>"""
+        full_request = declaration + et.tostring(QBXML, encoding=encoding).decode(encoding)
         logger.debug(f'full_request to go to qb: {full_request}')
 
         logger.debug(f'Opening connection to QuickBooks')
@@ -225,8 +225,6 @@ class QuickbooksDesktop():
             self.begin_session()
 
         logger.debug(f'Connection to QuickBooks is open')
-        QBXMLMsgsRs = None
-        responseXML = None
         try:
             responseXML = self.qbXMLRP.ProcessRequest(self.ticket, full_request)
             # Additional Things:

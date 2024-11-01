@@ -5,7 +5,7 @@ from typing import Optional, List
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime, QBDateTime
 from src.quickbooks_desktop.mixins.qb_mixins import QBRefMixin, QBMixin
 from src.quickbooks_desktop.lists import (
-    AccountRef, CustomerRef, ClassInQBRef, SalesTaxCodeRef, SalesRepRef, ItemRef,
+     CustomerRef, ClassInQBRef, SalesTaxCodeRef, SalesRepRef, ItemRef,
     InventorySiteRef, InventorySiteLocationRef, OverrideItemAccountRef, ItemGroupRef,
     OverrideUomsetRef, DiscountAccountRef, DiscountClassRef
 )
