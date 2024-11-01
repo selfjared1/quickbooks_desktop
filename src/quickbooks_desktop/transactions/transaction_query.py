@@ -3,15 +3,13 @@ from decimal import Decimal
 from typing import Optional, List, Type
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
-    ModifiedDateRangeFilter, TxnDateRangeFilter, RefNumberFilter, RefNumberRangeFilter,
+    RefNumberFilter, RefNumberRangeFilter,
 )
 from src.quickbooks_desktop.lists import (
-    CustomerRef, ClassInQBRef, EntityRef, ItemServiceRef, PayrollItemWageRef,
-    AccountRef, CurrencyRef
+    EntityRef, AccountRef, CurrencyRef
 )
 from src.quickbooks_desktop.mixins import (
-    PluralMixin, PluralTrxnSaveMixin, QBMixinWithQuery, QBMixin,
-    QBQueryMixin, QBAddMixin, QBModMixin
+    PluralMixin, QBMixinWithQuery, QBMixin, QBQueryMixin,
 )
 
 
