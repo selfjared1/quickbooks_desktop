@@ -89,6 +89,18 @@ class DepositToAccountRef(QBRefMixin):
 
 
 @dataclass
+class TransferFromAccountRef(QBRefMixin):
+    class Meta:
+        name = "TransferFromAccountRef"
+
+
+@dataclass
+class TransferToAccountRef(QBRefMixin):
+    class Meta:
+        name = "TransferToAccountRef"
+
+
+@dataclass
 class DiscountAccountRef(QBRefMixin):
     class Meta:
         name = "DiscountAccountRef"

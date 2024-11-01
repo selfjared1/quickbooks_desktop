@@ -4,7 +4,7 @@ from .accounts import (
     OverrideItemAccountRef, AraccountRef, DepositToAccountRef, ExpenseAccountRef,
     IncomeAccountRef, TaxLineInfo, AccountQuery, AccountAdd, SpecialAccountAdd,
     AccountMod, Account, Accounts, ApaccountRef, BankAccountRef, DiscountAccountRef,
-    CreditCardAccountRef, DepositToAccountRef
+    CreditCardAccountRef, DepositToAccountRef, TransferFromAccountRef, TransferToAccountRef
 )
 from .billing_rate import (
     BillingRateRef, BillingRatePerItem, BillingRateQuery, BillingRateAdd, BillingRate,
