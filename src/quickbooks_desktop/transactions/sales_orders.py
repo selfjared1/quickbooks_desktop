@@ -1,18 +1,17 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Optional, List, Type, Dict
-from collections import defaultdict
+from typing import Optional, List, Type
 from src.quickbooks_desktop.data_ext import DataExt
 from src.quickbooks_desktop.qb_special_fields import QBDates, QBTime
 from src.quickbooks_desktop.common import (
     LinkedTxn, BillAddress, BillAddressBlock, ShipAddress, ShipAddressBlock, SetCredit,
-    ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, AccountFilter, RefNumberFilter, RefNumberRangeFilter,
-    CurrencyFilter, LinkToTxn
+    ModifiedDateRangeFilter, TxnDateRangeFilter, EntityFilter, RefNumberFilter, RefNumberRangeFilter,
+    CurrencyFilter,
 )
 from src.quickbooks_desktop.lists import (
-    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, AraccountRef, CurrencyRef, TermsRef,
+    SalesTaxCodeRef, ItemSalesTaxRef, TemplateRef, CustomerRef, ClassInQBRef, CurrencyRef, TermsRef,
     SalesRepRef, ShipMethodRef, CustomerMsgRef, CustomerSalesTaxCodeRef, ItemRef, OverrideUomsetRef, InventorySiteRef,
-    InventorySiteLocationRef, ItemGroupRef, PriceLevelRef, OverrideItemAccountRef, AccountRef
+    InventorySiteLocationRef, ItemGroupRef, PriceLevelRef,
 )
 from src.quickbooks_desktop.mixins import (
     PluralMixin, PluralTrxnSaveMixin, QBMixinWithQuery, QBMixin,
