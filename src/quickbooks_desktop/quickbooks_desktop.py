@@ -9,6 +9,7 @@ from datetime import timedelta, datetime
 import tkinter as tk
 from PIL import Image, ImageTk
 from decimal import Decimal
+from collections import defaultdict
 
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,7 @@ VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Fina
 # endregion
 
 
-# region Fields
+# region Special Fields
 
 
 @dataclass
@@ -401,6 +402,52 @@ class QBPriceType(str):
         element.text = str(self)
         return element
 
+
+# endregion
+
+
+# region Common Fields
+
+addr1: Optional[str] = field(
+    default=None,
+    metadata={
+        "name": "Addr1",
+        "type": "Element",
+        "max_length": 41
+    },
+)
+addr2: Optional[str] = field(
+    default=None,
+    metadata={
+        "name": "Addr2",
+        "type": "Element",
+        "max_length": 41
+    },
+)
+addr3: Optional[str] = field(
+    default=None,
+    metadata={
+        "name": "Addr3",
+        "type": "Element",
+        "max_length": 41
+    },
+)
+addr4: Optional[str] = field(
+    default=None,
+    metadata={
+        "name": "Addr4",
+        "type": "Element",
+        "max_length": 41
+    },
+)
+addr5: Optional[str] = field(
+    default=None,
+    metadata={
+        "name": "Addr5",
+        "type": "Element",
+        "max_length": 41
+    },
+)
 
 # endregion
 
@@ -1060,7 +1107,6 @@ class FromXmlMixin:
                 main_field = next(iter(cls.__dataclass_fields__.values()))
                 init_args[main_field.name] = element.text
             elif element.tag in ['InvoiceLineRet']:
-                from src.quickbooks_desktop.transactions.invoices import InvoiceLine
                 for line in element:
                     invoice_line = InvoiceLine.from_xml(line)
                     return invoice_line
@@ -1902,7 +1948,6 @@ class TxnLineDetail(QBMixin):
             "required": True,
         },
     )
-
 
 
 @dataclass
@@ -4714,6 +4759,5350 @@ class ItemInventoryAssemblyLine(QBMixin):
         },
     )
 
+@dataclass
+class ComponentItemLine:
+    class Meta:
+        name = "ComponentItemLine"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity_on_hand: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnHand",
+            "type": "Element",
+        },
+    )
+    quantity_needed: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityNeeded",
+            "type": "Element",
+        },
+    )
+
+
+
+@dataclass
+class CreditMemoLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
+        "PriceLevelRef", "ClassRef", "Amount", "InventorySiteRef",
+        "InventorySiteLocationRef", "SerialNumber", "LotNumber", "ServiceDate",
+        "SalesTaxCodeRef", "OverrideItemAccountRef", "Other1", "Other2",
+        "CreditCardTxnInfo", "DataExt"
+    ]
+
+    class Meta:
+        name = "CreditMemoLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "Rate", "RatePercent", "PriceLevelRef",
+        "ClassRef", "Amount", "InventorySiteRef", "InventorySiteLocationRef",
+        "SerialNumber", "LotNumber", "ServiceDate", "SalesTaxCodeRef",
+        "OverrideItemAccountRef", "Other1", "Other2"
+    ]
+
+    class Meta:
+        name = "CreditMemoLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class CreditMemoLine(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "Rate", "RatePercent", "ClassRef", "Amount", "InventorySiteRef",
+        "InventorySiteLocationRef", "SerialNumber", "LotNumber", "ServiceDate",
+        "SalesTaxCodeRef", "Other1", "Other2", "CreditCardTxnInfo", "DataExtRet"
+    ]
+
+    class Meta:
+        name = "CreditMemoLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoLineGroupAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "CreditMemoLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoLineGroupMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "CreditMemoLineMod"
+    ]
+
+    class Meta:
+        name = "CreditMemoLineGroupMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_mod: List[CreditMemoLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoLineGroup(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "IsPrintItemsInGroup", "TotalAmount", "CreditMemoLineRet", "CreditCardTxnInfo",
+        "DataExtRet"
+    ]
+
+    class Meta:
+        name = "CreditMemoLineGroup"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_ret: List[CreditMemoLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "CreditMemoLineMod"
+    ]
+
+    class Meta:
+        name = "CreditMemoLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class DepositLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "PaymentTxnID", "PaymentTxnLineID", "OverrideMemo", "OverrideCheckNumber",
+        "OverrideClassRef", "EntityRef", "AccountRef", "Memo", "CheckNumber",
+        "PaymentMethodRef", "ClassRef", "Amount"
+    ]
+
+    class Meta:
+        name = "DepositLineAdd"
+
+    payment_txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentTxnID",
+            "type": "Element",
+        },
+    )
+    payment_txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentTxnLineID",
+            "type": "Element",
+        },
+    )
+    override_memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "OverrideMemo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    override_check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "OverrideCheckNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    override_class_ref: Optional[OverrideClassRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideClassRef",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CheckNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class DepositLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "PaymentTxnID", "PaymentTxnLineID", "OverrideMemo",
+        "OverrideCheckNumber", "OverrideClassRef", "EntityRef", "AccountRef",
+        "Memo", "CheckNumber", "PaymentMethodRef", "ClassRef", "Amount"
+    ]
+
+    class Meta:
+        name = "DepositLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payment_txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentTxnID",
+            "type": "Element",
+        },
+    )
+    payment_txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentTxnLineID",
+            "type": "Element",
+        },
+    )
+    override_memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "OverrideMemo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    override_check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "OverrideCheckNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    override_class_ref: Optional[OverrideClassRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideClassRef",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CheckNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class DepositLine(QBMixin):
+    class Meta:
+        name = "DepositLine"
+
+    txn_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnType",
+            "type": "Element",
+            "valid_values": VALID_TXN_TYPE_VALUES
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payment_txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentTxnLineID",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CheckNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+
+
+
+@dataclass
+class EstimateLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
+        "ClassRef", "Amount", "OptionForPriceRuleConflict", "InventorySiteRef",
+        "InventorySiteLocationRef", "SalesTaxCodeRef", "MarkupRate",
+        "MarkupRatePercent", "PriceLevelRef", "OverrideItemAccountRef", "Other1",
+        "Other2", "DataExt"
+    ]
+
+    class Meta:
+        name = "EstimateLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    markup_rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "MarkupRate",
+            "type": "Element",
+        },
+    )
+    markup_rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "MarkupRatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class EstimateLineGroupAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "EstimateLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class EstimateLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "Rate", "RatePercent", "ClassRef", "Amount", "OptionForPriceRuleConflict",
+        "InventorySiteRef", "InventorySiteLocationRef", "SalesTaxCodeRef",
+        "MarkupRate", "MarkupRatePercent", "PriceLevelRef", "Other1", "Other2"
+    ]
+
+    class Meta:
+        name = "EstimateLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    markup_rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "MarkupRate",
+            "type": "Element",
+        },
+    )
+    markup_rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "MarkupRatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class EstimateLineGroupMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "EstimateLineMod"
+    ]
+
+    class Meta:
+        name = "NameFilter"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    estimate_line_mod: List[EstimateLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class EstimateLine(QBMixin):
+    class Meta:
+        name = "EstimateLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    markup_rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "MarkupRate",
+            "type": "Element",
+        },
+    )
+    markup_rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "MarkupRatePercent",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class EstimateLineGroup(QBMixin):
+    class Meta:
+        name = "EstimateLineGroup"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    estimate_line_ret: List[EstimateLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SerialNumberAdjustment(QBMixin):
+
+    class Meta:
+        name = "SerialNumberAdjustment"
+
+    add_serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AddSerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    remove_serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RemoveSerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class LotNumberAdjustment(QBMixin):
+
+    class Meta:
+        name = "LotNumberAdjustment"
+
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    count_adjustment: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "CountAdjustment",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InventoryAdjustmentLineAdd(QBMixin):
+
+    class Meta:
+        name = "InventoryAdjustmentLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    quantity_adjustment: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityAdjustment",
+            "type": "Element",
+        },
+    )
+    value_adjustment: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ValueAdjustment",
+            "type": "Element",
+        },
+    )
+    serial_number_adjustment: Optional[SerialNumberAdjustment] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumberAdjustment",
+            "type": "Element",
+        },
+    )
+    lot_number_adjustment: Optional[LotNumberAdjustment] = field(
+        default=None,
+        metadata={
+            "name": "LotNumberAdjustment",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class InventoryAdjustmentLineMod(QBModMixin):
+    class Meta:
+        name = "InventoryAdjustmentLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    count_adjustment: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "CountAdjustment",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    quantity_difference: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityDifference",
+            "type": "Element",
+        },
+    )
+    value_difference: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ValueDifference",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InventoryAdjustmentLine(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "SerialNumber", "SerialNumberAddedOrRemoved",
+        "LotNumber", "InventorySiteLocationRef", "QuantityDifference", "ValueDifference"
+    ]
+
+    class Meta:
+        name = "NameFilter"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    serial_number_added_or_removed: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "SerialNumberAddedOrRemoved",
+                "type": "Element",
+                "valid_values": ["Added", "Removed"],
+            },
+        )
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    quantity_difference: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityDifference",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    value_difference: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ValueDifference",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+
+
+@dataclass
+class InvoiceLineAdd(QBAddMixin):
+
+    FIELD_ORDER = [
+        "item_ref", "desc", "quantity", "unit_of_measure", "rate", "rate_percent",
+        "price_level_ref", "class_ref", "amount", "option_for_price_rule_conflict",
+        "inventory_site_ref", "inventory_site_location_ref", "serial_number",
+        "lot_number", "service_date", "sales_tax_code_ref", "override_item_account_ref",
+        "other1", "other2", "link_to_txn", "data_ext"
+    ]
+
+    class Meta:
+        name = "InvoiceLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    link_to_txn: Optional[LinkToTxn] = field(
+        default=None,
+        metadata={
+            "name": "LinkToTxn",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InvoiceLineMod(QBMixin):
+
+    class Meta:
+        name = "InvoiceLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class InvoiceLine(QBMixin):
+
+    class Meta:
+        name = "InvoiceLine"
+
+    Add: Type[InvoiceLineAdd] = InvoiceLineAdd
+    # Mod: Type[InvoiceLineMod] = InvoiceLineMod
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InvoiceLineGroupAdd(QBAddMixin):
+
+    FIELD_ORDER = [
+        "item_group_ref", "quantity", "unit_of_measure", "inventory_site_ref",
+        "inventory_site_location_ref", "data_ext"
+    ]
+
+    class Meta:
+        name = "InvoiceLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    # data_ext: List[DataExt] = field(
+    #     default_factory=list,
+    #     metadata={
+    #         "name": "DataExt",
+    #         "type": "Element",
+    #     },
+    # )
+
+
+@dataclass
+class InvoiceLineGroupMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "InvoiceLineMod"
+    ]
+
+    class Meta:
+        name = "InvoiceLineGroupMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    invoice_line_mod: List[InvoiceLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InvoiceLineGroup(QBMixin):
+
+    class Meta:
+        name = "InvoiceLineGroup"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    invoice_line_ret: List[InvoiceLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class JournalDebitLine(QBMixin):
+    FIELD_ORDER = ["TxnLineID", "AccountRef", "Amount", "Memo", "EntityRef",
+                   "ClassRef", "BillableStatus"]
+
+    class Meta:
+        name = "JournalDebitLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class JournalCreditLine(QBMixin):
+    FIELD_ORDER = ["TxnLineID", "AccountRef", "Amount", "Memo", "EntityRef",
+                   "ClassRef", "BillableStatus"]
+
+    class Meta:
+        name = "JournalCreditLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class JournalLineMod(QBMixin):
+    class Meta:
+        name = "JournalLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    journal_line_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JournalLineType",
+            "type": "Element",
+            "valid_values": {
+                "JournalLineType": ["Debit", "Credit"],
+            }
+
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemRef", "ManufacturerPartNumber", "Desc", "Quantity", "UnitOfMeasure",
+        "Rate", "ClassRef", "Amount", "InventorySiteLocationRef", "CustomerRef",
+        "ServiceDate", "OverrideItemAccountRef", "Other1", "Other2", "DataExt"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    manufacturer_part_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ManufacturerPartNumber",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineGroupAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "ManufacturerPartNumber", "Desc", "Quantity",
+        "UnitOfMeasure", "OverrideUOMSetRef", "Rate", "ClassRef", "Amount",
+        "InventorySiteLocationRef", "CustomerRef", "ServiceDate",
+        "IsManuallyClosed", "OverrideItemAccountRef", "Other1", "Other2"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    manufacturer_part_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ManufacturerPartNumber",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineGroupMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "PurchaseOrderLineMod"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_mod: List[PurchaseOrderLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLine(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "ManufacturerPartNumber", "Desc",
+        "Quantity", "UnitOfMeasure", "OverrideUOMSetRef", "Rate",
+        "ClassRef", "Amount", "InventorySiteLocationRef", "CustomerRef",
+        "ServiceDate", "ReceivedQuantity", "UnbilledQuantity", "IsBilled",
+        "IsManuallyClosed", "Other1", "Other2", "DataExtRet"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    manufacturer_part_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ManufacturerPartNumber",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    received_quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ReceivedQuantity",
+            "type": "Element",
+        },
+    )
+    unbilled_quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "UnbilledQuantity",
+            "type": "Element",
+        },
+    )
+    is_billed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsBilled",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineGroup(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "IsPrintItemsInGroup", "TotalAmount",
+        "PurchaseOrderLineRet", "DataExtRet"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineGroup"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_ret: List[PurchaseOrderLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+
+@dataclass
+class SalesOrderLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
+        "PriceLevelRef", "ClassRef", "Amount", "OptionForPriceRuleConflict",
+        "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber", "LotNumber",
+        "SalesTaxCodeRef", "IsManuallyClosed", "Other1", "Other2", "DataExt"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrderLineGroupAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrderLineMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "Rate", "RatePercent", "PriceLevelRef", "ClassRef", "Amount",
+        "OptionForPriceRuleConflict", "InventorySiteRef", "InventorySiteLocationRef",
+        "SerialNumber", "LotNumber", "SalesTaxCodeRef", "IsManuallyClosed", "Other1", "Other2"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class SalesOrderLineGroupMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "SalesOrderLineMod"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineGroupMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    sales_order_line_mod: List[SalesOrderLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrderLine(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "Rate", "RatePercent", "ClassRef", "Amount", "InventorySiteRef",
+        "InventorySiteLocationRef", "SerialNumber", "LotNumber", "SalesTaxCodeRef",
+        "Invoiced", "IsManuallyClosed", "Other1", "Other2", "DataExtRet"
+    ]
+
+    class Meta:
+        name = "SalesOrderLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    invoiced: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "Invoiced",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrderLineGroup(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "IsPrintItemsInGroup", "TotalAmount", "SalesOrderLineRet",
+        "DataExtRet"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineGroup"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    sales_order_line_ret: List[SalesOrderLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+
+@dataclass
+class SalesReceiptLineAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
+        "PriceLevelRef", "ClassRef", "Amount", "OptionForPriceRuleConflict",
+        "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber",
+        "LotNumber", "ServiceDate", "SalesTaxCodeRef", "OverrideItemAccountRef",
+        "Other1", "Other2", "CreditCardTxnInfo", "DataExt"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineAdd"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptLineMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "Rate", "RatePercent", "PriceLevelRef", "ClassRef", "Amount",
+        "OptionForPriceRuleConflict", "InventorySiteRef", "InventorySiteLocationRef",
+        "SerialNumber", "LotNumber", "ServiceDate", "SalesTaxCodeRef",
+        "OverrideItemAccountRef", "Other1", "Other2"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    price_level_ref: Optional[PriceLevelRef] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+
+
+@dataclass
+class SalesReceiptLineGroupAdd(QBMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptLineGroupMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "SalesReceiptLineMod"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineGroupMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_mod: List[SalesReceiptLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptLine(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "Rate", "RatePercent", "ClassRef", "Amount", "InventorySiteRef",
+        "InventorySiteLocationRef", "SerialNumber", "LotNumber", "ServiceDate",
+        "SalesTaxCodeRef", "Other1", "Other2", "CreditCardTxnInfo", "DataExtRet"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    rate_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "RatePercent",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptLineGroup(QBMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "IsPrintItemsInGroup", "TotalAmount",
+        "SalesReceiptLineRet", "DataExtRet"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineGroup"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    is_print_items_in_group: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPrintItemsInGroup",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_ret: List[SalesReceiptLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+# endregion
+
+
+# region Queries
 
 
 # endregion
@@ -6266,34 +11655,7 @@ class CustomerQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    #todo: Add Field
-    # meta_data: CustomerQueryRqTypeMetaData = field(
-    #     default=CustomerQueryRqTypeMetaData.NO_META_DATA,
-    #     metadata={
-    #         "name": "metaData",
-    #         "type": "Attribute",
-    #     },
-    # )
-    # iterator: Optional[CustomerQueryRqTypeIterator] = field(
-    #     default=None,
-    #     metadata={
-    #         "type": "Attribute",
-    #     },
-    # )
-    # iterator_id: Optional[str] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "iteratorID",
-    #         "type": "Attribute",
-    #     },
-    # )
+
 
 @dataclass
 class CustomerAdd(QBAddMixin):
@@ -8304,21 +13666,20 @@ class Employee(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    #todo: Add Field
-    # external_guid: Optional[ExternalGuid] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "ExternalGUID",
-    #         "type": "Element",
-    #     },
-    # )
-    # data_ext_ret: List[DataExtRet] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExtRet",
-    #         "type": "Element",
-    #     },
-    # )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
 
     IS_YES_NO_FIELD_LIST = ["key_employee", "us_citizen", "disabled", "on_file", "us_veteran"]
     VALID_EMPLOYEE_TYPES = ["Officer", "Owner", "Regular", "Statutory"]
@@ -11484,5 +16845,17234 @@ class ItemSubtotals(PluralMixin, PluralListSaveMixin):
         name = "ItemSubtotal"
         plural_of = ItemSubtotal
 
+
+@dataclass
+class JobTypeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "JobTypeQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class JobTypeAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "ParentRef"
+    ]
+
+    class Meta:
+        name = "JobTypeAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class JobType(QBMixinWithQuery):
+
+    Query: Type[JobTypeQuery] = JobTypeQuery
+    Add: Type[JobTypeAdd] = JobTypeAdd
+    #There is no Mod
+
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    full_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+            "max_length": 159,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class JobTypes(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "JobType"
+        plural_of = JobType
+
+
+@dataclass
+class OtherNameQuery(QBQueryMixin):
+
+    FIELD_ORDER = [
+        "list_id", "full_name", "max_returned", "active_status",
+        "from_modified_date", "to_modified_date", "name_filter",
+        "name_range_filter", "include_ret_element", "owner_id"
+    ]
+
+    class Meta:
+        name = "OtherNameQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+
+@dataclass
+class OtherNameAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "CompanyName", "Salutation", "FirstName",
+        "MiddleName", "LastName", "OtherNameAddress", "Phone",
+        "AltPhone", "Fax", "Email", "Contact", "AltContact",
+        "AccountNumber", "Notes", "ExternalGUID"
+    ]
+
+    class Meta:
+        name = "OtherNameAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    other_name_address: Optional[OtherNameAddress] = field(
+        default=None,
+        metadata={
+            "name": "OtherNameAddress",
+            "type": "Element",
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class OtherNameMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive", "CompanyName",
+        "Salutation", "FirstName", "MiddleName", "LastName",
+        "OtherNameAddress", "Phone", "AltPhone", "Fax", "Email",
+        "Contact", "AltContact", "AccountNumber", "Notes"
+    ]
+
+    class Meta:
+        name = "OtherNameMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    other_name_address: Optional[OtherNameAddress] = field(
+        default=None,
+        metadata={
+            "name": "OtherNameAddress",
+            "type": "Element",
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+
+
+@dataclass
+class OtherName(QBMixinWithQuery):
+    class Meta:
+        name = "OtherName"
+
+    Query: Type[OtherNameQuery] = OtherNameQuery
+    Add: Type[OtherNameAdd] = OtherNameAdd
+    Mod: Type[OtherNameMod] = OtherNameMod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    other_name_address: Optional[OtherNameAddress] = field(
+        default=None,
+        metadata={
+            "name": "OtherNameAddress",
+            "type": "Element",
+        },
+    )
+    other_name_address_block: Optional[OtherNameAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "OtherNameAddressBlock",
+            "type": "Element",
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class OtherNames(PluralMixin, PluralListSaveMixin):
+
+    class Meta:
+        name = "OtherName"
+        plural_of = OtherName
+
+
+@dataclass
+class PaymentMethodQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "PaymentMethodType", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "PaymentMethodQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    payment_method_type: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "PaymentMethodType",
+            "type": "Element",
+            "valid_values": [
+                "AmericanExpress", "Cash", "Check", "DebitCard", "Discover",
+                "ECheck", "GiftCard", "MasterCard", "Other", "OtherCreditCard", "Visa"
+            ],
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class PaymentMethodAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "PaymentMethodType"
+    ]
+
+    class Meta:
+        name = "PaymentMethodQuery"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    payment_method_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodType",
+            "type": "Element",
+            "valid_values": [
+                "AmericanExpress", "Cash", "Check", "DebitCard", "Discover",
+                "ECheck", "GiftCard", "MasterCard", "Other", "OtherCreditCard", "Visa"
+            ],
+        },
+    )
+
+
+@dataclass
+class PaymentMethod(QBMixinWithQuery):
+    class Meta:
+        name = "PaymentMethod"
+
+    Query: Type[PaymentMethodQuery] = PaymentMethodQuery
+    Add: Type[PaymentMethodAdd] = PaymentMethodAdd
+    # There is no Mod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    payment_method_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodType",
+            "type": "Element",
+            "valid_values": [
+                "AmericanExpress", "Cash", "Check", "DebitCard", "Discover",
+                "ECheck", "GiftCard", "MasterCard", "Other", "OtherCreditCard", "Visa"
+            ],
+        },
+    )
+
+
+@dataclass
+class PaymentMethods(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "PaymentMethod"
+        plural_of = PaymentMethod
+
+
+@dataclass
+class PayrollItemWage(QBMixin):
+
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    wage_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "WageType",
+            "type": "Element",
+        },
+    )
+    expense_account_ref: Optional[ExpenseAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ExpenseAccountRef",
+            "type": "Element",
+        },
+    )
+
+    VALID_WAGE_TYPE_VALUES = ["Bonus", "Commission", "HourlyOvertime", "HourlyRegular", "HourlySick",
+                              "HourlyVacation", "SalaryRegular", "SalarySick", "SalaryVacation"]
+
+    def __post_init__(self):
+        self._validate_str_from_list_of_values('wage_type', self.wage_type, self.VALID_WAGE_TYPE_VALUES)
+
+
+
+@dataclass
+class PriceLevelPerItem(QBMixin):
+    class Meta:
+        name = "PriceLevelPerItem"
+
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    custom_price: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CustomPrice",
+            "type": "Element",
+        },
+    )
+    custom_price_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "CustomPricePercent",
+            "type": "Element",
+        },
+    )
+    adjust_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "AdjustPercentage",
+            "type": "Element",
+        },
+    )
+    adjust_relative_to: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AdjustRelativeTo",
+            "type": "Element",
+            "valid_values": ["StandardPrice", "Cost", "CurrentCustomPrice"],
+        },
+    )
+
+
+@dataclass
+class PriceLevelPerItemRet:
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    custom_price: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CustomPrice",
+            "type": "Element",
+        },
+    )
+    custom_price_percent: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "CustomPricePercent",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PriceLevelQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "ItemRef", "CurrencyFilter",
+        "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "PriceLevelQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+@dataclass
+class PriceLevelAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "PriceLevelFixedPercentage",
+        "PriceLevelPerItem", "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "PriceLevelAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    price_level_fixed_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelFixedPercentage",
+            "type": "Element",
+        },
+    )
+    price_level_per_item: List[PriceLevelPerItem] = field(
+        default_factory=list,
+        metadata={
+            "name": "PriceLevelPerItem",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PriceLevelMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive",
+        "PriceLevelFixedPercentage", "PriceLevelPerItem",
+        "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "PriceLevelMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    price_level_fixed_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelFixedPercentage",
+            "type": "Element",
+        },
+    )
+    price_level_per_item: List[PriceLevelPerItem] = field(
+        default_factory=list,
+        metadata={
+            "name": "PriceLevelPerItem",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PriceLevel(QBMixinWithQuery):
+
+    class Meta:
+        name = "PriceLevel"
+
+    Query: Type[PriceLevelQuery] = PriceLevelQuery
+    Add: Type[PriceLevelAdd] = PriceLevelAdd
+    Mod: Type[PriceLevelMod] = PriceLevelMod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    price_level_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelType",
+            "type": "Element",
+            "valid_values": ["FixedPercentage", "PerItem"]
+        },
+    )
+    price_level_fixed_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "PriceLevelFixedPercentage",
+            "type": "Element",
+        },
+    )
+    price_level_per_item_ret: List[PriceLevelPerItemRet] = field(
+        default_factory=list,
+        metadata={
+            "name": "PriceLevelPerItemRet",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PriceLevels(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "PriceLevel"
+        plural_of = PriceLevel
+
+
+@dataclass
+class SalesRepQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "SalesRepQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class SalesRepAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Initial", "IsActive", "SalesRepEntityRef"
+    ]
+
+    class Meta:
+        name = "SalesRepAdd"
+
+    initial: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Initial",
+            "type": "Element",
+            "required": True,
+            "max_length": 5,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    sales_rep_entity_ref: Optional[SalesRepEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepEntityRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+
+@dataclass
+class SalesRepMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Initial", "IsActive",
+        "SalesRepEntityRef"
+    ]
+
+    class Meta:
+        name = "SalesRepMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    initial: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Initial",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    sales_rep_entity_ref: Optional[SalesRepEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepEntityRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesRep(QBMixinWithQuery):
+
+    class Meta:
+        name = "SalesRep"
+
+    Query: Type[SalesRepQuery] = SalesRepQuery
+    Add: Type[SalesRepAdd] = SalesRepAdd
+    Mod: Type[SalesRepMod] = SalesRepMod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    initial: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Initial",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    sales_rep_entity_ref: Optional[SalesRepEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepEntityRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReps(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "SalesRep"
+        plural_of = SalesRep
+
+
+@dataclass
+class SalesTaxCodeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "SalesTaxCodeQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class SalesTaxCodeAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "IsTaxable", "Desc"
+    ]
+
+    class Meta:
+        name = "SalesTaxCodeAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 3,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    item_purchase_tax_ref: Optional[ItemPurchaseTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemPurchaseTaxRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesTaxCodeMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive",
+        "IsTaxable", "Desc"
+    ]
+
+    class Meta:
+        name = "SalesTaxCodeMod"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 3,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    item_purchase_tax_ref: Optional[ItemPurchaseTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemPurchaseTaxRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesTaxCode(QBMixinWithQuery):
+    class Meta:
+        name = "SalesTaxCode"
+
+    Query: Type[SalesTaxCodeQuery] = SalesTaxCodeQuery
+    Add: Type[SalesTaxCodeAdd] = SalesTaxCodeAdd
+    Mod: Type[SalesTaxCodeMod] = SalesTaxCodeMod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 3,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    is_taxable: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxable",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    item_purchase_tax_ref: Optional[ItemPurchaseTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemPurchaseTaxRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesTaxCodes(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "SalesTaxCode"
+        plural_of = SalesTaxCode
+
+
+@dataclass
+class CustomerSalesTaxCodeRef(QBRefMixin):
+    class Meta:
+        name = "CustomerSalesTaxCodeRef"
+
+
+@dataclass
+class ShipMethodQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "ShipMethodQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class ShipMethodAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive"
+    ]
+
+    class Meta:
+        name = "ShipMethodAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 15,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ShipMethod(QBMixinWithQuery):
+    class Meta:
+        name = "ShipMethod"
+
+    Query: Type[ShipMethodQuery] = ShipMethodQuery
+    Add: Type[ShipMethodAdd] = ShipMethodAdd
+    # Does not have Mod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ShipMethods(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "ShipMethod"
+        plural_of = ShipMethod
+
+
+@dataclass
+class StandardTermsQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "StandardTermsQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class StandardTermsAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "StdDueDays", "StdDiscountDays", "DiscountPct"
+    ]
+
+    class Meta:
+        name = "StandardTermsAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    std_due_days: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "StdDueDays",
+            "type": "Element",
+        },
+    )
+    std_discount_days: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "StdDiscountDays",
+            "type": "Element",
+        },
+    )
+    discount_pct: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "DiscountPct",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class StandardTerm(QBMixinWithQuery):
+    class Meta:
+        name = "StandardTerms"
+
+    Query: Type[StandardTermsQuery] = StandardTermsQuery
+    Add: Type[StandardTermsAdd] = StandardTermsAdd
+    # Doesn't Have Mod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    std_due_days: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "StdDueDays",
+            "type": "Element",
+        },
+    )
+    std_discount_days: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "StdDiscountDays",
+            "type": "Element",
+        },
+    )
+    discount_pct: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "DiscountPct",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class StandardTerms(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "StandardTerms"
+        plural_of = StandardTerm
+
+
+
+@dataclass
+class DefaultUnit(QBMixin):
+
+    class Meta:
+        name = "DefaultUnit"
+
+    unit_used_for: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitUsedFor",
+            "type": "Element",
+            "required": True,
+            "valid_values": ["Purchase", "Sales", "Shipping"]
+        },
+    )
+    unit: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Unit",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+
+
+@dataclass
+class BaseUnit(QBMixin):
+
+    class Meta:
+        name = "BaseUnit"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    abbreviation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Abbreviation",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+
+
+@dataclass
+class RelatedUnit(QBMixin):
+
+    class Meta:
+        name = "RelatedUnit"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    abbreviation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Abbreviation",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    conversion_ratio: Optional[QBPriceType] = field(
+        default=None,
+        metadata={
+            "name": "ConversionRatio",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+
+@dataclass
+class UnitOfMeasureSetQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "UnitOfMeasureSetQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class UnitOfMeasureSetAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "UnitOfMeasureType", "BaseUnit",
+        "RelatedUnit", "DefaultUnit"
+    ]
+
+    class Meta:
+        name = "UnitOfMeasureSetAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    unit_of_measure_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureType",
+            "type": "Element",
+            "required": True,
+            "valid_values": ["Area", "Count", "Length", "Other", "Time", "Volume", "Weight"],
+        },
+    )
+    base_unit: Optional[BaseUnit] = field(
+        default=None,
+        metadata={
+            "name": "BaseUnit",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    related_unit: List[RelatedUnit] = field(
+        default_factory=list,
+        metadata={
+            "name": "RelatedUnit",
+            "type": "Element",
+        },
+    )
+    default_unit: List[DefaultUnit] = field(
+        default_factory=list,
+        metadata={
+            "name": "DefaultUnit",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class UnitOfMeasureSet(QBMixinWithQuery):
+
+    class Meta:
+        name = "Unit Of Measure Set"
+
+    Query: Type[UnitOfMeasureSetQuery] = UnitOfMeasureSetQuery
+    Add: Type[UnitOfMeasureSetAdd] = UnitOfMeasureSetAdd
+    # No Mod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    unit_of_measure_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasureType",
+            "type": "Element",
+            "valid_values": ["Area", "Count", "Length", "Other", "Time", "Volume", "Weight"]
+        },
+    )
+    base_unit: Optional[BaseUnit] = field(
+        default=None,
+        metadata={
+            "name": "BaseUnit",
+            "type": "Element",
+        },
+    )
+    related_unit: List[RelatedUnit] = field(
+        default_factory=list,
+        metadata={
+            "name": "RelatedUnit",
+            "type": "Element",
+        },
+    )
+    default_unit: List[DefaultUnit] = field(
+        default_factory=list,
+        metadata={
+            "name": "DefaultUnit",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class UnitOfMeasureSets(PluralMixin, PluralListSaveMixin):
+
+    class Meta:
+        name = "UnitOfMeasureSet"
+        plural_of = UnitOfMeasureSet
+
+
+@dataclass
+class VendorTypeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "VendorTypeQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    meta_data: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "metaData",
+            "type": "Attribute",
+            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+        },
+    )
+
+
+@dataclass
+class VendorTypeAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "ParentRef"
+    ]
+
+    class Meta:
+        name = "VendorTypeAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 31,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class VendorType(QBMixinWithQuery):
+    class Meta:
+        name = "VendorType"
+
+    Query: Type[VendorTypeQuery] = VendorTypeQuery
+    Add: Type[VendorTypeAdd] = VendorTypeAdd
+    # No Mod
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    full_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+            "max_length": 159,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    parent_ref: Optional[ParentRef] = field(
+        default=None,
+        metadata={
+            "name": "ParentRef",
+            "type": "Element",
+        },
+    )
+    sublevel: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "Sublevel",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class VendorTypes(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "VendorType"
+        plural_of = VendorType
+
+
+@dataclass
+class VendorQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "TotalBalanceFilter", "CurrencyFilter",
+        "ClassFilter", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "VendorQuery"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    active_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ActiveStatus",
+            "type": "Element",
+            "valid_values": ["ActiveOnly", "InactiveOnly", "All"],
+        },
+    )
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    name_filter: Optional[NameFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameFilter",
+            "type": "Element",
+        },
+    )
+    name_range_filter: Optional[NameRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "NameRangeFilter",
+            "type": "Element",
+        },
+    )
+    total_balance_filter: Optional[TotalBalanceFilter] = field(
+        default=None,
+        metadata={
+            "name": "TotalBalanceFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    class_filter: Optional[ClassFilter] = field(
+        default=None,
+        metadata={
+            "name": "ClassFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class VendorAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "Name", "IsActive", "ClassRef", "CompanyName", "Salutation",
+        "FirstName", "MiddleName", "LastName", "JobTitle", "VendorAddress",
+        "ShipAddress", "Phone", "AltPhone", "Fax", "Email",
+        "Cc", "Contact", "AltContact", "AdditionalContactRef",
+        "Contacts", "NameOnCheck", "AccountNumber", "Notes",
+        "AdditionalNotes", "VendorTypeRef", "TermsRef", "CreditLimit",
+        "VendorTaxIdent", "IsVendorEligibleFor1099", "OpenBalance",
+        "OpenBalanceDate", "BillingRateRef", "ExternalGUID",
+        "PrefillAccountRef", "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "VendorAdd"
+
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "required": True,
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    suffix: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Suffix",
+            "type": "Element",
+        },
+    )
+    job_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobTitle",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    mobile: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Mobile",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    pager: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Pager",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    cc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Cc",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 8,
+        },
+    )
+    contacts: List[Contacts] = field(
+        default_factory=list,
+        metadata={
+            "name": "Contacts",
+            "type": "Element",
+        },
+    )
+    name_on_check: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "NameOnCheck",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    additional_notes: List[AdditionalNotes] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalNotes",
+            "type": "Element",
+        },
+    )
+    vendor_type_ref: Optional[VendorTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorTypeRef",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    credit_limit: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditLimit",
+            "type": "Element",
+        },
+    )
+    vendor_tax_ident: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "VendorTaxIdent",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    is_vendor_eligible_for1099: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsVendorEligibleFor1099",
+            "type": "Element",
+        },
+    )
+    open_balance: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "OpenBalance",
+            "type": "Element",
+        },
+    )
+    open_balance_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "OpenBalanceDate",
+            "type": "Element",
+        },
+    )
+    billing_rate_ref: Optional[BillingRateRef] = field(
+        default=None,
+        metadata={
+            "name": "BillingRateRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    prefill_account_ref: List[PrefillAccountRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "PrefillAccountRef",
+            "type": "Element",
+            "max_occurs": 3,
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class VendorMod(QBModMixin):
+    FIELD_ORDER = [
+        "ListID", "EditSequence", "Name", "IsActive", "ClassRef",
+        "CompanyName", "Salutation", "FirstName", "MiddleName",
+        "LastName", "JobTitle", "VendorAddress", "ShipAddress",
+        "Phone", "AltPhone", "Fax", "Email", "Cc", "Contact",
+        "AltContact", "AdditionalContactRef", "ContactsMod",
+        "NameOnCheck", "AccountNumber", "Notes", "AdditionalNotesMod",
+        "VendorTypeRef", "TermsRef", "CreditLimit", "VendorTaxIdent",
+        "IsVendorEligibleFor1099", "BillingRateRef", "PrefillAccountRef",
+        "CurrencyRef"
+    ]
+
+    class Meta:
+        name = "VendorMod"
+
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    suffix: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Suffix",
+            "type": "Element",
+        },
+    )
+    job_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobTitle",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    mobile: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Mobile",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    pager: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Pager",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    cc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Cc",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 8,
+        },
+    )
+    contacts_mod: List[ContactsMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ContactsMod",
+            "type": "Element",
+        },
+    )
+    name_on_check: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "NameOnCheck",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    additional_notes_mod: List[AdditionalNotesMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalNotesMod",
+            "type": "Element",
+        },
+    )
+    vendor_type_ref: Optional[VendorTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorTypeRef",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    credit_limit: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditLimit",
+            "type": "Element",
+        },
+    )
+    vendor_tax_ident: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "VendorTaxIdent",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    is_vendor_eligible_for1099: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsVendorEligibleFor1099",
+            "type": "Element",
+        },
+    )
+    billing_rate_ref: Optional[BillingRateRef] = field(
+        default=None,
+        metadata={
+            "name": "BillingRateRef",
+            "type": "Element",
+        },
+    )
+    prefill_account_ref: List[PrefillAccountRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "PrefillAccountRef",
+            "type": "Element",
+            "max_occurs": 3,
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Vendor(QBMixinWithQuery):
+
+    class Meta:
+        name = "Vendor"
+
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Name",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    is_tax_agency: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxAgency",
+            "type": "Element",
+        },
+    )
+    company_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CompanyName",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    salutation: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Salutation",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    first_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FirstName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    middle_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MiddleName",
+            "type": "Element",
+            "max_length": 5,
+        },
+    )
+    last_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LastName",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    suffix: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Suffix",
+            "type": "Element",
+        },
+    )
+    job_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "JobTitle",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    vendor_address_block: Optional[VendorAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Phone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    mobile: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Mobile",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    pager: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Pager",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    alt_phone: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltPhone",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    fax: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Fax",
+            "type": "Element",
+            "max_length": 21,
+        },
+    )
+    email: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Email",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    cc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Cc",
+            "type": "Element",
+            "max_length": 1023,
+        },
+    )
+    contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Contact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    alt_contact: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AltContact",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    additional_contact_ref: List[AdditionalContactRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalContactRef",
+            "type": "Element",
+            "max_occurs": 8,
+        },
+    )
+    contacts: List[Contacts] = field(
+        default_factory=list,
+        metadata={
+            "name": "Contacts",
+            "type": "Element",
+        },
+    )
+    name_on_check: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "NameOnCheck",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountNumber",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    additional_notes_ret: List[AdditionalNotesRet] = field(
+        default_factory=list,
+        metadata={
+            "name": "AdditionalNotesRet",
+            "type": "Element",
+        },
+    )
+    vendor_type_ref: Optional[VendorTypeRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorTypeRef",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    credit_limit: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditLimit",
+            "type": "Element",
+        },
+    )
+    vendor_tax_ident: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "VendorTaxIdent",
+            "type": "Element",
+            "max_length": 15,
+        },
+    )
+    is_vendor_eligible_for1099: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsVendorEligibleFor1099",
+            "type": "Element",
+        },
+    )
+    balance: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Balance",
+            "type": "Element",
+        },
+    )
+    billing_rate_ref: Optional[BillingRateRef] = field(
+        default=None,
+        metadata={
+            "name": "BillingRateRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    prefill_account_ref: List[PrefillAccountRef] = field(
+        default_factory=list,
+        metadata={
+            "name": "PrefillAccountRef",
+            "type": "Element",
+            "max_occurs": 3,
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class Vendors(PluralMixin, PluralListSaveMixin):
+    class Meta:
+        name = "Vendor"
+        plural_of = Vendor
+
+
+# endregion
+
+
+# region Transactions
+
+
+@dataclass
+class ARRefundCreditCardQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "ARRefundCreditCardQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ARRefundCreditCardAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "RefundFromAccountRef", "ARAccountRef", "TxnDate",
+        "RefNumber", "Address", "PaymentMethodRef", "Memo",
+        "CreditCardTxnInfo", "ExchangeRate", "ExternalGUID",
+        "RefundAppliedToTxnAdd"
+    ]
+
+    class Meta:
+        name = "ARRefundCreditCardAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    refund_from_account_ref: Optional[RefundFromAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "RefundFromAccountRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    refund_applied_to_txn_add: List[RefundAppliedToTxnAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefundAppliedToTxnAdd",
+            "type": "Element",
+            "min_occurs": 1,
+        },
+    )
+
+@dataclass
+class ARRefundCreditCard(QBMixinWithQuery):
+    class Meta:
+        name = "ARRefundCreditCard"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    refund_from_account_ref: Optional[RefundFromAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "RefundFromAccountRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    address_block: Optional[AddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "AddressBlock",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    refund_applied_to_txn_ret: List[RefundAppliedToTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefundAppliedToTxnRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ARRefundCreditCards(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "ARRefundCreditCard"
+        plural_of = ARRefundCreditCard
+
+
+@dataclass
+class BillPaymentCheckQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "BillPaymentCheckQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BillPaymentCheckAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "PayeeEntityRef", "APAccountRef", "TxnDate", "BankAccountRef",
+        "IsToBePrinted", "RefNumber", "Memo", "ExchangeRate",
+        "ExternalGUID", "AppliedToTxnAdd"
+    ]
+
+    class Meta:
+        name = "BillPaymentCheckAdd"
+
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    bank_account_ref: Optional[BankAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "BankAccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_add: List[AppliedToTxnAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnAdd",
+            "type": "Element",
+            "min_occurs": 1,
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class BillPaymentCheckMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "TxnDate", "BankAccountRef",
+        "Amount", "ExchangeRate", "IsToBePrinted", "RefNumber",
+        "Memo", "AppliedToTxnMod"
+    ]
+
+    class Meta:
+        name = "BillPaymentCheckMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    bank_account_ref: Optional[BankAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "BankAccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    applied_to_txn_mod: List[AppliedToTxnMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BillPaymentCheck(QBMixinWithQuery):
+    class Meta:
+        name = "BillPaymentCheck"
+
+    Query: Type[BillPaymentCheckQuery] = BillPaymentCheckQuery
+    Add: Type[BillPaymentCheckAdd] = BillPaymentCheckAdd
+    Mod: Type[BillPaymentCheckMod] = BillPaymentCheckMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    bank_account_ref: Optional[BankAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "BankAccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    address_block: Optional[AddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "AddressBlock",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_ret: List[AppliedToTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BillPaymentChecks(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "BillPaymentCheck"
+        plural_of = BillPaymentCheck
+
+
+@dataclass
+class BillPaymentCreditCardQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "BillPaymentCreditCardQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BillPaymentCreditCardAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "PayeeEntityRef", "APAccountRef", "TxnDate", "CreditCardAccountRef",
+        "RefNumber", "Memo", "ExchangeRate", "ExternalGUID", "AppliedToTxnAdd"
+    ]
+
+    class Meta:
+        name = "BillPaymentCreditCardAdd"
+
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    credit_card_account_ref: Optional[CreditCardAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardAccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_add: List[AppliedToTxnAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnAdd",
+            "type": "Element",
+            "min_occurs": 1,
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class BillPaymentCreditCard(QBMixinWithQuery):
+    class Meta:
+        name = "BillPaymentCreditCard"
+
+    Query: Type[BillPaymentCreditCardQuery] = BillPaymentCreditCardQuery
+    Add: Type[BillPaymentCreditCardAdd] = BillPaymentCreditCardAdd
+    # No Mod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    credit_card_account_ref: Optional[CreditCardAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardAccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_ret: List[AppliedToTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BillPaymentCreditCards(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "BillPaymentCreditCard"
+        plural_of = BillPaymentCreditCard
+
+
+@dataclass
+class BillQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "PaidStatus", "IncludeLineItems",
+        "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "BillQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    paid_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaidStatus",
+            "type": "Element",
+            "valid_values": ["All", "PaidOnly", "NotPaidOnly"],
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BillAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "VendorRef", "VendorAddress", "APAccountRef", "TxnDate",
+        "DueDate", "RefNumber", "TermsRef", "Memo", "ExchangeRate",
+        "ExternalGUID", "LinkToTxnID", "ExpenseLineAdd", "ItemLineAdd",
+        "ItemGroupLineAdd"
+    ]
+
+    class Meta:
+        name = "BillAdd"
+
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    link_to_txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkToTxnID",
+            "type": "Element",
+        },
+    )
+    expense_line_add: List[ExpenseLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineAdd",
+            "type": "Element",
+        },
+    )
+    item_line_add: List[ItemLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineAdd",
+            "type": "Element",
+        },
+    )
+    item_group_line_add: List[ItemGroupLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class BillMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "VendorRef", "VendorAddress",
+        "APAccountRef", "TxnDate", "DueDate", "RefNumber",
+        "TermsRef", "Memo", "ExchangeRate", "ClearExpenseLines",
+        "ExpenseLineMod", "ClearItemLines", "ItemLineMod",
+        "ItemGroupLineMod"
+    ]
+
+    class Meta:
+        name = "BillMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    clear_expense_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearExpenseLines",
+            "type": "Element",
+        },
+    )
+    expense_line_mod: List[ExpenseLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineMod",
+            "type": "Element",
+        },
+    )
+    clear_item_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearItemLines",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+    item_group_line_mod: List[ItemGroupLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Bill(QBMixinWithQuery):
+
+    class Meta:
+        name = "Bill"
+
+    Query: Type[BillQuery] = BillQuery
+    Add: Type[BillAdd] = BillAdd
+    Mod: Type[BillMod] = BillMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[ApaccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    amount_due: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountDue",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_due_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountDueInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    is_paid: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPaid",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    expense_line: List[ExpenseLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineRet",
+            "type": "Element",
+        },
+    )
+    item_line_ret: List[ItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineRet",
+            "type": "Element",
+        },
+    )
+    item_group_line_ret: List[ItemGroupLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineRet",
+            "type": "Element",
+        },
+    )
+    open_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "OpenAmount",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class Bills(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "Bill"
+        plural_of = Bill
+
+
+@dataclass
+class BuildAssemblyQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "ItemFilter",
+        "RefNumberFilter", "RefNumberRangeFilter", "PendingStatus",
+        "IncludeComponentLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "BuildAssemblyQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    item_filter: Optional[ItemFilter] = field(
+        default=None,
+        metadata={
+            "name": "ItemFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    pending_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PendingStatus",
+            "type": "Element",
+            "valid_values": ["All", "PendingOnly", "NotPendingOnly"],
+        },
+    )
+    include_component_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeComponentLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BuildAssemblyAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "ItemInventoryAssemblyRef", "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber",
+        "LotNumber", "TxnDate", "RefNumber", "Memo", "QuantityToBuild", "MarkPendingIfRequired",
+        "ExternalGUID"
+    ]
+
+    class Meta:
+        name = "BuildAssemblyAdd"
+
+    item_inventory_assembly_ref: Optional[ItemInventoryAssemblyRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemInventoryAssemblyRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity_to_build: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "QuantityToBuild",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    mark_pending_if_required: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "MarkPendingIfRequired",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BuildAssemblyMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber",
+        "LotNumber", "TxnDate", "RefNumber", "Memo", "QuantityToBuild", "MarkPendingIfRequired",
+        "RemovePending"
+    ]
+
+    class Meta:
+        name = "BuildAssemblyMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    quantity_to_build: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "QuantityToBuild",
+            "type": "Element",
+        },
+    )
+    mark_pending_if_required: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "MarkPendingIfRequired",
+            "type": "Element",
+        },
+    )
+    remove_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "RemovePending",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BuildAssembly(QBMixinWithQuery):
+    class Meta:
+        name = "BuildAssembly"
+
+    Query: Type[BuildAssemblyQuery] = BuildAssemblyQuery
+    Add: Type[BuildAssemblyAdd] = BuildAssemblyAdd
+    Mod: Type[BuildAssemblyMod] = BuildAssemblyMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    item_inventory_assembly_ref: Optional[ItemInventoryAssemblyRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemInventoryAssemblyRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    quantity_to_build: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "QuantityToBuild",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    quantity_can_build: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "QuantityCanBuild",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    quantity_on_hand: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnHand",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    quantity_on_sales_order: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "QuantityOnSalesOrder",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    component_item_line_ret: List[ComponentItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ComponentItemLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class BuildAssemblies(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "BuildAssembly"
+        plural_of = BuildAssembly
+
+
+@dataclass
+class ChargeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned", "ModifiedDateRangeFilter",
+        "TxnDateRangeFilter", "DateMacro", "EntityFilter", "AccountFilter", "RefNumberFilter",
+        "RefNumberRangeFilter", "PaidStatus", "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "ChargeQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    paid_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaidStatus",
+            "type": "Element",
+            "valid_values": ["All", "PaidOnly", "NotPaidOnly"],
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ChargeAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "TxnDate", "RefNumber", "ItemRef", "InventorySiteRef",
+        "InventorySiteLocationRef", "Quantity", "UnitOfMeasure", "Rate",
+        "OptionForPriceRuleConflict", "Amount", "Desc", "ARAccountRef",
+        "ClassRef", "BilledDate", "DueDate", "OverrideItemAccountRef",
+        "ExternalGUID"
+    ]
+
+    class Meta:
+        name = "ChargeAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"],
+            },
+        )
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    billed_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "BilledDate",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class ChargeMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "CustomerRef", "TxnDate", "RefNumber",
+        "ItemRef", "InventorySiteRef", "InventorySiteLocationRef", "Quantity",
+        "UnitOfMeasure", "OverrideUOMSetRef", "Rate", "OptionForPriceRuleConflict",
+        "Amount", "Desc", "ARAccountRef", "ClassRef", "BilledDate", "DueDate",
+        "OverrideItemAccountRef"
+    ]
+
+    class Meta:
+        name = "ChargeMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    option_for_price_rule_conflict: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "OptionForPriceRuleConflict",
+                "type": "Element",
+                "valid_values": ["Zero", "BasePrice"]
+            },
+        )
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    billed_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "BilledDate",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideItemAccountRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Charge(QBMixinWithQuery):
+    class Meta:
+        name = "Charge"
+
+    Query: Type[ChargeQuery] = ChargeQuery
+    Add: Type[ChargeAdd] = ChargeAdd
+    Mod: Type[ChargeMod] = ChargeMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    item_ref: Optional[ItemRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    balance_remaining: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "BalanceRemaining",
+            "type": "Element",
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    billed_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "BilledDate",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    is_paid: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPaid",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Charges(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "Charge"
+        plural_of = Charge
+
+
+@dataclass
+class ApplyCheckToTxnBase:
+    class Meta:
+        name = ""
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ApplyCheckToTxnAdd(ApplyCheckToTxnBase, QBAddMixin):
+    class Meta:
+        name = "ApplyCheckToTxnAdd"
+
+
+@dataclass
+class ApplyCheckToTxnMod(ApplyCheckToTxnBase, QBAddMixin):
+    class Meta:
+        name = "ApplyCheckToTxnMod"
+
+
+@dataclass
+class CheckQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "metaData", "iterator", "iteratorID", "TxnID", "RefNumber",
+        "RefNumberCaseSensitive", "MaxReturned", "ModifiedDateRangeFilter",
+        "TxnDateRangeFilter", "EntityFilter", "AccountFilter", "RefNumberFilter",
+        "RefNumberRangeFilter", "CurrencyFilter", "IncludeLineItems",
+        "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "CheckQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CheckAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "defMacro", "AccountRef", "PayeeEntityRef", "RefNumber", "TxnDate",
+        "Memo", "Address", "IsToBePrinted", "ExchangeRate", "ExternalGUID",
+        "ApplyCheckToTxnAdd", "ExpenseLineAdd", "ItemLineAdd", "ItemGroupLineAdd"
+    ]
+
+    class Meta:
+        name = "CheckAdd"
+
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    apply_check_to_txn_add: List[ApplyCheckToTxnAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ApplyCheckToTxnAdd",
+            "type": "Element",
+        },
+    )
+    expense_line_add: List[ExpenseLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineAdd",
+            "type": "Element",
+        },
+    )
+    item_line_add: List[ItemLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineAdd",
+            "type": "Element",
+        },
+    )
+    item_group_line_add: List[ItemGroupLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class CheckMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "AccountRef", "PayeeEntityRef", "RefNumber",
+        "TxnDate", "Memo", "Address", "IsToBePrinted", "ExchangeRate",
+        "ApplyCheckToTxnMod", "ClearExpenseLines", "ExpenseLineMod",
+        "ClearItemLines", "ItemLineMod", "ItemGroupLineMod"
+    ]
+
+    class Meta:
+        name = "CheckMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    apply_check_to_txn_mod: List[ApplyCheckToTxnMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ApplyCheckToTxnMod",
+            "type": "Element",
+        },
+    )
+    clear_expense_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearExpenseLines",
+            "type": "Element",
+        },
+    )
+    expense_line_mod: List[ExpenseLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineMod",
+            "type": "Element",
+        },
+    )
+    clear_item_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearItemLines",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+    item_group_line_mod: List[ItemGroupLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Check(QBMixinWithQuery):
+    class Meta:
+        name = "Check"
+
+    Query: Type[CheckQuery] = CheckQuery
+    Add: Type[CheckAdd] = CheckAdd
+    Mod: Type[CheckMod] = CheckMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    address: Optional[Address] = field(
+        default=None,
+        metadata={
+            "name": "Address",
+            "type": "Element",
+        },
+    )
+    address_block: Optional[AddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "AddressBlock",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    expense_line_ret: List[ExpenseLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineRet",
+            "type": "Element",
+        },
+    )
+    item_line_ret: List[ItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineRet",
+            "type": "Element",
+        },
+    )
+    item_group_line_ret: List[ItemGroupLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Checks(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "Check"
+        plural_of = Check
+
+
+@dataclass
+class CreditCardChargeQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "CreditCardChargeQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditCardChargeAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "AccountRef", "PayeeEntityRef", "TxnDate", "RefNumber", "Memo",
+        "ExchangeRate", "ExternalGUID", "ExpenseLineAdd", "ItemLineAdd",
+        "ItemGroupLineAdd"
+    ]
+
+    class Meta:
+        name = "CreditCardChargeAdd"
+
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    expense_line_add: List[ExpenseLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineAdd",
+            "type": "Element",
+        },
+    )
+    item_line_add: List[ItemLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineAdd",
+            "type": "Element",
+        },
+    )
+    item_group_line_add: List[ItemGroupLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class CreditCardChargeMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "AccountRef", "PayeeEntityRef", "TxnDate",
+        "RefNumber", "Memo", "ExchangeRate", "ClearExpenseLines",
+        "ExpenseLineMod", "ClearItemLines", "ItemLineMod", "ItemGroupLineMod"
+    ]
+
+    class Meta:
+        name = "CreditCardChargeMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    clear_expense_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearExpenseLines",
+            "type": "Element",
+        },
+    )
+    expense_line_mod: List[ExpenseLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineMod",
+            "type": "Element",
+        },
+    )
+    clear_item_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearItemLines",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+    item_group_line_mod: List[ItemGroupLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditCardCharge(QBMixinWithQuery):
+    class Meta:
+        name = "CurrencyFilter"
+
+    Query: Type[CreditCardChargeQuery] = CreditCardChargeQuery
+    Add: Type[CreditCardChargeAdd] = CreditCardChargeAdd
+    Mod: Type[CreditCardChargeMod] = CreditCardChargeMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    expense_line_ret: List[ExpenseLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineRet",
+            "type": "Element",
+        },
+    )
+    item_line_ret: List[ItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineRet",
+            "type": "Element",
+        },
+    )
+    item_group_line_ret: List[ItemGroupLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditCardCharges(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "CreditCardCharge"
+        plural_of = CreditCardCharge
+
+
+@dataclass
+class CreditCardCreditQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "CreditCardCreditQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditCardCreditAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "AccountRef", "PayeeEntityRef", "TxnDate", "RefNumber", "Memo",
+        "ExchangeRate", "ExternalGUID", "ExpenseLineAdd", "ItemLineAdd",
+        "ItemGroupLineAdd"
+    ]
+
+    class Meta:
+        name = "CreditCardCreditAdd"
+
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    expense_line_add: List[ExpenseLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineAdd",
+            "type": "Element",
+        },
+    )
+    item_line_add: List[ItemLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineAdd",
+            "type": "Element",
+        },
+    )
+    item_group_line_add: List[ItemGroupLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class CreditCardCreditMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "AccountRef", "PayeeEntityRef", "TxnDate",
+        "RefNumber", "Memo", "ExchangeRate", "ClearExpenseLines",
+        "ExpenseLineMod", "ClearItemLines", "ItemLineMod", "ItemGroupLineMod"
+    ]
+
+    class Meta:
+        name = "CreditCardCreditMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    clear_expense_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearExpenseLines",
+            "type": "Element",
+        },
+    )
+    expense_line_mod: List[ExpenseLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineMod",
+            "type": "Element",
+        },
+    )
+    clear_item_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearItemLines",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+    item_group_line_mod: List[ItemGroupLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditCardCredit(QBMixinWithQuery):
+    class Meta:
+        name = "CurrencyFilter"
+
+    Query: Type[CreditCardCreditQuery] = CreditCardCreditQuery
+    Add: Type[CreditCardCreditAdd] = CreditCardCreditAdd
+    Mod: Type[CreditCardCreditMod] = CreditCardCreditMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    payee_entity_ref: Optional[PayeeEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "PayeeEntityRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    expense_line_ret: List[ExpenseLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineRet",
+            "type": "Element",
+        },
+    )
+    item_line_ret: List[ItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineRet",
+            "type": "Element",
+        },
+    )
+    item_group_line_ret: List[ItemGroupLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditCardCredits(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "CreditCardCredit"
+        plural_of = CreditCardCredit
+
+
+
+
+@dataclass
+class CreditMemoQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeLinkedTxns",
+        "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "CreditMemoQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "ClassRef", "ARAccountRef", "TemplateRef", "TxnDate", "RefNumber",
+        "BillAddress", "ShipAddress", "IsPending", "PONumber", "TermsRef", "DueDate",
+        "SalesRepRef", "FOB", "ShipDate", "ShipMethodRef", "ItemSalesTaxRef", "Memo",
+        "CustomerMsgRef", "IsToBePrinted", "IsToBeEmailed", "CustomerSalesTaxCodeRef",
+        "Other", "ExchangeRate", "ExternalGUID", "CreditMemoLineAdd", "CreditMemoLineGroupAdd"
+    ]
+
+    class Meta:
+        name = "CreditMemoAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_add: List[CreditMemoLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineAdd",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_group_add: List[CreditMemoLineGroupAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineGroupAdd",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemoMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "CustomerRef", "ClassRef", "ARAccountRef", "TemplateRef",
+        "TxnDate", "RefNumber", "BillAddress", "ShipAddress", "IsPending", "PONumber",
+        "TermsRef", "DueDate", "SalesRepRef", "FOB", "ShipDate", "ShipMethodRef",
+        "ItemSalesTaxRef", "Memo", "CustomerMsgRef", "IsToBePrinted", "IsToBeEmailed",
+        "CustomerSalesTaxCodeRef", "Other", "ExchangeRate", "CreditMemoLineMod",
+        "CreditMemoLineGroupMod"
+    ]
+
+    class Meta:
+        name = "CreditMemoMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_mod: List[CreditMemoLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineMod",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_group_mod: List[CreditMemoLineGroupMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineGroupMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemo(QBMixinWithQuery):
+    class Meta:
+        name = "CreditMemo"
+
+    Query: Type[CreditMemoQuery] = CreditMemoQuery
+    Add: Type[CreditMemoAdd] = CreditMemoAdd
+    Mod: Type[CreditMemoMod] = CreditMemoMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    bill_address_block: Optional[BillAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "BillAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_address_block: Optional[ShipAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddressBlock",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    subtotal: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Subtotal",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxPercentage",
+            "type": "Element",
+        },
+    )
+    sales_tax_total: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxTotal",
+            "type": "Element",
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    credit_remaining: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditRemaining",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    credit_remaining_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditRemainingInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_ret: List[CreditMemoLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineRet",
+            "type": "Element",
+        },
+    )
+    credit_memo_line_group_ret: List[CreditMemoLineGroup] = field(
+        default_factory=list,
+        metadata={
+            "name": "CreditMemoLineGroupRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CreditMemos(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "CreditMemo"
+        plural_of = CreditMemo
+
+
+@dataclass
+class CashBackInfoAdd(QBMixin):
+    FIELD_ORDER = [
+        "AccountRef", "Memo", "Amount"
+    ]
+
+    class Meta:
+        name = "CashBackInfoAdd"
+
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CashBackInfoMod(QBModMixin):
+    FIELD_ORDER = [
+        "AccountRef", "Memo", "Amount"
+    ]
+
+    class Meta:
+        name = "CashBackInfoMod"
+
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CashBackInfo(QBMixin):
+    FIELD_ORDER = [
+        "txn_line_id", "AccountRef", "Memo", "Amount"
+    ]
+
+    class Meta:
+        name = "CashBackInfo"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class DepositQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "MaxReturned", "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "DepositQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class DepositAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "TxnDate", "DepositToAccountRef", "Memo", "CashBackInfoAdd", "CurrencyRef",
+        "ExchangeRate", "ExternalGUID", "DepositLineAdd"
+    ]
+
+    class Meta:
+        name = "DepositAdd"
+
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    cash_back_info_add: Optional[CashBackInfoAdd] = field(
+        default=None,
+        metadata={
+            "name": "CashBackInfoAdd",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    deposit_line_add: List[DepositLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "DepositLineAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class DepositMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "TxnDate", "DepositToAccountRef", "Memo",
+        "CashBackInfoMod", "CurrencyRef", "ExchangeRate", "DepositLineMod"
+    ]
+
+    class Meta:
+        name = "DepositMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    cash_back_info_mod: Optional[CashBackInfoMod] = field(
+        default=None,
+        metadata={
+            "name": "CashBackInfoMod",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    deposit_line_mod: List[DepositLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "DepositLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Deposit(QBMixinWithQuery):
+    class Meta:
+        name = "NameFilter"
+
+    Query: Type[DepositQuery] = DepositQuery
+    Add: Type[DepositAdd] = DepositAdd
+    Mod: Type[DepositMod] = DepositMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    deposit_total: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "DepositTotal",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    deposit_total_in_home_currency: Optional[Decimal] = (
+        field(
+            default=None,
+            metadata={
+                "name": "DepositTotalInHomeCurrency",
+                "type": "Element",
+            },
+        )
+    )
+    cash_back_info_ret: Optional[CashBackInfo] = field(
+        default=None,
+        metadata={
+            "name": "CashBackInfoRet",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    deposit_line_ret: List[DepositLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "DepositLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Deposits(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "Deposit"
+        plural_of = Deposit
+
+
+@dataclass
+class EstimateQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "metaData", "iterator", "iteratorID", "TxnID", "RefNumber", "RefNumberCaseSensitive",
+        "MaxReturned", "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter", "CurrencyFilter",
+        "IncludeLineItems", "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "EstimateQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class EstimateAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "ClassRef", "TemplateRef", "TxnDate", "RefNumber",
+        "BillAddress", "ShipAddress", "IsActive", "PONumber", "TermsRef", "DueDate",
+        "SalesRepRef", "FOB", "ItemSalesTaxRef", "Memo", "CustomerMsgRef",
+        "IsToBeEmailed", "CustomerSalesTaxCodeRef", "Other", "ExchangeRate",
+        "ExternalGUID", "EstimateLineAdd", "EstimateLineGroupAdd"
+    ]
+
+    class Meta:
+        name = "EstimateQuery"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    estimate_line_add: List[EstimateLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineAdd",
+            "type": "Element",
+        },
+    )
+    estimate_line_group_add: List[EstimateLineGroupAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineGroupAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class EstimateMod(QBMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "CustomerRef", "ClassRef", "TemplateRef", "TxnDate",
+        "RefNumber", "BillAddress", "ShipAddress", "IsActive", "CreateChangeOrder",
+        "PONumber", "TermsRef", "DueDate", "SalesRepRef", "FOB", "ItemSalesTaxRef",
+        "Memo", "CustomerMsgRef", "IsToBeEmailed", "CustomerSalesTaxCodeRef",
+        "Other", "ExchangeRate", "EstimateLineMod", "EstimateLineGroupMod"
+    ]
+
+    class Meta:
+        name = "NameFilter"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    create_change_order: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "CreateChangeOrder",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    estimate_line_mod: List[EstimateLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineMod",
+            "type": "Element",
+        },
+    )
+    estimate_line_group_mod: List[EstimateLineGroupMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineGroupMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Estimate(QBMixinWithQuery):
+    class Meta:
+        name = "Estimate"
+
+    Query: Type[EstimateQuery] = EstimateQuery
+    Add: Type[EstimateAdd] = EstimateAdd
+    Mod: Type[EstimateMod] = EstimateMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    bill_address_block: Optional[BillAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "BillAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_address_block: Optional[ShipAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddressBlock",
+            "type": "Element",
+        },
+    )
+    is_active: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsActive",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    subtotal: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Subtotal",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxPercentage",
+            "type": "Element",
+        },
+    )
+    sales_tax_total: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxTotal",
+            "type": "Element",
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    estimate_line_ret: List[EstimateLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineRet",
+            "type": "Element",
+        },
+    )
+    estimate_line_group_ret: List[EstimateLineGroup] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineGroupRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Estimates(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "Estimate"
+        plural_of = Estimate
+
+
+
+
+
+
+
+@dataclass
+class InventoryAdjustmentQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "metaData", "iterator", "iteratorID", "TxnID", "RefNumber", "RefNumberCaseSensitive",
+        "MaxReturned", "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "ItemFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "InventoryAdjustmentQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    item_filter: Optional[ItemFilter] = field(
+        default=None,
+        metadata={
+            "name": "ItemFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InventoryAdjustmentAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "defMacro", "AccountRef", "TxnDate", "RefNumber", "InventorySiteRef",
+        "CustomerRef", "ClassRef", "Memo", "ExternalGUID", "InventoryAdjustmentLineAdd"
+    ]
+
+    class Meta:
+        name = "InventoryAdjustmentAdd"
+
+    account_ref: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    inventory_adjustment_line_add: List[InventoryAdjustmentLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "InventoryAdjustmentLineAdd",
+            "type": "Element",
+            "min_occurs": 1,
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class InventoryAdjustmentMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "AccountRef", "InventorySiteRef", "TxnDate",
+        "RefNumber", "CustomerRef", "ClassRef", "Memo", "InventoryAdjustmentLineMod"
+    ]
+
+    class Meta:
+        name = "InventoryAdjustmentMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    inventory_adjustment_line_mod: List[InventoryAdjustmentLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "InventoryAdjustmentLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InventoryAdjustment(QBMixinWithQuery):
+    class Meta:
+        name = "InventoryAdjustment"
+
+    Query: Type[InventoryAdjustmentQuery] = InventoryAdjustmentQuery
+    Add: Type[InventoryAdjustmentAdd] = InventoryAdjustmentAdd
+    Mod: Type[InventoryAdjustmentMod] = InventoryAdjustmentMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    inventory_adjustment_line_ret: List[InventoryAdjustmentLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "InventoryAdjustmentLineRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InventoryAdjustments(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "InventoryAdjustment"
+        plural_of = InventoryAdjustment
+
+
+
+
+
+@dataclass
+class InvoiceQuery(QBQueryMixin):
+
+    FIELD_ORDER = [
+        "txn_id", "ref_number", "ref_number_case_sensitive", "max_returned",
+        "modified_date_range_filter", "txn_date_range_filter", "entity_filter",
+        "account_filter", "ref_number_filter", "ref_number_range_filter",
+        "currency_filter", "paid_status", "include_line_items", "include_linked_txns",
+        "include_ret_element", "owner_id"
+    ]
+
+    class Meta:
+        name = "InvoiceQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    paid_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaidStatus",
+            "type": "Element",
+            "valid_values": ["All", "PaidOnly", "NotPaidOnly"]
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class InvoiceAdd(QBAddMixin):
+
+    FIELD_ORDER = [
+        "customer_ref", "class_ref", "ar_account_ref", "template_ref", "txn_date",
+        "ref_number", "bill_address", "ship_address", "is_pending", "is_finance_charge",
+        "po_number", "terms_ref", "due_date", "sales_rep_ref", "fob", "ship_date",
+        "ship_method_ref", "item_sales_tax_ref", "memo", "customer_msg_ref",
+        "is_to_be_printed", "is_to_be_emailed", "customer_sales_tax_code_ref",
+        "other", "exchange_rate", "external_guid", "link_to_txn_id", "set_credit",
+        "invoice_line_add", "invoice_line_group_add", "include_ret_element"
+    ]
+
+    class Meta:
+        name = "InvoiceAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    is_finance_charge: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsFinanceCharge",
+            "type": "Element",
+        },
+    )
+    po_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    link_to_txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkToTxnID",
+            "type": "Element",
+        },
+    )
+    set_credit: List[SetCredit] = field(
+        default_factory=list,
+        metadata={
+            "name": "SetCredit",
+            "type": "Element",
+        },
+    )
+    invoice_line_add: List[InvoiceLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineAdd",
+            "type": "Element",
+        },
+    )
+    invoice_line_group_add: List[InvoiceLineGroupAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineGroupAdd",
+            "type": "Element",
+        },
+    )
+
+    def validate(self):
+        super().validate()
+        self.is_to_be_emailed = False
+        self.is_pending = False
+        self.is_to_be_printed = False
+
+
+@dataclass
+class InvoiceMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "CustomerRef", "ClassRef", "ARAccountRef",
+        "TemplateRef", "TxnDate", "RefNumber", "BillAddress", "ShipAddress",
+        "IsPending", "PONumber", "TermsRef", "DueDate", "SalesRepRef",
+        "FOB", "ShipDate", "ShipMethodRef", "ItemSalesTaxRef", "Memo",
+        "CustomerMsgRef", "IsToBePrinted", "IsToBeEmailed",
+        "CustomerSalesTaxCodeRef", "Other", "ExchangeRate", "SetCredit",
+        "InvoiceLineMod", "InvoiceLineGroupMod"
+    ]
+
+    class Meta:
+        name = "InvoiceMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    set_credit: List[SetCredit] = field(
+        default_factory=list,
+        metadata={
+            "name": "SetCredit",
+            "type": "Element",
+        },
+    )
+    invoice_line_mod: List[InvoiceLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineMod",
+            "type": "Element",
+        },
+    )
+    invoice_line_group_mod: List[InvoiceLineGroupMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineGroupMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Invoice(QBMixinWithQuery):
+
+    class Meta:
+        name = "Invoice"
+
+    Query: Type[InvoiceQuery] = InvoiceQuery
+    Add: Type[InvoiceAdd] = InvoiceAdd
+    Mod: Type[InvoiceMod] = InvoiceMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    ar_account_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    bill_address_block: Optional[BillAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "BillAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_address_block: Optional[ShipAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddressBlock",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    is_finance_charge: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsFinanceCharge",
+            "type": "Element",
+        },
+    )
+    po_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    subtotal: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Subtotal",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxPercentage",
+            "type": "Element",
+        },
+    )
+    sales_tax_total: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxTotal",
+            "type": "Element",
+        },
+    )
+    applied_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AppliedAmount",
+            "type": "Element",
+        },
+    )
+    balance_remaining: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "BalanceRemaining",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    balance_remaining_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "BalanceRemainingInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    is_paid: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPaid",
+            "type": "Element",
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    suggested_discount_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SuggestedDiscountAmount",
+            "type": "Element",
+        },
+    )
+    suggested_discount_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "SuggestedDiscountDate",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    invoice_line_ret: List[InvoiceLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineRet",
+            "type": "Element",
+        },
+    )
+    invoice_line_groups: List[InvoiceLineGroup] = field(
+        default_factory=list,
+        metadata={
+            "name": "InvoiceLineGroupRet",
+            "type": "Element",
+        },
+    )
+
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class Invoices(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "Invoice"
+        plural_of = Invoice
+
+    def split_invoices_by_tax(self) -> Dict[str, List[Invoice]]:
+        result = defaultdict(list)
+
+        # Group invoices by item_sales_tax_ref and sales_tax_percentage
+        for invoice in self:  # Assuming self.invoices holds the list of Invoice objects
+            key = f"{invoice.item_sales_tax_ref}-{invoice.sales_tax_percentage}"
+            result[key].append(invoice)
+
+        return dict(result)
+
+
+
+@dataclass
+class JournalEntryQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned", "ModifiedDateRangeFilter",
+        "TxnDateRangeFilter", "EntityFilter", "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "JournalEntryQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class JournalEntryAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "TxnDate", "RefNumber", "IsAdjustment", "IsHomeCurrencyAdjustment",
+        "IsAmountsEnteredInHomeCurrency", "CurrencyRef", "ExchangeRate",
+        "ExternalGUID", "JournalDebitLine", "JournalCreditLine"
+    ]
+
+    class Meta:
+        name = "JournalEntryAdd"
+
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+        },
+    )
+    is_adjustment: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAdjustment",
+            "type": "Element",
+        },
+    )
+    is_home_currency_adjustment: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsHomeCurrencyAdjustment",
+            "type": "Element",
+        },
+    )
+    is_amounts_entered_in_home_currency: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAmountsEnteredInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    journal_debit_line: List[JournalDebitLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "JournalDebitLine",
+            "type": "Element",
+        },
+    )
+    journal_credit_line: List[JournalCreditLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "JournalCreditLine",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class JournalEntryMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "TxnDate", "RefNumber", "IsAdjustment",
+        "IsAmountsEnteredInHomeCurrency", "CurrencyRef", "ExchangeRate",
+        "JournalLineMod"
+    ]
+
+    class Meta:
+        name = "JournalEntryMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    is_adjustment: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAdjustment",
+            "type": "Element",
+        },
+    )
+    is_amounts_entered_in_home_currency: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAmountsEnteredInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    journal_line_mod: List[JournalLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "JournalLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class JournalEntry(QBMixinWithQuery):
+    class Meta:
+        name = "JournalEntry"
+
+    Query: Type[JournalEntryQuery] = JournalEntryQuery
+    Add: Type[JournalEntryAdd] = JournalEntryAdd
+    Mod: Type[JournalEntryMod] = JournalEntryMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+        },
+    )
+    is_adjustment: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAdjustment",
+            "type": "Element",
+        },
+    )
+    is_home_currency_adjustment: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsHomeCurrencyAdjustment",
+            "type": "Element",
+        },
+    )
+    is_amounts_entered_in_home_currency: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAmountsEnteredInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    journal_debit_line: List[JournalDebitLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "JournalDebitLine",
+            "type": "Element",
+        },
+    )
+    journal_credit_line: List[JournalCreditLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "JournalCreditLine",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class JournalEntries(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "JournalEntry"
+        plural_of = JournalEntry
+
+
+
+@dataclass
+class ShipToEntityRef(QBRefMixin):
+    class Meta:
+        name = "ShipToEntityRef"
+
+
+
+
+@dataclass
+class PurchaseOrderQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeLinkedTxns",
+        "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "VendorRef", "ClassRef", "InventorySiteRef", "ShipToEntityRef",
+        "TemplateRef", "TxnDate", "RefNumber", "VendorAddress",
+        "ShipAddress", "TermsRef", "DueDate", "ExpectedDate",
+        "ShipMethodRef", "FOB", "Memo", "VendorMsg", "IsToBePrinted",
+        "IsToBeEmailed", "Other1", "Other2", "ExchangeRate",
+        "ExternalGUID", "PurchaseOrderLineAdd", "PurchaseOrderLineGroupAdd"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderAdd"
+
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    ship_to_entity_ref: Optional[ShipToEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipToEntityRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    expected_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ExpectedDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    vendor_msg: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "VendorMsg",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_add: List[PurchaseOrderLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineAdd",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_group_add: List[PurchaseOrderLineGroupAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineGroupAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "VendorRef", "ClassRef", "InventorySiteRef",
+        "ShipToEntityRef", "TemplateRef", "TxnDate", "RefNumber", "VendorAddress",
+        "ShipAddress", "TermsRef", "DueDate", "ExpectedDate", "ShipMethodRef",
+        "FOB", "IsManuallyClosed", "Memo", "VendorMsg", "IsToBePrinted",
+        "IsToBeEmailed", "Other1", "Other2", "ExchangeRate",
+        "PurchaseOrderLineMod", "PurchaseOrderLineGroupMod"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    ship_to_entity_ref: Optional[ShipToEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipToEntityRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    expected_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ExpectedDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    vendor_msg: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "VendorMsg",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_mod: List[PurchaseOrderLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineMod",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_group_mod: List[PurchaseOrderLineGroupMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineGroupMod",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class PurchaseOrder(QBMixinWithQuery):
+
+    class Meta:
+        name = "PurchaseOrder"
+
+    Query: Type[PurchaseOrderQuery] = PurchaseOrderQuery
+    Add: Type[PurchaseOrderAdd] = PurchaseOrderAdd
+    Mod: Type[PurchaseOrderMod] = PurchaseOrderMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    ship_to_entity_ref: Optional[ShipToEntityRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipToEntityRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    vendor_address: Optional[VendorAddress] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddress",
+            "type": "Element",
+        },
+    )
+    vendor_address_block: Optional[VendorAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "VendorAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_address_block: Optional[ShipAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddressBlock",
+            "type": "Element",
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    expected_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ExpectedDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    is_fully_received: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsFullyReceived",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    vendor_msg: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "VendorMsg",
+            "type": "Element",
+            "max_length": 99,
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    other1: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other1",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    other2: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other2",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_ret: List[PurchaseOrderLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineRet",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_group_ret: List[PurchaseOrderLineGroup] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineGroupRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrders(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "PurchaseOrder"
+        plural_of = PurchaseOrder
+
+
+@dataclass
+class CreditCardTxnInputInfoMod(QBMixin):
+    FIELD_ORDER = [
+        "CreditCardNumber", "ExpirationMonth", "ExpirationYear", "NameOnCard",
+        "CreditCardAddress", "CreditCardPostalCode", "CommercialCardCode",
+        "TransactionMode", "CreditCardTxnType"
+    ]
+
+    class Meta:
+        name = "CreditCardTxnInputInfoMod"
+
+    credit_card_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardNumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    expiration_month: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExpirationMonth",
+            "type": "Element",
+            "valid_values": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+        },
+    )
+    expiration_year: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExpirationYear",
+            "type": "Element",
+        },
+    )
+    name_on_card: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "NameOnCard",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    credit_card_address: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardAddress",
+            "type": "Element",
+            "max_length": 41,
+        },
+    )
+    credit_card_postal_code: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardPostalCode",
+            "type": "Element",
+            "max_length": 18,
+        },
+    )
+    commercial_card_code: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CommercialCardCode",
+            "type": "Element",
+            "max_length": 24,
+        },
+    )
+    transaction_mode: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TransactionMode",
+            "type": "Element",
+            "valid_values": ["CardNotPresent", "CardPresent"]
+        },
+    )
+    credit_card_txn_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnType",
+            "type": "Element",
+            "valid_values": ["Authorization", "Capture", "Charge", "Refund", "VoiceAuthorization"]
+        },
+    )
+
+
+@dataclass
+class CreditCardTxnResultInfoMod(QBMixin):
+    FIELD_ORDER = [
+        "ResultCode", "ResultMessage", "CreditCardTransID", "MerchantAccountNumber",
+        "AuthorizationCode", "AVSStreet", "AVSZip", "CardSecurityCodeMatch",
+        "ReconBatchID", "PaymentGroupingCode", "PaymentStatus",
+        "TxnAuthorizationTime", "TxnAuthorizationStamp", "ClientTransID"
+    ]
+
+    class Meta:
+        name = "CreditCardTxnResultInfoMod"
+
+    result_code: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "ResultCode",
+            "type": "Element",
+        },
+    )
+    result_message: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ResultMessage",
+            "type": "Element",
+            "max_length": 60,
+        },
+    )
+    credit_card_trans_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTransID",
+            "type": "Element",
+            "max_length": 24,
+        },
+    )
+    merchant_account_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "MerchantAccountNumber",
+            "type": "Element",
+            "max_length": 32,
+        },
+    )
+    authorization_code: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AuthorizationCode",
+            "type": "Element",
+            "max_length": 12,
+        },
+    )
+    avsstreet: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AVSStreet",
+            "type": "Element",
+            "valid_values": ["Pass", "Fail", "NotAvailable"],
+        },
+    )
+    avszip: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AVSZip",
+            "type": "Element",
+            "valid_values": ["Pass", "Fail", "NotAvailable"],
+        },
+    )
+    card_security_code_match: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CardSecurityCodeMatch",
+            "type": "Element",
+            "valid_values": ["Pass", "Fail", "NotAvailable"],
+        },
+    )
+    recon_batch_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReconBatchID",
+            "type": "Element",
+            "max_length": 84,
+        },
+    )
+    payment_grouping_code: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "PaymentGroupingCode",
+            "type": "Element",
+        },
+    )
+    payment_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PaymentStatus",
+            "type": "Element",
+            "valid_values": ["Unknown", "Completed"],
+        },
+    )
+    txn_authorization_time: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TxnAuthorizationTime",
+            "type": "Element",
+        },
+    )
+    txn_authorization_stamp: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "TxnAuthorizationStamp",
+            "type": "Element",
+        },
+    )
+    client_trans_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ClientTransID",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+
+
+@dataclass
+class CreditCardTxnInfoMod(QBMixin):
+    credit_card_txn_input_info_mod: Optional[CreditCardTxnInputInfoMod] = (
+        field(
+            default=None,
+            metadata={
+                "name": "CreditCardTxnInputInfoMod",
+                "type": "Element",
+            },
+        )
+    )
+    credit_card_txn_result_info_mod: Optional[CreditCardTxnResultInfoMod] = (
+        field(
+            default=None,
+            metadata={
+                "name": "CreditCardTxnResultInfoMod",
+                "type": "Element",
+            },
+        )
+    )
+
+
+@dataclass
+class ReceivePaymentQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "ReceivePaymentQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ReceivePaymentAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "ARAccountRef", "TxnDate", "RefNumber", "TotalAmount",
+        "ExchangeRate", "PaymentMethodRef", "Memo", "DepositToAccountRef",
+        "CreditCardTxnInfo", "ExternalGUID", "IsAutoApply", "AppliedToTxnAdd"
+    ]
+
+    class Meta:
+        name = "ReceivePaymentAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    is_auto_apply: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsAutoApply",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_add: List[AppliedToTxnAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class ReceivePaymentMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "CustomerRef", "ARAccountRef", "TxnDate", "RefNumber",
+        "TotalAmount", "ExchangeRate", "PaymentMethodRef", "Memo", "DepositToAccountRef",
+        "CreditCardTxnInfoMod", "AppliedToTxnMod"
+    ]
+
+    class Meta:
+        name = "ReceivePaymentMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    credit_card_txn_info_mod: Optional[CreditCardTxnInfoMod] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfoMod",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_mod: List[AppliedToTxnMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ReceivePayment(QBMixinWithQuery):
+    class Meta:
+        name = "ReceivePayment"
+
+    Query: Type[ReceivePaymentQuery] = ReceivePaymentQuery
+    Add: Type[ReceivePaymentAdd] = ReceivePaymentAdd
+    Mod: Type[ReceivePaymentMod] = ReceivePaymentMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    araccount_ref: Optional[AraccountRef] = field(
+        default=None,
+        metadata={
+            "name": "ARAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    unused_payment: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "UnusedPayment",
+            "type": "Element",
+        },
+    )
+    unused_credits: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "UnusedCredits",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    applied_to_txn_ret: List[AppliedToTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "AppliedToTxnRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ReceivePayments(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "ReceivePayment"
+        plural_of = ReceivePayment
+
+
+
+
+@dataclass
+class SalesOrderQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "RefNumberFilter", "RefNumberRangeFilter", "CurrencyFilter",
+        "IncludeLineItems", "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "SalesOrderQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrderAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "ClassRef", "TemplateRef", "TxnDate", "RefNumber", "BillAddress",
+        "ShipAddress", "PONumber", "TermsRef", "DueDate", "SalesRepRef", "FOB", "ShipDate",
+        "ShipMethodRef", "ItemSalesTaxRef", "IsManuallyClosed", "Memo", "CustomerMsgRef",
+        "IsToBePrinted", "IsToBeEmailed", "CustomerSalesTaxCodeRef", "Other", "ExchangeRate",
+        "ExternalGUID", "SalesOrderLineAdd", "SalesOrderLineGroupAdd"
+    ]
+
+    class Meta:
+        name = "SalesOrderAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    sales_order_line_add: List[SalesOrderLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineAdd",
+            "type": "Element",
+        },
+    )
+    sales_order_line_group_add: List[SalesOrderLineGroupAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineGroupAdd",
+            "type": "Element",
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class SalesOrderMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "CustomerRef", "ClassRef", "TemplateRef", "TxnDate",
+        "RefNumber", "BillAddress", "ShipAddress", "PONumber", "TermsRef", "DueDate",
+        "SalesRepRef", "FOB", "ShipDate", "ShipMethodRef", "ItemSalesTaxRef",
+        "IsManuallyClosed", "Memo", "CustomerMsgRef", "IsToBePrinted", "IsToBeEmailed",
+        "CustomerSalesTaxCodeRef", "Other", "ExchangeRate", "SalesOrderLineMod",
+        "SalesOrderLineGroupMod"
+    ]
+
+    class Meta:
+        name = "SalesOrderMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    sales_order_line_mod: List[SalesOrderLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineMod",
+            "type": "Element",
+        },
+    )
+    sales_order_line_group_mod: List[SalesOrderLineGroupMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineGroupMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrder(QBMixinWithQuery):
+    class Meta:
+        name = "SalesOrder"
+
+    Query: Type[SalesOrderQuery] = SalesOrderQuery
+    Add: Type[SalesOrderAdd] = SalesOrderAdd
+    Mod: Type[SalesOrderMod] = SalesOrderMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    bill_address_block: Optional[BillAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "BillAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_address_block: Optional[ShipAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddressBlock",
+            "type": "Element",
+        },
+    )
+    ponumber: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PONumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    terms_ref: Optional[TermsRef] = field(
+        default=None,
+        metadata={
+            "name": "TermsRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    subtotal: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Subtotal",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxPercentage",
+            "type": "Element",
+        },
+    )
+    sales_tax_total: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxTotal",
+            "type": "Element",
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    is_manually_closed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsManuallyClosed",
+            "type": "Element",
+        },
+    )
+    is_fully_invoiced: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsFullyInvoiced",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    sales_order_line_ret: List[SalesOrderLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineRet",
+            "type": "Element",
+        },
+    )
+    sales_order_line_group_ret: List[SalesOrderLineGroup] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineGroupRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrders(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "SalesOrder"
+        plural_of = SalesOrder
+
+
+
+
+@dataclass
+class SalesReceiptQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "SalesReceiptQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "CustomerRef", "ClassRef", "TemplateRef", "TxnDate", "RefNumber",
+        "BillAddress", "ShipAddress", "IsPending", "CheckNumber",
+        "PaymentMethodRef", "DueDate", "SalesRepRef", "ShipDate",
+        "ShipMethodRef", "FOB", "ItemSalesTaxRef", "Memo", "CustomerMsgRef",
+        "IsToBePrinted", "IsToBeEmailed", "CustomerSalesTaxCodeRef",
+        "DepositToAccountRef", "CreditCardTxnInfo", "Other", "ExchangeRate",
+        "ExternalGUID", "SalesReceiptLineAdd", "SalesReceiptLineGroupAdd"
+    ]
+
+    class Meta:
+        name = "SalesReceiptAdd"
+
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CheckNumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_add: List[SalesReceiptLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineAdd",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_group_add: List[SalesReceiptLineGroupAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineGroupAdd",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptMod(QBModMixin):
+    FIELD_ORDER_SALES_RECEIPT_MOD = [
+        "TxnID", "EditSequence", "CustomerRef", "ClassRef", "TemplateRef", "TxnDate",
+        "RefNumber", "BillAddress", "ShipAddress", "IsPending", "CheckNumber",
+        "PaymentMethodRef", "DueDate", "SalesRepRef", "ShipDate", "ShipMethodRef",
+        "FOB", "ItemSalesTaxRef", "Memo", "CustomerMsgRef", "IsToBePrinted",
+        "IsToBeEmailed", "CustomerSalesTaxCodeRef", "DepositToAccountRef",
+        "Other", "ExchangeRate", "SalesReceiptLineMod", "SalesReceiptLineGroupMod"
+    ]
+
+    class Meta:
+        name = "SalesReceiptMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CheckNumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_mod: List[SalesReceiptLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineMod",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_group_mod: List[SalesReceiptLineGroupMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineGroupMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceipt(QBMixinWithQuery):
+    class Meta:
+        name = "SalesReceipt"
+
+    Query: Type[SalesReceiptQuery] = SalesReceiptQuery
+    Add: Type[SalesReceiptAdd] = SalesReceiptAdd
+    Mod: Type[SalesReceiptMod] = SalesReceiptMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    template_ref: Optional[TemplateRef] = field(
+        default=None,
+        metadata={
+            "name": "TemplateRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 11,
+        },
+    )
+    bill_address: Optional[BillAddress] = field(
+        default=None,
+        metadata={
+            "name": "BillAddress",
+            "type": "Element",
+        },
+    )
+    bill_address_block: Optional[BillAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "BillAddressBlock",
+            "type": "Element",
+        },
+    )
+    ship_address: Optional[ShipAddress] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddress",
+            "type": "Element",
+        },
+    )
+    ship_address_block: Optional[ShipAddressBlock] = field(
+        default=None,
+        metadata={
+            "name": "ShipAddressBlock",
+            "type": "Element",
+        },
+    )
+    is_pending: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsPending",
+            "type": "Element",
+        },
+    )
+    check_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "CheckNumber",
+            "type": "Element",
+            "max_length": 25,
+        },
+    )
+    payment_method_ref: Optional[PaymentMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "PaymentMethodRef",
+            "type": "Element",
+        },
+    )
+    due_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DueDate",
+            "type": "Element",
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    ship_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ShipDate",
+            "type": "Element",
+        },
+    )
+    ship_method_ref: Optional[ShipMethodRef] = field(
+        default=None,
+        metadata={
+            "name": "ShipMethodRef",
+            "type": "Element",
+        },
+    )
+    fob: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FOB",
+            "type": "Element",
+            "max_length": 13,
+        },
+    )
+    subtotal: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Subtotal",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_percentage: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxPercentage",
+            "type": "Element",
+        },
+    )
+    sales_tax_total: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxTotal",
+            "type": "Element",
+        },
+    )
+    total_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    total_amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TotalAmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_msg_ref: Optional[CustomerMsgRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerMsgRef",
+            "type": "Element",
+        },
+    )
+    is_to_be_printed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBePrinted",
+            "type": "Element",
+        },
+    )
+    is_to_be_emailed: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsToBeEmailed",
+            "type": "Element",
+        },
+    )
+    is_tax_included: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IsTaxIncluded",
+            "type": "Element",
+        },
+    )
+    customer_sales_tax_code_ref: Optional[CustomerSalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerSalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    deposit_to_account_ref: Optional[DepositToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "DepositToAccountRef",
+            "type": "Element",
+        },
+    )
+    credit_card_txn_info: Optional[CreditCardTxnInfo] = field(
+        default=None,
+        metadata={
+            "name": "CreditCardTxnInfo",
+            "type": "Element",
+        },
+    )
+    other: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Other",
+            "type": "Element",
+            "max_length": 29,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_ret: List[SalesReceiptLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineRet",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_group_ret: List[SalesReceiptLineGroup] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineGroupRet",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceipts(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "SalesReceipt"
+        plural_of = SalesReceipt
+
+
+@dataclass
+class TimeTrackingEntityFilter(QBMixin):
+    FIELD_ORDER = [
+        "ListId", "FullName",
+    ]
+
+    class Meta:
+        name = "TimeTrackingEntityFilter"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TimeTrackingQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "MaxReturned", "ModifiedDateRangeFilter",
+        "TxnDateRangeFilter", "TimeTrackingEntityFilter",
+        "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "TimeTrackingQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    time_tracking_entity_filter: Optional[TimeTrackingEntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "TimeTrackingEntityFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+
+
+@dataclass
+class TimeTrackingAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "TxnDate", "EntityRef", "CustomerRef", "ItemServiceRef",
+        "Duration", "ClassRef", "PayrollItemWageRef", "Notes",
+        "BillableStatus", "IsBillable", "ExternalGUID"
+    ]
+
+    class Meta:
+        name = "TimeTrackingAdd"
+
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    item_service_ref: Optional[ItemServiceRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemServiceRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    duration: Optional[QBTime] = field(
+        default=None,
+        metadata={
+            "name": "Duration",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    payroll_item_wage_ref: Optional[PayrollItemWageRef] = field(
+        default=None,
+        metadata={
+            "name": "PayrollItemWageRef",
+            "type": "Element",
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TimeTrackingMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "TxnDate", "EntityRef",
+        "CustomerRef", "ItemServiceRef", "Duration", "ClassRef",
+        "PayrollItemWageRef", "Notes", "BillableStatus"
+    ]
+
+    class Meta:
+        name = "TimeTrackingMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    item_service_ref: Optional[ItemServiceRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemServiceRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    duration: Optional[QBTime] = field(
+        default=None,
+        metadata={
+            "name": "Duration",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    payroll_item_wage_ref: Optional[PayrollItemWageRef] = field(
+        default=None,
+        metadata={
+            "name": "PayrollItemWageRef",
+            "type": "Element",
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+
+
+@dataclass
+class TimeTracking(QBMixinWithQuery):
+    class Meta:
+        name = "TimeTracking"
+
+    Query: Type[TimeTrackingQuery] = TimeTrackingQuery
+    Add: Type[TimeTrackingAdd] = TimeTrackingAdd
+    Mod: Type[TimeTrackingMod] = TimeTrackingMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    item_service_ref: Optional[ItemServiceRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemServiceRef",
+            "type": "Element",
+        },
+    )
+    rate: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Rate",
+            "type": "Element",
+        },
+    )
+    duration: Optional[QBTime] = field(
+        default=None,
+        metadata={
+            "name": "Duration",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    payroll_item_wage_ref: Optional[PayrollItemWageRef] = field(
+        default=None,
+        metadata={
+            "name": "PayrollItemWageRef",
+            "type": "Element",
+        },
+    )
+    notes: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Notes",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TimeTrackings(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "TimeTracking"
+        plural_of = TimeTracking
+
+
+
+@dataclass
+class TransactionModifiedDateRangeFilter(QBMixin):
+    FIELD_ORDER = [
+        "FromModifiedDate", "ToModifiedDate", "DateMacro"
+    ]
+
+    class Meta:
+        name = "TransactionModifiedDateRangeFilter"
+
+    from_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToModifiedDate",
+            "type": "Element",
+        },
+    )
+    date_macro: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DateMacro",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TransactionDateRangeFilter(QBMixin):
+    FIELD_ORDER = [
+        "FromTxnDate", "ToTxnDate", "DateMacro"
+    ]
+
+    class Meta:
+        name = "TransactionDateRangeFilter"
+
+    from_txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromTxnDate",
+            "type": "Element",
+        },
+    )
+    to_txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToTxnDate",
+            "type": "Element",
+        },
+    )
+    date_macro: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "DateMacro",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TransactionEntityFilter(QBMixin):
+    FIELD_ORDER = [
+        "EntityTypeFilter", "ListID", "FullName",
+        "ListIDWithChildren", "FullNameWithChildren"
+    ]
+
+    class Meta:
+        name = "TransactionEntityFilter"
+
+    entity_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EntityTypeFilter",
+            "type": "Element",
+            "valid_values": ["Customer", "Employee", "OtherName", "Vendor"]
+        },
+    )
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    list_idwith_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListIDWithChildren",
+            "type": "Element",
+            "max_length": 36,
+        },
+    )
+    full_name_with_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullNameWithChildren",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TransactionAccountFilter(QBMixin):
+    FIELD_ORDER = [
+        "AccountTypeFilter", "ListID", "FullName",
+        "ListIDWithChildren", "FullNameWithChildren"
+    ]
+
+    class Meta:
+        name = "TransactionAccountFilter"
+
+    account_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountTypeFilter",
+            "type": "Element",
+            "valid_values": [
+                "AccountsPayable", "AccountsReceivable", "AllowedFor1099", "APAndSalesTax",
+                "APOrCreditCard", "ARAndAP", "Asset", "BalanceSheet", "Bank",
+                "BankAndARAndAPAndUF", "BankAndUF", "CostOfSales", "CreditCard",
+                "CurrentAsset", "CurrentAssetAndExpense", "CurrentLiability", "Equity",
+                "EquityAndIncomeAndExpense", "ExpenseAndOtherExpense", "FixedAsset",
+                "IncomeAndExpense", "IncomeAndOtherIncome", "Liability", "LiabilityAndEquity",
+                "LongTermLiability", "NonPosting", "OrdinaryExpense", "OrdinaryIncome",
+                "OrdinaryIncomeAndCOGS", "OrdinaryIncomeAndExpense", "OtherAsset",
+                "OtherCurrentAsset", "OtherCurrentLiability", "OtherExpense",
+                "OtherIncome", "OtherIncomeOrExpense"
+            ],
+        },
+    )
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    list_idwith_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListIDWithChildren",
+            "type": "Element",
+            "max_length": 36,
+        },
+    )
+    full_name_with_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullNameWithChildren",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TransactionItemFilter(QBMixin):
+    FIELD_ORDER = [
+        "ItemTypeFilter", "ListID", "FullName",
+        "ListIDWithChildren", "FullNameWithChildren"
+    ]
+
+    class Meta:
+        name = "TransactionItemFilter"
+
+    item_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemTypeFilter",
+            "type": "Element",
+            "valid_values": [
+                "AllExceptFixedAsset", "Assembly", "Discount", "FixedAsset", "Inventory",
+                "InventoryAndAssembly", "NonInventory", "OtherCharge", "Payment",
+                "Sales", "SalesTax", "Service"
+            ]
+        },
+    )
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    list_idwith_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListIDWithChildren",
+            "type": "Element",
+        },
+    )
+    full_name_with_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullNameWithChildren",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class TransactionClassFilter(QBMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName", "ListIDWithChildren", "FullNameWithChildren"
+    ]
+
+    class Meta:
+        name = "TransactionClassFilter"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    list_idwith_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListIDWithChildren",
+            "type": "Element",
+        },
+    )
+    full_name_with_children: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "FullNameWithChildren",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class CurrencyFilter(QBMixin):
+    FIELD_ORDER = [
+        "ListID", "FullName"
+    ]
+
+    class Meta:
+        name = "CurrencyFilter"
+
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+            "max_length": 64,
+        },
+    )
+
+
+@dataclass
+class TransactionQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "MaxReturned", "RefNumber", "RefNumberCaseSensitive",
+        "RefNumberFilter", "RefNumberRangeFilter", "TransactionModifiedDateRangeFilter",
+        "TransactionDateRangeFilter", "TransactionEntityFilter",
+        "TransactionAccountFilter", "TransactionItemFilter", "TransactionClassFilter",
+        "TransactionTypeFilter", "TransactionDetailLevelFilter",
+        "TransactionPostingStatusFilter", "TransactionPaidStatusFilter",
+        "CurrencyFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "TransactionQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    transaction_modified_date_range_filter: Optional[
+        TransactionModifiedDateRangeFilter
+    ] = field(
+        default=None,
+        metadata={
+            "name": "TransactionModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    transaction_date_range_filter: Optional[TransactionDateRangeFilter] = (
+        field(
+            default=None,
+            metadata={
+                "name": "TransactionDateRangeFilter",
+                "type": "Element",
+            },
+        )
+    )
+    transaction_entity_filter: Optional[TransactionEntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "TransactionEntityFilter",
+            "type": "Element",
+        },
+    )
+    transaction_account_filter: Optional[TransactionAccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "TransactionAccountFilter",
+            "type": "Element",
+        },
+    )
+    transaction_item_filter: Optional[TransactionItemFilter] = field(
+        default=None,
+        metadata={
+            "name": "TransactionItemFilter",
+            "type": "Element",
+        },
+    )
+    transaction_class_filter: Optional[TransactionClassFilter] = field(
+        default=None,
+        metadata={
+            "name": "TransactionClassFilter",
+            "type": "Element",
+        },
+    )
+    transaction_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TransactionTypeFilter",
+            "type": "Element",
+            "valid_values": [
+                "All", "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+                "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
+                "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
+                "ItemReceipt", "JournalEntry", "LiabilityAdjustment", "Paycheck",
+                "PayrollLiabilityCheck", "PurchaseOrder", "ReceivePayment", "SalesOrder",
+                "SalesReceipt", "SalesTaxPaymentCheck", "Transfer", "VendorCredit",
+                "YTDAdjustment"
+            ],
+        },
+    )
+    transaction_detail_level_filter: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "TransactionDetailLevelFilter",
+                "type": "Element",
+                "valid_values": [
+                    "All", "SummaryOnly", "AllExceptSummary"
+                ],
+            },
+        )
+    )
+    transaction_posting_status_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TransactionPostingStatusFilter",
+            "type": "Element",
+            "valid_values": [
+                "All", "SummaryOnly", "AllExceptSummary"
+            ],
+        },
+    )
+    transaction_paid_status_filter: Optional[str] = (
+        field(
+            default=None,
+            metadata={
+                "name": "TransactionPaidStatusFilter",
+                "type": "Element",
+                "valid_values": [
+                    "Either", "Closed", "Open"
+                ],
+            },
+        )
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+
+
+@dataclass
+class Transaction(QBMixinWithQuery):
+
+    class Meta:
+        name = "Transaction"
+
+    Query: Type[TransactionQuery] = TransactionQuery
+    #No Add
+    #No Mod
+
+    txn_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnType",
+            "type": "Element",
+            "valid_values": [
+                "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+                "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
+                "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
+                "ItemReceipt", "JournalEntry", "LiabilityAdjustment", "Paycheck",
+                "PayrollLiabilityCheck", "PurchaseOrder", "ReceivePayment", "SalesOrder",
+                "SalesReceipt", "SalesTaxPaymentCheck", "Transfer", "VendorCredit",
+                "YTDAdjustment"
+            ],
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    amount_in_home_currency: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "AmountInHomeCurrency",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+
+
+@dataclass
+class Transactions(PluralMixin):
+
+    class Meta:
+        name = "Transaction"
+        plural_of = Transaction
+
+
+@dataclass
+class TransferQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "MaxReturned", "ModifiedDateRangeFilter",
+        "TxnDateRangeFilter", "IncludeRetElement"
+    ]
+
+    class Meta:
+        name = "TransferQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+
+
+@dataclass
+class TransferAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "TxnDate", "TransferFromAccountRef", "TransferToAccountRef",
+        "ClassRef", "Amount", "Memo"
+    ]
+
+    class Meta:
+        name = "TransferAdd"
+
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    transfer_from_account_ref: Optional[TransferFromAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "TransferFromAccountRef",
+            "type": "Element",
+        },
+    )
+    transfer_to_account_ref: Optional[TransferToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "TransferToAccountRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class TransferMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "TxnDate", "TransferFromAccountRef",
+        "TransferToAccountRef", "ClassRef", "Amount", "Memo"
+    ]
+
+    class Meta:
+        name = "TransferMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    transfer_from_account_ref: Optional[TransferFromAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "TransferFromAccountRef",
+            "type": "Element",
+        },
+    )
+    transfer_to_account_ref: Optional[TransferToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "TransferToAccountRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+
+
+@dataclass
+class Transfer(QBMixinWithQuery):
+    class Meta:
+        name = "Transfer"
+
+    Query: Type[TransferQuery] = TransferQuery
+    Add: Type[TransferAdd] = TransferAdd
+    Mod: Type[TransferMod] = TransferMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    transfer_from_account_ref: Optional[TransferFromAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "TransferFromAccountRef",
+            "type": "Element",
+        },
+    )
+    from_account_balance: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "FromAccountBalance",
+            "type": "Element",
+        },
+    )
+    transfer_to_account_ref: Optional[TransferToAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "TransferToAccountRef",
+            "type": "Element",
+        },
+    )
+    to_account_balance: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "ToAccountBalance",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+
+
+@dataclass
+class Transfers(PluralMixin, PluralTrxnSaveMixin):
+    class Meta:
+        name = "Transfer"
+        plural_of = Transfer
+
+@dataclass
+class TxnDel(QBMixin):
+    FIELD_ORDER = [
+        "TxnDelType", "TxnID"
+    ]
+
+    class Meta:
+        name = "TxnDel"
+
+    txn_del_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnDelType",
+            "type": "Element",
+            "required": True,
+            "valid_values": [
+                "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+                "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
+                "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
+                "ItemReceipt", "JournalEntry", "PurchaseOrder", "ReceivePayment", "SalesOrder",
+                "SalesReceipt", "SalesTaxPaymentCheck", "TimeTracking", "TransferInventory",
+                "VehicleMileage", "VendorCredit"
+            ],
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+@dataclass
+class TxnVoid(QBMixin):
+    FIELD_ORDER = [
+        "TxnVoidType", "TxnID"
+    ]
+
+    class Meta:
+        name = "TxnVoid"
+
+    txn_void_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnVoidType",
+            "type": "Element",
+            "required": True,
+            "valid_values": [
+                "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+                "Charge", "Check", "CreditCardCharge", "CreditCardCredit", "CreditMemo",
+                "Deposit", "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry",
+                "SalesReceipt", "VendorCredit"
+            ],
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
 
 # endregion
