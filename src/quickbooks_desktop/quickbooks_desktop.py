@@ -991,7 +991,7 @@ class FromXmlMixin:
     IS_YES_NO_FIELD_LIST = []
 
     @staticmethod
-    def __validate_from_xml_arg_type(element):
+    def _validate_from_xml_arg_type(element):
         if not isinstance(element, et._Element):
             raise TypeError(f'element must be an instance of lxml.etree._Element. Your element is type {type(element)}')
         # elif element.tag[-3:] != 'Ret':
@@ -1000,7 +1000,7 @@ class FromXmlMixin:
             pass
 
     @staticmethod
-    def __get_field_type(field):
+    def _get_field_type(field):
         field_type = field.type
         if get_origin(field_type) is Union:
             # Handle Optional and Union types
@@ -1010,25 +1010,26 @@ class FromXmlMixin:
             return field_type
 
     @staticmethod
-    def __parse_list_field_type(init_args, field, field_type, xml_elements):
-        # if the field type is a list
-        for xml_element in xml_elements:
-            class_to_use = field_type.__args__[0]
-            instance = class_to_use.from_xml(xml_element)
-            if field.name in init_args.keys():
+    def _parse_list_field_type(init_args, field, field_type, an_xml_list_element):
+        instance = field_type.__args__[0].from_xml(an_xml_list_element)
+        if field.name in init_args.keys():
+            if isinstance(init_args[field.name], list):
                 init_args[field.name].append(instance)
             else:
-                init_args[field.name] = [instance]
+                # if it's not a list then what is it?
+                pass
+        else:
+            init_args[field.name] = [instance]
         return init_args
 
 
     @classmethod
-    def __parse_field_according_to_type(cls, init_args, field, field_type, xml_element):
+    def _parse_field_according_to_type(cls, init_args, field, field_type, xml_element):
         # Check if the field type is a dataclass
         if is_dataclass(field_type):
             init_args[field.name] = field_type.from_xml(xml_element)
         elif hasattr(field_type, '_name') and field_type._name == 'List':
-            init_args = cls.__parse_list_field_type(init_args, field, field_type, xml_element)
+            init_args = cls._parse_list_field_type(init_args, field, field_type, xml_element)
         elif field.name in cls.IS_YES_NO_FIELD_LIST:
             init_args[field.name] = yes_no_dict[xml_element.text]
         else:
@@ -1039,7 +1040,7 @@ class FromXmlMixin:
         return init_args
 
     @classmethod
-    def __get_init_args(cls, element, field_names):
+    def _get_init_args(cls, element, field_names):
         init_args = {}
         for xml_element in element:
             field_name = xml_element.tag
@@ -1050,21 +1051,27 @@ class FromXmlMixin:
                 init_args[ext_name] = ext_value
             elif field_name in field_names:
                 field = field_names[field_name]
-                field_type = cls.__get_field_type(field)
-                init_args = cls.__parse_field_according_to_type(init_args, field, field_type, xml_element)
+                field_type = cls._get_field_type(field)
+                init_args = cls._parse_field_according_to_type(init_args, field, field_type, xml_element)
             else:
-                logger.debug(f'Extra field {field_name} is in the xml provided')
+                try:
+                    logger.debug(f'Extra field {field_name} is in the xml provided')
+                except Exception as e:
+                    print(e)
         return init_args
 
     @classmethod
     def from_xml(cls, element: et.Element) -> Any:
-        cls.__validate_from_xml_arg_type(element)
+        cls._validate_from_xml_arg_type(element)
 
         field_names = {field.metadata.get("name", field.name): field for field in cls.__dataclass_fields__.values()}
-        init_args = cls.__get_init_args(element, field_names)
+        init_args = cls._get_init_args(element, field_names)
 
-        if element is not None:
-            if not len(element) and element.text is not None and len(element.text) and element.text.replace('\n', '').strip() != '' and len(cls.__dataclass_fields__):
+        if element is not None and not len(element) and element.text is not None and len(element.text) and element.text.replace('\n', '').strip() != '':
+            # The element exists, is not a list, has a name and is not a new line.
+
+            if len(cls.__dataclass_fields__):
+                #a dataclass to parse out
                 main_field = next(iter(cls.__dataclass_fields__.values()))
                 init_args[main_field.name] = element.text
             elif element.tag in ['InvoiceLineRet']:
@@ -1074,6 +1081,7 @@ class FromXmlMixin:
             else:
                 pass
         else:
+            #Normal Element to be parsed out
             pass
 
         instance = cls(**{k: v for k, v in init_args.items() if k in cls.__dataclass_fields__})
@@ -4582,7 +4590,7 @@ class ItemGroupLine(QBMixin):
             "required": True,
         },
     )
-    item_line_ret: List[ItemLine] = field(
+    item_lines: List[ItemLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemLineRet",
@@ -5506,7 +5514,7 @@ class CreditMemoLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    credit_memo_line_ret: List[CreditMemoLine] = field(
+    credit_memo_lines: List[CreditMemoLine] = field(
         default_factory=list,
         metadata={
             "name": "CreditMemoLineRet",
@@ -6649,7 +6657,7 @@ class EstimateLineGroup(QBMixin):
             "required": True,
         },
     )
-    estimate_line_ret: List[EstimateLine] = field(
+    estimate_lines: List[EstimateLine] = field(
         default_factory=list,
         metadata={
             "name": "EstimateLineRet",
@@ -7638,7 +7646,7 @@ class InvoiceLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    invoice_line_ret: List[InvoiceLine] = field(
+    invoice_lines: List[InvoiceLine] = field(
         default_factory=list,
         metadata={
             "name": "InvoiceLineRet",
@@ -8572,7 +8580,7 @@ class PurchaseOrderLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    purchase_order_line_ret: List[PurchaseOrderLine] = field(
+    purchase_order_lines: List[PurchaseOrderLine] = field(
         default_factory=list,
         metadata={
             "name": "PurchaseOrderLineRet",
@@ -9283,7 +9291,7 @@ class SalesOrderLineGroup(QBMixin):
             "required": True,
         },
     )
-    sales_order_line_ret: List[SalesOrderLine] = field(
+    sales_order_lines: List[SalesOrderLine] = field(
         default_factory=list,
         metadata={
             "name": "SalesOrderLineRet",
@@ -10045,7 +10053,7 @@ class SalesReceiptLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    sales_receipt_line_ret: List[SalesReceiptLine] = field(
+    sales_receipt_lines: List[SalesReceiptLine] = field(
         default_factory=list,
         metadata={
             "name": "SalesReceiptLineRet",
@@ -22658,14 +22666,14 @@ class Bill(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    item_line_ret: List[ItemLine] = field(
+    item_lines: List[ItemLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemLineRet",
             "type": "Element",
         },
     )
-    item_group_line_ret: List[ItemGroupLine] = field(
+    item_group_lines: List[ItemGroupLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemGroupLineRet",
@@ -23155,7 +23163,7 @@ class BuildAssembly(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    component_item_line_ret: List[ComponentItemLine] = field(
+    component_item_lines: List[ComponentItemLine] = field(
         default_factory=list,
         metadata={
             "name": "ComponentItemLineRet",
@@ -24387,21 +24395,21 @@ class Check(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    expense_line_ret: List[ExpenseLine] = field(
+    expense_lines: List[ExpenseLine] = field(
         default_factory=list,
         metadata={
             "name": "ExpenseLineRet",
             "type": "Element",
         },
     )
-    item_line_ret: List[ItemLine] = field(
+    item_lines: List[ItemLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemLineRet",
             "type": "Element",
         },
     )
-    item_group_line_ret: List[ItemGroupLine] = field(
+    item_group_lines: List[ItemGroupLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemGroupLineRet",
@@ -24870,21 +24878,21 @@ class CreditCardCharge(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    expense_line_ret: List[ExpenseLine] = field(
+    expense_lines: List[ExpenseLine] = field(
         default_factory=list,
         metadata={
             "name": "ExpenseLineRet",
             "type": "Element",
         },
     )
-    item_line_ret: List[ItemLine] = field(
+    item_lines: List[ItemLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemLineRet",
             "type": "Element",
         },
     )
-    item_group_line_ret: List[ItemGroupLine] = field(
+    item_group_lines: List[ItemGroupLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemGroupLineRet",
@@ -25353,21 +25361,21 @@ class CreditCardCredit(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    expense_line_ret: List[ExpenseLine] = field(
+    expense_lines: List[ExpenseLine] = field(
         default_factory=list,
         metadata={
             "name": "ExpenseLineRet",
             "type": "Element",
         },
     )
-    item_line_ret: List[ItemLine] = field(
+    item_lines: List[ItemLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemLineRet",
             "type": "Element",
         },
     )
-    item_group_line_ret: List[ItemGroupLine] = field(
+    item_group_lines: List[ItemGroupLine] = field(
         default_factory=list,
         metadata={
             "name": "ItemGroupLineRet",
@@ -26245,7 +26253,7 @@ class CreditMemo(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    credit_memo_line_ret: List[CreditMemoLine] = field(
+    credit_memo_lines: List[CreditMemoLine] = field(
         default_factory=list,
         metadata={
             "name": "CreditMemoLineRet",
@@ -26734,7 +26742,7 @@ class Deposit(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    deposit_line_ret: List[DepositLine] = field(
+    deposit_lines: List[DepositLine] = field(
         default_factory=list,
         metadata={
             "name": "DepositLineRet",
@@ -27531,7 +27539,7 @@ class Estimate(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    estimate_line_ret: List[EstimateLine] = field(
+    estimate_lines: List[EstimateLine] = field(
         default_factory=list,
         metadata={
             "name": "EstimateLineRet",
@@ -27955,7 +27963,7 @@ class InventoryAdjustment(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    inventory_adjustment_line_ret: List[InventoryAdjustmentLine] = field(
+    inventory_adjustment_lines: List[InventoryAdjustmentLine] = field(
         default_factory=list,
         metadata={
             "name": "InventoryAdjustmentLineRet",
@@ -28903,14 +28911,14 @@ class Invoice(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    invoice_line_ret: List[InvoiceLine] = field(
+    invoice_lines: List[InvoiceLine] = field(
         default_factory=list,
         metadata={
             "name": "InvoiceLineRet",
             "type": "Element",
         },
     )
-    invoice_line_groups: List[InvoiceLineGroup] = field(
+    invoice_line_group_ret: List[InvoiceLineGroup] = field(
         default_factory=list,
         metadata={
             "name": "InvoiceLineGroupRet",
@@ -30170,7 +30178,7 @@ class PurchaseOrder(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    purchase_order_line_ret: List[PurchaseOrderLine] = field(
+    purchase_order_lines: List[PurchaseOrderLine] = field(
         default_factory=list,
         metadata={
             "name": "PurchaseOrderLineRet",
@@ -31780,7 +31788,7 @@ class SalesOrder(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    sales_order_line_ret: List[SalesOrderLine] = field(
+    sales_order_lines: List[SalesOrderLine] = field(
         default_factory=list,
         metadata={
             "name": "SalesOrderLineRet",
@@ -32658,7 +32666,7 @@ class SalesReceipt(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    sales_receipt_line_ret: List[SalesReceiptLine] = field(
+    sales_receipt_lines: List[SalesReceiptLine] = field(
         default_factory=list,
         metadata={
             "name": "SalesReceiptLineRet",

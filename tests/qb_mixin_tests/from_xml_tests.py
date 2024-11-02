@@ -1,14 +1,12 @@
 import unittest
+from decimal import Decimal
 from lxml import etree as et
 from dataclasses import dataclass, field
 from typing import Optional, List
-from src.quickbooks_desktop.mixins.qb_mixins import FromXmlMixin
-from src.quickbooks_desktop.lists import CustomerRef
-from src.quickbooks_desktop.transactions.invoices import Invoice
+from src.quickbooks_desktop.quickbooks_desktop import FromXmlMixin, CustomerRef, Invoice, InvoiceLine
 
 
-# Import the FromXmlMixin
-# from your_module import FromXmlMixin
+
 
 @dataclass
 class TestClass(FromXmlMixin):
@@ -74,46 +72,96 @@ class TestFromXmlMixin(unittest.TestCase):
     def test_basic_from_xml_04(self):
         # Test case for a simple XML element matching defined fields
         xml_str = """
+                <InvoiceLine>
+                    <TxnLineID>4-1326159535</TxnLineID>
+                    <ItemRef>
+                        <ListID>80000001-1326159384</ListID>
+                        <FullName>Estimating</FullName>
+                    </ItemRef>
+                    <Desc>Seasons 52 Fire Alarm - Fire Lite</Desc>
+                    <Quantity>1</Quantity>
+                    <Rate>100.00</Rate>
+                    <Amount>100.00</Amount>
+                    <SalesTaxCodeRef>
+                        <ListID>80000002-1326158429</ListID>
+                        <FullName>Non</FullName>
+                    </SalesTaxCodeRef>
+                </InvoiceLine>
+        """
+        element = et.fromstring(xml_str)
+        instance = InvoiceLine.from_xml(element)
+
+        self.assertEqual(instance.txn_line_id, "4-1326159535")
+        self.assertEqual(instance.amount, Decimal(100.00))
+
+
+    def test_basic_from_xml_05(self):
+        # Test case for a simple XML element matching defined fields
+        xml_str = """
         <InvoiceRet>
-            <InvoiceLineRet>      
-                <InvoiceLine>        
-                    <TxnLineID>3-1326159535</TxnLineID>        
-                    <ItemRef>          
-                        <ListID>80000001-1326159384</ListID>          
-                        <FullName>Estimating</FullName>        
-                    </ItemRef>        
-                    <Desc>Washington ES Low Voltage/Fire Alarm Bid</Desc>        
-                    <Quantity>1</Quantity>        
-                    <Rate>100.00</Rate>        
-                    <Amount>100.00</Amount>        
-                    <SalesTaxCodeRef>          
-                        <ListID>80000002-1326158429</ListID>          
-                        <FullName>Non</FullName>        
-                    </SalesTaxCodeRef>      
-                </InvoiceLine>      
-                <InvoiceLine>        
-                    <TxnLineID>4-1326159535</TxnLineID>        
-                    <ItemRef>          
-                    <ListID>80000001-1326159384</ListID>          
-                    <FullName>Estimating</FullName>        
-                    </ItemRef>        
-                    <Desc>Seasons 52 Fire Alarm - Fire Lite</Desc>        
-                    <Quantity>1</Quantity>        
-                    <Rate>100.00</Rate>        
-                    <Amount>100.00</Amount>        
-                    <SalesTaxCodeRef>          
-                    <ListID>80000002-1326158429</ListID>          
-                    <FullName>Non</FullName>        
-                    </SalesTaxCodeRef>      
-                </InvoiceLine>    
+            <InvoiceLineRet>
+                <TxnLineID>3-1326159535</TxnLineID>
+                <ItemRef>
+                    <ListID>80000001-1326159384</ListID>
+                    <FullName>Estimating</FullName>
+                </ItemRef>
+                <Desc>Washington ES Low Voltage/Fire Alarm Bid</Desc>
+                <Quantity>1</Quantity>
+                <Rate>100.00</Rate>
+                <Amount>100.00</Amount>
+                <SalesTaxCodeRef>
+                    <ListID>80000002-1326158429</ListID>
+                    <FullName>Non</FullName>
+                </SalesTaxCodeRef>
+            </InvoiceLineRet>
+            <InvoiceLineRet>
+                <TxnLineID>4-1326159535</TxnLineID>
+                <ItemRef>
+                <ListID>80000001-1326159384</ListID>
+                <FullName>Estimating</FullName>
+                </ItemRef>
+                <Desc>Seasons 52 Fire Alarm - Fire Lite</Desc>
+                <Quantity>1</Quantity>
+                <Rate>100.00</Rate>
+                <Amount>100.00</Amount>
+                <SalesTaxCodeRef>
+                <ListID>80000002-1326158429</ListID>
+                <FullName>Non</FullName>
+                </SalesTaxCodeRef>
             </InvoiceLineRet>
         </InvoiceRet>
         """
         element = et.fromstring(xml_str)
         instance = Invoice.from_xml(element)
 
-        self.assertEqual(instance.list_id, "80000001-1326159291")
-        self.assertEqual(instance.full_name, "Netelco, Incorporated")
+        self.assertEqual(len(instance.invoice_lines), 2)
+        self.assertEqual(instance.invoice_lines[0].txn_line_id, "3-1326159535")
+        self.assertEqual(instance.invoice_lines[0].item_ref.full_name, "Estimating")
+
+    def test__get_init_args(self):
+        xml_str = """
+        <InvoiceLine>
+            <TxnLineID>3-1326159535</TxnLineID>
+            <ItemRef>
+                <ListID>80000001-1326159384</ListID>
+                <FullName>Estimating</FullName>
+            </ItemRef>
+            <Desc>Washington ES Low Voltage/Fire Alarm Bid</Desc>
+            <Quantity>1</Quantity>
+            <Rate>100.00</Rate>
+            <Amount>100.00</Amount>
+            <SalesTaxCodeRef>
+                <ListID>80000002-1326158429</ListID>
+                <FullName>Non</FullName>
+            </SalesTaxCodeRef>
+        </InvoiceLine>
+        """
+
+        element = et.fromstring(xml_str)
+        field_names = {field.metadata.get("name", field.name): field for field in InvoiceLine.__dataclass_fields__.values()}
+        init_args = InvoiceLine._get_init_args(element, field_names)
+        self.assertIn("desc", init_args)
+        self.assertEqual(init_args["desc"], "Washington ES Low Voltage/Fire Alarm Bid")
 
     def test_handle_unexpected_field(self):
         # Test case where the XML contains an unexpected field
@@ -196,6 +244,3 @@ class TestFromXmlMixin(unittest.TestCase):
         self.assertEqual(instance.value, True)  # Since "Yes" should map to True
         TestClass.IS_YES_NO_FIELD_LIST = []  # Reset for other tests
 
-
-if __name__ == '__main__':
-    unittest.main()
