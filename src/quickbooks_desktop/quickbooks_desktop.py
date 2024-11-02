@@ -570,7 +570,7 @@ class QuickbooksDesktop():
 
         return QBXML, QBXMLMsgsRq
 
-    def _prepare_request(self, requestXML):
+    def _create_full_request(self, requestXML, encoding="utf-8"):
         """
         Combines converting the request to lxml and ensuring the proper structure for the XML request.
 
@@ -601,7 +601,10 @@ class QuickbooksDesktop():
                 requestXML.attrib['requestID'] = "1"
             QBXMLMsgsRq.append(requestXML)
 
-        return QBXML
+        declaration = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="{self.SDK_version}"?>"""
+        full_request = declaration + et.tostring(QBXML, encoding=encoding).decode(encoding)
+        logger.debug(f'full_request to go to qb: {full_request}')
+        return full_request
 
 
     def send_xml(self, requestXML, encoding="utf-8"):
@@ -614,11 +617,7 @@ class QuickbooksDesktop():
         :return: responseXML from the quickbooks processor
         """
 
-        QBXML = self._prepare_request(requestXML)
-
-        declaration = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="{self.SDK_version}"?>"""
-        full_request = declaration + et.tostring(QBXML, encoding=encoding).decode(encoding)
-        logger.debug(f'full_request to go to qb: {full_request}')
+        full_request = self._create_full_request(requestXML, encoding)
 
         logger.debug(f'Opening connection to QuickBooks')
         if not self.qbXMLRP:
@@ -29141,14 +29140,14 @@ class JournalEntryAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    journal_debit_line: List[JournalDebitLine] = field(
+    journal_debit_lines: List[JournalDebitLine] = field(
         default_factory=list,
         metadata={
             "name": "JournalDebitLine",
             "type": "Element",
         },
     )
-    journal_credit_line: List[JournalCreditLine] = field(
+    journal_credit_lines: List[JournalCreditLine] = field(
         default_factory=list,
         metadata={
             "name": "JournalCreditLine",
@@ -29360,7 +29359,7 @@ class JournalEntry(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    journal_credit_line: List[JournalCreditLine] = field(
+    journal_credit_lines: List[JournalCreditLine] = field(
         default_factory=list,
         metadata={
             "name": "JournalCreditLine",

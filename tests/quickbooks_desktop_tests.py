@@ -118,6 +118,3 @@ class TestQuickbooksDesktop(unittest.TestCase):
         self.assertFalse(qb_desktop.session_begun)
         self.assertFalse(qb_desktop.connection_open)
 
-
-if __name__ == '__main__':
-    unittest.main()

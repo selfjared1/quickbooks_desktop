@@ -3,9 +3,9 @@ from decimal import Decimal
 from lxml import etree as et
 from dataclasses import dataclass, field
 from typing import Optional, List
-from src.quickbooks_desktop.quickbooks_desktop import FromXmlMixin, CustomerRef, Invoice, InvoiceLine
-
-
+from src.quickbooks_desktop.quickbooks_desktop import (
+    FromXmlMixin, CustomerRef, Invoice, InvoiceLine, JournalEntry,
+)
 
 
 @dataclass
@@ -105,7 +105,7 @@ class TestFromXmlMixin(unittest.TestCase):
                     <ListID>80000001-1326159384</ListID>
                     <FullName>Estimating</FullName>
                 </ItemRef>
-                <Desc>Washington ES Low Voltage/Fire Alarm Bid</Desc>
+                <Desc>Product</Desc>
                 <Quantity>1</Quantity>
                 <Rate>100.00</Rate>
                 <Amount>100.00</Amount>
@@ -120,7 +120,7 @@ class TestFromXmlMixin(unittest.TestCase):
                 <ListID>80000001-1326159384</ListID>
                 <FullName>Estimating</FullName>
                 </ItemRef>
-                <Desc>Seasons 52 Fire Alarm - Fire Lite</Desc>
+                <Desc>Product Custom Description</Desc>
                 <Quantity>1</Quantity>
                 <Rate>100.00</Rate>
                 <Amount>100.00</Amount>
@@ -137,6 +137,71 @@ class TestFromXmlMixin(unittest.TestCase):
         self.assertEqual(len(instance.invoice_lines), 2)
         self.assertEqual(instance.invoice_lines[0].txn_line_id, "3-1326159535")
         self.assertEqual(instance.invoice_lines[0].item_ref.full_name, "Estimating")
+        self.assertEqual(instance.invoice_lines[1].desc, "Product Custom Description")
+
+    def test_basic_from_xml_06(self):
+        # Test case for a simple XML element matching defined fields
+        journal_xml = """
+                <JournalEntryRet>
+                    <TxnID>19C72-1627671245</TxnID>
+                    <TimeCreated>2021-07-30T12:54:05-07:00</TimeCreated>
+                    <TimeModified>2022-01-31T15:33:12-07:00</TimeModified>
+                    <EditSequence>1627671245</EditSequence>
+                    <TxnNumber>34217</TxnNumber>
+                    <TxnDate>2005-10-18</TxnDate>
+                    <RefNumber>1</RefNumber>
+                    <IsAdjustment>false</IsAdjustment>
+                    <IsHomeCurrencyAdjustment>false</IsHomeCurrencyAdjustment>
+                    <IsAmountsEnteredInHomeCurrency>false</IsAmountsEnteredInHomeCurrency>
+                    <CurrencyRef>
+                    <ListID>80000096-1622403877</ListID>
+                    <FullName>US Dollar</FullName>
+                    </CurrencyRef>
+                    <ExchangeRate>1</ExchangeRate>
+                    <JournalCreditLine>
+                    <TxnLineID>19C73-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>80000015-1622404240</ListID>
+                    <FullName>Notes - Sample, Inc.</FullName>
+                    </AccountRef>
+                    <Amount>210000.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalCreditLine>
+                    <JournalDebitLine>
+                    <TxnLineID>19C74-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>8000005D-1627666939</ListID>
+                    <FullName>Automobiles</FullName>
+                    </AccountRef>
+                    <Amount>4500.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalDebitLine>
+                    <JournalDebitLine>
+                    <TxnLineID>19C75-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>8000005E-1627666939</ListID>
+                    <FullName>Furniture &amp; Fixtures</FullName>
+                    </AccountRef>
+                    <Amount>2000.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalDebitLine>
+                    <JournalDebitLine>
+                    <TxnLineID>19C76-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>8000005C-1627666939</ListID>
+                    <FullName>Inventory</FullName>
+                    </AccountRef>
+                    <Amount>203500.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalDebitLine>
+                </JournalEntryRet>
+                """
+        element = et.fromstring(journal_xml)
+        instance = JournalEntry.from_xml(element)
+
+        self.assertEqual(len(instance.journal_credit_lines), 1)
+        self.assertEqual(instance.journal_credit_lines[0].txn_line_id, "19C73-1627671245")
+
 
     def test__get_init_args(self):
         xml_str = """

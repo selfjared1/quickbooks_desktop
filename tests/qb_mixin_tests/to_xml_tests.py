@@ -3,11 +3,9 @@ from decimal import Decimal
 import xml.etree.ElementTree as et
 from dataclasses import dataclass, field, fields, is_dataclass
 from typing import List, Optional, Any
-from src.quickbooks_desktop.mixins.qb_mixins import ToXmlMixin
-from src.quickbooks_desktop.common import LinkedTxn
-from src.quickbooks_desktop.qb_special_fields import QBDates
-from src.quickbooks_desktop.lists import ItemRef, SalesTaxCodeRef, CustomerRef
-from src.quickbooks_desktop.transactions.invoices import InvoiceAdd, InvoiceLineAdd
+from src.quickbooks_desktop.quickbooks_desktop import (
+    ToXmlMixin, LinkedTxn, QBDates, ItemRef, SalesTaxCodeRef, CustomerRef, InvoiceAdd, InvoiceLineAdd
+)
 from datetime import datetime
 
 # Sample dataclass to use with ToXmlMixin
@@ -40,7 +38,7 @@ class TestToXmlMixin(unittest.TestCase):
     def test_to_xml_with_no_field_order(self):
         data = TestData(name="TestName", is_active=False, description=None)
         if hasattr(data, 'FIELD_ORDER'):
-            delattr(data, 'FIELD_ORDER')
+            delattr(type(data), 'FIELD_ORDER')
         else:
             pass
 
@@ -50,7 +48,7 @@ class TestToXmlMixin(unittest.TestCase):
         elements = list(xml_element)
         self.assertEqual(elements[0].tag, "Name")
         self.assertEqual(elements[1].tag, "IsActive")
-        self.assertEqual(elements[2].tag, "Description")
+        self.assertEqual(len(elements), 2)
 
     def test_to_xml_with_field_order(self):
         # Add FIELD_ORDER to the dataclass
@@ -98,7 +96,7 @@ class TestToXmlMixin(unittest.TestCase):
                          lot_number=None, service_date=None,
                          sales_tax_code_ref=SalesTaxCodeRef(list_id='80000002-1326158429', full_name='Non'),
                          is_taxable=None, override_item_account_ref=None, other1=None, other2=None,
-                         link_to_txn=None, def_macro=None),
+                         link_to_txn=None),
                 InvoiceLineAdd(item_ref=ItemRef(list_id='80000001-1326159385', full_name='Estimating'),
                                desc='Washington ES Low Voltage/Fire Alarm Bid', quantity=Decimal('1'),
                                unit_of_measure=None, rate=Decimal('200.00'), rate_percent=None,
@@ -108,14 +106,14 @@ class TestToXmlMixin(unittest.TestCase):
                                lot_number=None, service_date=None,
                                sales_tax_code_ref=SalesTaxCodeRef(list_id='80000002-1326158429', full_name='Non'),
                                is_taxable=None, override_item_account_ref=None, other1=None, other2=None,
-                               link_to_txn=None, def_macro=None)
+                               link_to_txn=None)
                 ],
             invoice_line_group_add=[])
 
         xml_element = invoice_add.to_xml()
         self.assertEqual(xml_element.tag, "InvoiceAdd")
         self.assertEqual(xml_element.find("CustomerRef/ListID").text, "80000001-1326159291")
-        invoice_line_add_elm = xml_element.find('InvoiceLineAdd')
+        invoice_line_add_elm = xml_element.findall('InvoiceLineAdd')
         self.assertEqual(len(invoice_line_add_elm), 2)
 
 
@@ -153,7 +151,7 @@ class TestToXmlMixin2(unittest.TestCase):
 
         # Check if the element is created correctly
         self.assertIsNotNone(element)
-        self.assertEqual(element.tag, 'LinkedTxn')
+        self.assertEqual(element[0].tag, 'LinkedTxn')
         self.assertEqual(len(element), 1)  # One linked transaction
 
         # Check the child elements inside LinkedTxn

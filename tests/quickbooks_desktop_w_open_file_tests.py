@@ -1,8 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
-from src.quickbooks_desktop.transactions import JournalEntry
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, JournalEntry
 
 
 class TestQuickbooksDesktop(unittest.TestCase):
@@ -60,7 +59,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
             <Amount>203500.00</Amount>
             <Memo>original purchase</Memo>
             </JournalDebitLine>
-            </JournalEntryRet>
+        </JournalEntryRet>
         """
 
     def test_add_journal_entry(self):
