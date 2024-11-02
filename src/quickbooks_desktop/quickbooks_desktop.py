@@ -408,46 +408,7 @@ class QBPriceType(str):
 
 # region Common Fields
 
-addr1: Optional[str] = field(
-    default=None,
-    metadata={
-        "name": "Addr1",
-        "type": "Element",
-        "max_length": 41
-    },
-)
-addr2: Optional[str] = field(
-    default=None,
-    metadata={
-        "name": "Addr2",
-        "type": "Element",
-        "max_length": 41
-    },
-)
-addr3: Optional[str] = field(
-    default=None,
-    metadata={
-        "name": "Addr3",
-        "type": "Element",
-        "max_length": 41
-    },
-)
-addr4: Optional[str] = field(
-    default=None,
-    metadata={
-        "name": "Addr4",
-        "type": "Element",
-        "max_length": 41
-    },
-)
-addr5: Optional[str] = field(
-    default=None,
-    metadata={
-        "name": "Addr5",
-        "type": "Element",
-        "max_length": 41
-    },
-)
+
 
 # endregion
 
@@ -15875,7 +15836,7 @@ class ItemMixin:
 
 
 @dataclass
-def ItemWithClassAndTaxMixin(ItemMixin):
+class ItemWithClassAndTaxMixin(ItemMixin):
 
 
     class_ref: Optional[ClassInQBRef] = field(
@@ -16975,6 +16936,9 @@ class JobTypeAdd(QBAddMixin):
 
 @dataclass
 class JobType(QBMixinWithQuery):
+
+    class Meta:
+        name = "JobType"
 
     Query: Type[JobTypeQuery] = JobTypeQuery
     Add: Type[JobTypeAdd] = JobTypeAdd
@@ -20559,6 +20523,10 @@ class Vendor(QBMixinWithQuery):
     class Meta:
         name = "Vendor"
 
+    Query: Type[VendorQuery] = VendorQuery
+    Add: Type[VendorAdd] = VendorAdd
+    Mod: Type[VendorMod] = VendorMod
+
     list_id: Optional[str] = field(
         default=None,
         metadata={
@@ -21122,6 +21090,10 @@ class ARRefundCreditCardAdd(QBAddMixin):
 class ARRefundCreditCard(QBMixinWithQuery):
     class Meta:
         name = "ARRefundCreditCard"
+
+    Query: Type[ARRefundCreditCardQuery] = ARRefundCreditCardQuery
+    Add: Type[ARRefundCreditCardAdd] = ARRefundCreditCardAdd
+    #No Mod
 
     txn_id: Optional[str] = field(
         default=None,

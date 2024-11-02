@@ -133,3 +133,4 @@ burn/
 /src/quickbooks_desktop/desktop_to_desktop/passes/all_xml/
 /src/quickbooks_desktop/desktop_to_desktop/passes/add_rq_xml/
 /src/quickbooks_desktop/desktop_to_desktop/passes/transaction_mappings.db
+/xsd_data/
