@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop  # Assuming your class is in a module called quickbooks_desktop
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
 
 
 class TestQuickbooksDesktop(unittest.TestCase):

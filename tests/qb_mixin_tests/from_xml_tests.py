@@ -199,6 +199,7 @@ class TestFromXmlMixin(unittest.TestCase):
         element = et.fromstring(journal_xml)
         instance = JournalEntry.from_xml(element)
 
+        self.assertEqual(instance.ref_number, )
         self.assertEqual(len(instance.journal_credit_lines), 1)
         self.assertEqual(instance.journal_credit_lines[0].txn_line_id, "19C73-1627671245")
 

@@ -1112,19 +1112,25 @@ class ReprMixin:
         return f"{self.__class__.__name__}({field_str})"
 
 
-class CopyFromParentMixin:
+class CreateAddFromParentMixin:
 
     @classmethod
-    def copy_from_parent(cls, parent):
+    def create_add_from_parent(cls, parent, keep_ids=True):
         instance = cls()
         for attr, value in parent.__dict__.items():
-            if hasattr(instance, attr):
-                setattr(instance, attr, value)
-            elif attr[-4:] == '_ret' and hasattr(instance, str(attr[:-4]) + '_add') and isinstance(value, list):
+            if hasattr(instance, attr) and not isinstance(value, list):
+                if keep_ids:
+                    setattr(instance, attr, value)
+                elif attr in ["list_id", "txn_line_id", "txn_id"]:
+                    pass
+                else:
+                    setattr(instance, attr, value)
+            #todo: I need to figure out how to parse each line correctly. see create_add_from_parent_tests.
+            elif isinstance(value, list) and hasattr(instance, str(attr[:-4]) + '_add'):
                 converted_values = []
                 for sub_instance in value:
                     add_class = getattr(sub_instance, 'Add')
-                    add_value = add_class.copy_from_parent(sub_instance)
+                    add_value = add_class.create_add_from_parent(sub_instance)
                     converted_values.append(add_value)
                 setattr(instance, str(attr[:-4]) + '_add', converted_values)
             else:
@@ -1144,14 +1150,14 @@ class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, ReprMixin):
         cls.Meta.name = f"{name}QueryRq"
 
 
-class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin, ReprMixin):
+class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddFromParentMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}AddRq"
 
 
-class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CopyFromParentMixin, ReprMixin):
+class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddFromParentMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
@@ -10187,7 +10193,7 @@ class AccountQuery(QBQueryMixin):
         "list_id", "full_name", "max_returned", "active_status",
         "from_modified_date", "to_modified_date", "name_filter",
         "name_range_filter", "account_type", "currency_filter",
-        "include_ret_element", "owner_id", "request_id"
+        "include_ret_element", "owner_id",
     ]
 
     class Meta:
@@ -29352,7 +29358,7 @@ class JournalEntry(QBMixinWithQuery):
             "type": "Element",
         },
     )
-    journal_debit_line: List[JournalDebitLine] = field(
+    journal_debit_lines: List[JournalDebitLine] = field(
         default_factory=list,
         metadata={
             "name": "JournalDebitLine",
