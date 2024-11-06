@@ -3070,13 +3070,7 @@ class AppliedToTxn(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     txn_line_detail: List[TxnLineDetail] = field(
         default_factory=list,
         metadata={
@@ -3266,13 +3260,7 @@ class ExpenseLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -3365,13 +3353,7 @@ class ExpenseLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -3449,13 +3431,7 @@ class ExpenseLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -3596,13 +3572,7 @@ class ItemLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -3764,13 +3734,7 @@ class ItemLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -3914,13 +3878,7 @@ class ItemLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -4338,13 +4296,7 @@ class CreditMemoLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -4521,13 +4473,7 @@ class CreditMemoLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -4685,13 +4631,7 @@ class CreditMemoLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -5099,13 +5039,7 @@ class DepositLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     def_macro: Optional[str] = field(
         default=None,
         metadata={
@@ -5215,13 +5149,7 @@ class DepositLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
 
 
 @dataclass
@@ -5306,13 +5234,7 @@ class DepositLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
 
 
 @dataclass
@@ -5379,13 +5301,7 @@ class EstimateLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -5554,13 +5470,7 @@ class EstimateLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -5712,13 +5622,7 @@ class EstimateLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -6319,13 +6223,7 @@ class InvoiceLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -6512,13 +6410,7 @@ class InvoiceLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -6680,13 +6572,7 @@ class InvoiceLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -7022,13 +6908,7 @@ class JournalLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -7101,13 +6981,7 @@ class JournalDebitLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -7187,13 +7061,7 @@ class JournalCreditLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -7310,13 +7178,7 @@ class PurchaseOrderLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -7470,13 +7332,7 @@ class PurchaseOrderLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -7627,13 +7483,7 @@ class PurchaseOrderLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -8009,13 +7859,7 @@ class SalesOrderLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -8187,13 +8031,7 @@ class SalesOrderLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -8354,13 +8192,7 @@ class SalesOrderLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -8726,13 +8558,7 @@ class SalesReceiptLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -8933,13 +8759,7 @@ class SalesReceiptLineMod(QBModMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -9107,13 +8927,7 @@ class SalesReceiptLine(QBMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     tax_amount: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -20383,13 +20197,7 @@ class BillPaymentCheckMod(QBModRqMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     exchange_rate: Optional[float] = field(
         default=None,
         metadata={
@@ -20502,13 +20310,7 @@ class BillPaymentCheck(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -20870,13 +20672,7 @@ class BillPaymentCreditCard(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -22251,13 +22047,7 @@ class ChargeAdd(QBAddRqMixin):
             },
         )
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     desc: Optional[str] = field(
         default=None,
         metadata={
@@ -22429,13 +22219,7 @@ class ChargeMod(QBModRqMixin):
             },
         )
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     desc: Optional[str] = field(
         default=None,
         metadata={
@@ -22598,13 +22382,7 @@ class Charge(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     balance_remaining: Optional[Decimal] = field(
         default=None,
         metadata={
@@ -22698,13 +22476,7 @@ class ApplyCheckToTxnBase:
             "required": True,
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
 
 
 @dataclass
@@ -23187,13 +22959,7 @@ class Check(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -23690,13 +23456,7 @@ class CreditCardCharge(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -24173,13 +23933,7 @@ class CreditCardCredit(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -25171,13 +24925,7 @@ class CashBackInfoAdd(QBMixin):
             "max_length": 4095,
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
 
 
 @dataclass
@@ -25204,13 +24952,7 @@ class CashBackInfoMod(QBModRqMixin):
             "max_length": 4095,
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
 
 
 @dataclass
@@ -25246,13 +24988,7 @@ class CashBackInfo(QBMixin):
             "max_length": 4095,
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
 
 
 @dataclass
@@ -32450,13 +32186,7 @@ class Transaction(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     currency_ref: Optional[CurrencyRef] = field(
         default=None,
         metadata={
@@ -32582,13 +32312,7 @@ class TransferAdd(QBAddRqMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     memo: Optional[str] = field(
         default=None,
         metadata={
@@ -32661,13 +32385,7 @@ class TransferMod(QBModRqMixin):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     memo: Optional[str] = field(
         default=None,
         metadata={
@@ -32765,13 +32483,7 @@ class Transfer(QBMixinWithSave):
             "type": "Element",
         },
     )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
+    amount: Optional[Decimal] = amount
     memo: Optional[str] = field(
         default=None,
         metadata={

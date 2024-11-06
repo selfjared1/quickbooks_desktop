@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field, fields, is_dataclass, MISSING
 from typing import Optional, Union, Dict, Type, Any, get_origin, get_args, List
+from decimal import Decimal
 
 yes_no_dict = {'Yes': True, 'yes': True, 'No': False, 'no': False}
 
@@ -85,6 +86,7 @@ list_ids: List[str] = field(
         metadata={
             "name": "ListID",
             "type": "Element",
+            "required": False,
         },
     )
 full_name: Optional[str] = field(
@@ -92,7 +94,8 @@ full_name: Optional[str] = field(
         metadata={
             "name": "FullName",
             "type": "Element",
-            "max_length": 209
+            "max_length": 209,
+            "required": False,
         },
     )
 full_names: List[str] = field(
@@ -100,6 +103,16 @@ full_names: List[str] = field(
         metadata={
             "name": "FullName",
             "type": "Element",
+            "required": False,
+        },
+    )
+
+amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+            "required": False,
         },
     )
 
