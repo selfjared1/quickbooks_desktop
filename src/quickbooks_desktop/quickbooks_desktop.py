@@ -743,65 +743,6 @@ def convert_all_dicts_and_lists(obj):
         setattr(obj, key, convert_to_json_string(value))
 
 
-class SearchableComboBox():
-    def __init__(self, root, options, geometry) -> None:
-        self.dropdown_id = None
-        self.options = options
-        self.geometry = geometry
-
-        # Create a Text widget for the entry field
-        wrapper = tk.Frame(root)
-        wrapper.pack()
-
-        self.entry = tk.Entry(wrapper, width=24)
-        self.entry.bind("<KeyRelease>", self.on_entry_key)
-        self.entry.bind("<FocusIn>", self.show_dropdown)
-        self.entry.pack(side=tk.LEFT)
-
-        # Dropdown icon/button
-        self.icon = ImageTk.PhotoImage(Image.open("dropdown_arrow.png").resize((16,16)))
-        tk.Button(wrapper, image=self.icon, command=self.show_dropdown).pack(side=tk.LEFT)
-
-        # Create a Listbox widget for the dropdown menu
-        self.listbox = tk.Listbox(root, height=5, width=30)
-        self.listbox.bind("<<ListboxSelect>>", self.on_select)
-        for option in self.options:
-            self.listbox.insert(tk.END, option)
-
-    def on_entry_key(self, event):
-        typed_value = event.widget.get().strip().lower()
-        if not typed_value:
-            # If the entry is empty, display all options
-            self.listbox.delete(0, tk.END)
-            for option in self.options:
-                self.listbox.insert(tk.END, option)
-        else:
-            # Filter options based on the typed value
-            self.listbox.delete(0, tk.END)
-            filtered_options = [option for option in self.options if option.lower().startswith(typed_value)]
-            for option in filtered_options:
-                self.listbox.insert(tk.END, option)
-        self.show_dropdown()
-
-    def on_select(self, event):
-        selected_index = self.listbox.curselection()
-        if selected_index:
-            selected_option = self.listbox.get(selected_index)
-            self.entry.delete(0, tk.END)
-            self.entry.insert(0, selected_option)
-
-    def show_dropdown(self, event=None):
-        self.listbox.place(in_=self.entry, x=0, rely=1, relwidth=1.0, anchor="nw")
-        self.listbox.lift()
-
-        # Show dropdown for 2 seconds
-        if self.dropdown_id: # Cancel any old events
-            self.listbox.after_cancel(self.dropdown_id)
-        self.dropdown_id = self.listbox.after(2000, self.hide_dropdown)
-
-    def hide_dropdown(self):
-        self.listbox.place_forget()
-
 def convert_integer(value):
     if isinstance(value, int):
         if value == 1:
@@ -811,6 +752,7 @@ def convert_integer(value):
         else:
             return str(value)
     return value
+
 
 class EasyGuiPopup:
     def __init__(self, message, title="Message"):
@@ -845,6 +787,17 @@ def create_address(dataclass_instance):
         return None
 
 
+def xml_bool_to_py_bool(element):
+    text = element.text.strip().lower() if element.text else None
+    if text is None:
+        return None
+    elif text == 'true':
+        return True
+    elif text == 'false':
+        return False
+    else:
+        raise ValueError("Invalid input; expected 'true' or 'false' in element text.")
+
 # endregion
 
 
@@ -865,7 +818,10 @@ class ToXmlMixin:
     IS_YES_NO_FIELD_LIST = []
 
     def to_xml(self):
-        root = et.Element(self.Meta.name)
+        if "Query" in self.Meta.name:
+            root = et.Element(str(self.Meta.name) + "Rq")
+        else:
+            root = et.Element(self.Meta.name)
 
         # Retrieve the custom field order if available, otherwise use natural order
         field_order = getattr(self, 'FIELD_ORDER', None)
@@ -874,18 +830,21 @@ class ToXmlMixin:
         fields = self._get_sorted_fields(field_order)
 
         for field in fields:
-            value = getattr(self, field.name)
-            if value is not None and not isinstance(value, type):
-                element = self._create_xml_element(root, field, value)
-                if element is not None and isinstance(element, list):
-                    for el in element:
-                        root.append(el)
-                elif element is not None:
-                    root.append(element)
+            if field.name in ["Query", "Add", "Mod", "SpecialAccountAdd"]:
+                pass
+            else:
+                value = getattr(self, field.name)
+                if value is not None and not isinstance(value, type):
+                    element = self._create_xml_element(root, field, value)
+                    if element is not None and isinstance(element, list):
+                        for el in element:
+                            root.append(el)
+                    elif element is not None:
+                        root.append(element)
+                    else:
+                        pass
                 else:
                     pass
-            else:
-                pass
 
         return root
 
@@ -1031,11 +990,14 @@ class FromXmlMixin:
             init_args = cls._parse_list_field_type(init_args, field, field_type, xml_element)
         elif field.name in cls.IS_YES_NO_FIELD_LIST:
             init_args[field.name] = yes_no_dict[xml_element.text]
+        elif field_type == bool:
+            init_args[field.name] = xml_bool_to_py_bool(xml_element)
         else:
             try:
                 init_args[field.name] = field_type(xml_element.text)
             except Exception as e:
-                print(e)
+                logger.debug(e)
+                raise ValueError(e)
         return init_args
 
     @classmethod
@@ -1112,27 +1074,63 @@ class ReprMixin:
         return f"{self.__class__.__name__}({field_str})"
 
 
-class CreateAddFromParentMixin:
+class CreateAddOrModFromParentMixin:
+
+
+    def _handle_ref_subvalue(self, value, attr, attrs_that_are_ids):
+        for ref_attr, ref_value in vars(value).items():
+            if ref_attr in attrs_that_are_ids:
+                setattr(value, ref_attr, None)
+            else:
+                pass
+        setattr(self, attr, value)
+
+
+    def _handle_regular_sub_value(self, attr, value, keep_ids):
+        attrs_that_are_ids = ["list_id", "txn_line_id", "txn_id"]
+        if attr in ["Query", "Add", "Mod", "SpecialAccountAdd"]:
+            pass
+        elif keep_ids:
+            setattr(self, attr, value)
+        elif attr[-3:] == 'ref':
+            self._handle_ref_subvalue(value, attr, attrs_that_are_ids)
+        elif attr in attrs_that_are_ids:
+            pass
+        elif attr[-2:] == '_id':
+            setattr(value, attr, None)
+        else:
+            setattr(self, attr, value)
+
+
+    def _handle_list_sub_instance(self, attr, sub_instance_list, add_or_mod, keep_ids):
+        converted_sub_instances = []
+        for sub_instance in sub_instance_list:
+            add_or_mod_class = getattr(sub_instance, add_or_mod)
+            if isinstance(add_or_mod_class, str) and add_or_mod_class == 'self':
+                # Special instance where the Add class is actually itself instead of a separate class
+                converted_sub_instance = sub_instance.__class__.create_add_or_mod_from_parent(sub_instance, add_or_mod, keep_ids=keep_ids)
+            else:
+                # Add class is already assigned
+                converted_sub_instance = add_or_mod_class.create_add_or_mod_from_parent(sub_instance, add_or_mod)
+            converted_sub_instances.append(converted_sub_instance)
+        if converted_sub_instances:
+            setattr(self, attr, converted_sub_instances)
+        else:
+            pass
+
 
     @classmethod
-    def create_add_from_parent(cls, parent, keep_ids=True):
+    def create_add_or_mod_from_parent(cls, parent, add_or_mod, keep_ids=True):
+        """add_or_mod can be 'add' or 'mod' """
+        assert add_or_mod in ['Add', 'Mod'], "add_or_mod must be 'add' or 'mod'"
         instance = cls()
         for attr, value in parent.__dict__.items():
-            if hasattr(instance, attr) and not isinstance(value, list):
-                if keep_ids:
-                    setattr(instance, attr, value)
-                elif attr in ["list_id", "txn_line_id", "txn_id"]:
-                    pass
-                else:
-                    setattr(instance, attr, value)
-            #todo: I need to figure out how to parse each line correctly. see create_add_from_parent_tests.
-            elif isinstance(value, list) and hasattr(instance, str(attr[:-4]) + '_add'):
-                converted_values = []
-                for sub_instance in value:
-                    add_class = getattr(sub_instance, 'Add')
-                    add_value = add_class.create_add_from_parent(sub_instance)
-                    converted_values.append(add_value)
-                setattr(instance, str(attr[:-4]) + '_add', converted_values)
+            if value is None:
+                pass
+            elif hasattr(instance, attr) and not isinstance(value, list):
+                instance._handle_regular_sub_value(attr, value, keep_ids)
+            elif isinstance(value, list):
+                instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
             else:
                 pass
 
@@ -1150,25 +1148,39 @@ class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, ReprMixin):
         cls.Meta.name = f"{name}QueryRq"
 
 
-class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddFromParentMixin, ReprMixin):
+class QBAddRqMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddOrModFromParentMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}AddRq"
 
 
-class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddFromParentMixin, ReprMixin):
+class QBModRqMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddOrModFromParentMixin, ReprMixin):
 
     @classmethod
     def set_name(cls, name):
         cls.Meta.name = f"{name}ModRq"
 
 
+class QBAddMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddOrModFromParentMixin, ReprMixin):
+
+    @classmethod
+    def set_name(cls, name):
+        cls.Meta.name = f"{name}Add"
+
+
+class QBModMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, CreateAddOrModFromParentMixin, ReprMixin):
+
+    @classmethod
+    def set_name(cls, name):
+        cls.Meta.name = f"{name}Mod"
+
+
 class SaveMixin:
 
     def _get_mod_rq_xml(self):
         mod_class = getattr(self, f'Mod', None)
-        mod_instance = mod_class.copy_from_parent(self)
+        mod_instance = mod_class.create_add_or_mod_from_parent(self, add_or_mod='Mod')
         mod_xml = mod_instance.to_xml()
         rq_element_name = mod_class.__name__ + 'Rq'
         rq_element = et.Element(rq_element_name)
@@ -1177,7 +1189,7 @@ class SaveMixin:
 
     def _get_add_rq_xml(self):
         add_class = getattr(self, f'Add', None)
-        add_instance = add_class.copy_from_parent(self)
+        add_instance = add_class.create_add_or_mod_from_parent(self, add_or_mod='Add')
         add_xml = add_instance.to_xml()
         rq_element_name = add_class.__name__ + 'Rq'
         rq_element = et.Element(rq_element_name)
@@ -1203,20 +1215,16 @@ class SaveMixin:
             return response
 
 
-class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin, ReprMixin, SaveMixin):
+class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin, CreateAddOrModFromParentMixin, ReprMixin):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
 
-class QBMixinWithQuery(QBMixin):
-
-    # class Query(QBQueryMixin):
-    #     pass
+class QBMixinWithSave(QBMixin, SaveMixin):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.Query.set_name(cls.Meta.name)
 
 
 class PluralMixin:
@@ -2376,7 +2384,7 @@ class AdditionalNotesRet(QBMixin):
 
 
 @dataclass
-class DataExtAdd(QBAddMixin):
+class DataExtAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "OwnerID", "DataExtName", "ListDataExtType", "ListObjRef",
         "TxnDataExtType", "TxnID", "TxnLineID", "OtherDataExtType", "DataExtValue"
@@ -2457,7 +2465,7 @@ class DataExtAdd(QBAddMixin):
     )
 
 @dataclass
-class DataExtMod(QBAddMixin):
+class DataExtMod(QBAddRqMixin):
     FIELD_ORDER = [
         "OwnerID", "DataExtName", "ListDataExtType", "ListObjRef",
         "TxnDataExtType", "TxnID", "TxnLineID", "OtherDataExtType", "DataExtValue"
@@ -3705,7 +3713,7 @@ class LinkToTxn(QBMixin):
 
 
 @dataclass
-class ExpenseLineAdd(QBMixin):
+class ExpenseLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "AccountRef", "Amount", "Memo", "CustomerRef",
         "ClassRef", "BillableStatus", "SalesRepRef", "DataExt"
@@ -3794,8 +3802,185 @@ class ExpenseLineAdd(QBMixin):
         },
     )
 
+
 @dataclass
-class ItemLineAdd(QBMixin):
+class ExpenseLineMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "AccountRef", "Amount", "Memo",
+        "CustomerRef", "ClassRef", "BillableStatus", "SalesRepRef"
+    ]
+
+    class Meta:
+        name = "ExpenseLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ExpenseLine(QBMixin):
+
+    class Meta:
+        name = "ExpenseLine"
+
+    Add: Type[ExpenseLineAdd] = ExpenseLineAdd
+    Mod: Type[ExpenseLineMod] = ExpenseLineMod
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    customer_ref: Optional[CustomerRef] = field(
+        default=None,
+        metadata={
+            "name": "CustomerRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    sales_rep_ref: Optional[SalesRepRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesRepRef",
+            "type": "Element",
+        },
+    )
+    data_ext_ret: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemRef", "InventorySiteRef", "InventorySiteLocationRef",
         "SerialNumber", "LotNumber", "Desc", "Quantity",
@@ -3946,155 +4131,9 @@ class ItemLineAdd(QBMixin):
         },
     )
 
-@dataclass
-class ItemGroupLineAdd(QBMixin):
-    FIELD_ORDER = [
-        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
-        "InventorySiteLocationRef", "DataExt"
-    ]
-
-    class Meta:
-        name = "ItemGroupLineAdd"
-
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    inventory_site_ref: Optional[InventorySiteRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteRef",
-            "type": "Element",
-        },
-    )
-    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
 
 @dataclass
-class ExpenseLineMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "AccountRef", "Amount", "Memo",
-        "CustomerRef", "ClassRef", "BillableStatus", "SalesRepRef"
-    ]
-
-    class Meta:
-        name = "ExpenseLineMod"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    account_ref: Optional[AccountRef] = field(
-        default=None,
-        metadata={
-            "name": "AccountRef",
-            "type": "Element",
-        },
-    )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    tax_amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "TaxAmount",
-            "type": "Element",
-        },
-    )
-    memo: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Memo",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    customer_ref: Optional[CustomerRef] = field(
-        default=None,
-        metadata={
-            "name": "CustomerRef",
-            "type": "Element",
-        },
-    )
-    class_ref: Optional[ClassInQBRef] = field(
-        default=None,
-        metadata={
-            "name": "ClassRef",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
-    billable_status: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BillableStatus",
-            "type": "Element",
-            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
-        },
-    )
-    sales_rep_ref: Optional[SalesRepRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesRepRef",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class ItemLineMod(QBMixin):
+class ItemLineMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "InventorySiteRef", "InventorySiteLocationRef",
         "SerialNumber", "LotNumber", "Desc", "Quantity",
@@ -4248,152 +4287,13 @@ class ItemLineMod(QBMixin):
 
 
 @dataclass
-class ItemGroupLineMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
-        "OverrideUOMSetRef", "ItemLineMod"
-    ]
-
-    class Meta:
-        name = "ItemGroupLineMod"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    override_uomset_ref: Optional[OverrideUomsetRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideUOMSetRef",
-            "type": "Element",
-        },
-    )
-    item_line_mod: List[ItemLineMod] = field(
-        default_factory=list,
-        metadata={
-            "name": "ItemLineMod",
-            "type": "Element",
-        },
-    )
-
-@dataclass
-class ExpenseLine(QBMixin):
-
-    class Meta:
-        name = "ExpenseLine"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    account_ref: Optional[AccountRef] = field(
-        default=None,
-        metadata={
-            "name": "AccountRef",
-            "type": "Element",
-        },
-    )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    tax_amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "TaxAmount",
-            "type": "Element",
-        },
-    )
-    memo: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Memo",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    customer_ref: Optional[CustomerRef] = field(
-        default=None,
-        metadata={
-            "name": "CustomerRef",
-            "type": "Element",
-        },
-    )
-    class_ref: Optional[ClassInQBRef] = field(
-        default=None,
-        metadata={
-            "name": "ClassRef",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
-    billable_status: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BillableStatus",
-            "type": "Element",
-            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
-        },
-    )
-    sales_rep_ref: Optional[SalesRepRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesRepRef",
-            "type": "Element",
-        },
-    )
-    data_ext_ret: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExtRet",
-            "type": "Element",
-        },
-    )
-
-@dataclass
 class ItemLine(QBMixin):
 
     class Meta:
         name = "ItemLine"
+
+    Add: Type[ItemLineAdd] = ItemLineAdd
+    Mod: Type[ItemLineMod] = ItemLineMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -4535,11 +4435,134 @@ class ItemLine(QBMixin):
         },
     )
 
+
+@dataclass
+class ItemGroupLineAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "ItemGroupLineAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ItemGroupLineMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "ItemLineMod"
+    ]
+
+    class Meta:
+        name = "ItemGroupLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+
+
 @dataclass
 class ItemGroupLine(QBMixin):
 
     class Meta:
         name = "ItemGroupLine"
+
+    Add: Type[ItemGroupLineAdd] = ItemGroupLineAdd
+    Mod: Type[ItemGroupLineMod] = ItemGroupLineMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -4610,112 +4633,15 @@ class ItemGroupLine(QBMixin):
         },
     )
 
-@dataclass
-class DiscountLineAdd(QBMixin):
-
-    class Meta:
-        name = "DiscountLineAdd"
-
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    rate_percent: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "RatePercent",
-            "type": "Element",
-        },
-    )
-    is_taxable: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsTaxable",
-            "type": "Element",
-        },
-    )
-    account_ref: Optional[AccountRef] = field(
-        default=None,
-        metadata={
-            "name": "AccountRef",
-            "type": "Element",
-        },
-    )
-
-@dataclass
-class DiscountLine(QBMixin):
-
-    class Meta:
-        name = "DiscountLine"
-
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    rate_percent: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "RatePercent",
-            "type": "Element",
-        },
-    )
-    is_taxable: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsTaxable",
-            "type": "Element",
-        },
-    )
-    account_ref: Optional[AccountRef] = field(
-        default=None,
-        metadata={
-            "name": "AccountRef",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class ItemGroupLine(QBMixin):
-
-    class Meta:
-        name = "ItemGroupLine"
-
-    item_ref: Optional[ItemRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemRef",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-
 
 @dataclass
 class ItemInventoryAssemblyLine(QBMixin):
 
     class Meta:
         name = "ItemInventoryAssemblyLine"
+
+    Add: Type = 'self'
+    Mod: Type = 'self'
 
     item_inventory_ref: Optional[ItemInventoryRef] = field(
         default=None,
@@ -4733,10 +4659,14 @@ class ItemInventoryAssemblyLine(QBMixin):
         },
     )
 
+
 @dataclass
-class ComponentItemLine:
+class ComponentItemLine(QBMixin):
     class Meta:
         name = "ComponentItemLine"
+
+    Add: Type = 'self'
+    Mod: Type = 'self'
 
     item_ref: Optional[ItemRef] = field(
         default=None,
@@ -4800,9 +4730,8 @@ class ComponentItemLine:
     )
 
 
-
 @dataclass
-class CreditMemoLineAdd(QBMixin):
+class CreditMemoLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
         "PriceLevelRef", "ClassRef", "Amount", "InventorySiteRef",
@@ -4970,7 +4899,7 @@ class CreditMemoLineAdd(QBMixin):
 
 
 @dataclass
-class CreditMemoLineMod(QBMixin):
+class CreditMemoLineMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure",
         "OverrideUOMSetRef", "Rate", "RatePercent", "PriceLevelRef",
@@ -5150,6 +5079,9 @@ class CreditMemoLine(QBMixin):
     class Meta:
         name = "CreditMemoLine"
 
+    Add: Type[CreditMemoLineAdd] = CreditMemoLineAdd
+    Mod: Type[CreditMemoLineMod] = CreditMemoLineMod
+
     txn_line_id: Optional[str] = field(
         default=None,
         metadata={
@@ -5314,7 +5246,7 @@ class CreditMemoLine(QBMixin):
 
 
 @dataclass
-class CreditMemoLineGroupAdd(QBMixin):
+class CreditMemoLineGroupAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
         "InventorySiteLocationRef", "DataExt"
@@ -5384,7 +5316,7 @@ class CreditMemoLineGroupAdd(QBMixin):
 
 
 @dataclass
-class CreditMemoLineGroupMod(QBMixin):
+class CreditMemoLineGroupMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
         "CreditMemoLineMod"
@@ -5446,6 +5378,9 @@ class CreditMemoLineGroup(QBMixin):
         "IsPrintItemsInGroup", "TotalAmount", "CreditMemoLineRet", "CreditCardTxnInfo",
         "DataExtRet"
     ]
+
+    Add: Type[CreditMemoLineGroupAdd] = CreditMemoLineGroupAdd
+    Mod: Type[CreditMemoLineGroupMod] = CreditMemoLineGroupMod
 
     class Meta:
         name = "CreditMemoLineGroup"
@@ -5536,173 +5471,7 @@ class CreditMemoLineGroup(QBMixin):
 
 
 @dataclass
-class CreditMemoLineMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
-        "CreditMemoLineMod"
-    ]
-
-    class Meta:
-        name = "CreditMemoLineMod"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    item_ref: Optional[ItemRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemRef",
-            "type": "Element",
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    override_uomset_ref: Optional[OverrideUomsetRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideUOMSetRef",
-            "type": "Element",
-        },
-    )
-    rate: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Rate",
-            "type": "Element",
-        },
-    )
-    rate_percent: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "RatePercent",
-            "type": "Element",
-        },
-    )
-    price_level_ref: Optional[PriceLevelRef] = field(
-        default=None,
-        metadata={
-            "name": "PriceLevelRef",
-            "type": "Element",
-        },
-    )
-    class_ref: Optional[ClassInQBRef] = field(
-        default=None,
-        metadata={
-            "name": "ClassRef",
-            "type": "Element",
-        },
-    )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    tax_amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "TaxAmount",
-            "type": "Element",
-        },
-    )
-    inventory_site_ref: Optional[InventorySiteRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteRef",
-            "type": "Element",
-        },
-    )
-    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    serial_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "SerialNumber",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    lot_number: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "LotNumber",
-            "type": "Element",
-            "max_length": 40,
-        },
-    )
-    service_date: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "ServiceDate",
-            "type": "Element",
-        },
-    )
-    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
-        default=None,
-        metadata={
-            "name": "SalesTaxCodeRef",
-            "type": "Element",
-        },
-    )
-    override_item_account_ref: Optional[OverrideItemAccountRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideItemAccountRef",
-            "type": "Element",
-        },
-    )
-    other1: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Other1",
-            "type": "Element",
-            "max_length": 29,
-        },
-    )
-    other2: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Other2",
-            "type": "Element",
-            "max_length": 29,
-        },
-    )
-
-
-@dataclass
-class DepositLineAdd(QBMixin):
+class DepositLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "PaymentTxnID", "PaymentTxnLineID", "OverrideMemo", "OverrideCheckNumber",
         "OverrideClassRef", "EntityRef", "AccountRef", "Memo", "CheckNumber",
@@ -5810,7 +5579,7 @@ class DepositLineAdd(QBMixin):
 
 
 @dataclass
-class DepositLineMod(QBMixin):
+class DepositLineMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "PaymentTxnID", "PaymentTxnLineID", "OverrideMemo",
         "OverrideCheckNumber", "OverrideClassRef", "EntityRef", "AccountRef",
@@ -5923,6 +5692,9 @@ class DepositLine(QBMixin):
     class Meta:
         name = "DepositLine"
 
+    Add: Type[DepositLineAdd] = DepositLineAdd
+    Mod: Type[DepositLineMod] = DepositLineMod
+
     txn_type: Optional[str] = field(
         default=None,
         metadata={
@@ -6006,9 +5778,8 @@ class DepositLine(QBMixin):
     )
 
 
-
 @dataclass
-class EstimateLineAdd(QBMixin):
+class EstimateLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
         "ClassRef", "Amount", "OptionForPriceRuleConflict", "InventorySiteRef",
@@ -6168,72 +5939,8 @@ class EstimateLineAdd(QBMixin):
         },
     )
 
-
 @dataclass
-class EstimateLineGroupAdd(QBMixin):
-    FIELD_ORDER = [
-        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
-        "InventorySiteLocationRef", "DataExt"
-    ]
-
-    class Meta:
-        name = "EstimateLineGroupAdd"
-
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    inventory_site_ref: Optional[InventorySiteRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteRef",
-            "type": "Element",
-        },
-    )
-    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class EstimateLineMod(QBMixin):
+class EstimateLineMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
         "Rate", "RatePercent", "ClassRef", "Amount", "OptionForPriceRuleConflict",
@@ -6395,65 +6102,12 @@ class EstimateLineMod(QBMixin):
 
 
 @dataclass
-class EstimateLineGroupMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
-        "EstimateLineMod"
-    ]
-
-    class Meta:
-        name = "NameFilter"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    override_uomset_ref: Optional[OverrideUomsetRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideUOMSetRef",
-            "type": "Element",
-        },
-    )
-    estimate_line_mod: List[EstimateLineMod] = field(
-        default_factory=list,
-        metadata={
-            "name": "EstimateLineMod",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
 class EstimateLine(QBMixin):
     class Meta:
         name = "EstimateLine"
+
+    Add: Type[EstimateLineAdd] = EstimateLineAdd
+    Mod: Type[EstimateLineMod] = EstimateLineMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -6596,9 +6250,131 @@ class EstimateLine(QBMixin):
 
 
 @dataclass
+class EstimateLineGroupAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "EstimateLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class EstimateLineGroupMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "EstimateLineMod"
+    ]
+
+    class Meta:
+        name = "NameFilter"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    estimate_line_mod: List[EstimateLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "EstimateLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
 class EstimateLineGroup(QBMixin):
     class Meta:
         name = "EstimateLineGroup"
+
+    Add: Type[EstimateLineGroupAdd] = EstimateLineGroupAdd
+    Mod: Type[EstimateLineGroupMod] = EstimateLineGroupMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -6684,6 +6460,9 @@ class SerialNumberAdjustment(QBMixin):
     class Meta:
         name = "SerialNumberAdjustment"
 
+    Add: Type = 'self'
+    Mod: Type = 'self'
+
     add_serial_number: Optional[str] = field(
         default=None,
         metadata={
@@ -6715,6 +6494,9 @@ class LotNumberAdjustment(QBMixin):
     class Meta:
         name = "LotNumberAdjustment"
 
+    Add: Type = 'self'
+    Mod: Type = 'self'
+
     lot_number: Optional[str] = field(
         default=None,
         metadata={
@@ -6740,7 +6522,7 @@ class LotNumberAdjustment(QBMixin):
 
 
 @dataclass
-class InventoryAdjustmentLineAdd(QBMixin):
+class InventoryAdjustmentLineAdd(QBAddMixin):
 
     class Meta:
         name = "InventoryAdjustmentLineAdd"
@@ -6855,6 +6637,9 @@ class InventoryAdjustmentLine(QBMixin):
         "LotNumber", "InventorySiteLocationRef", "QuantityDifference", "ValueDifference"
     ]
 
+    Add: Type[InventoryAdjustmentLineAdd] = InventoryAdjustmentLineAdd
+    Mod: Type[InventoryAdjustmentLineMod] = InventoryAdjustmentLineMod
+
     class Meta:
         name = "NameFilter"
 
@@ -6923,7 +6708,6 @@ class InventoryAdjustmentLine(QBMixin):
             "required": True,
         },
     )
-
 
 
 @dataclass
@@ -7113,7 +6897,7 @@ class InvoiceLineAdd(QBAddMixin):
 
 
 @dataclass
-class InvoiceLineMod(QBMixin):
+class InvoiceLineMod(QBModMixin):
 
     class Meta:
         name = "InvoiceLineMod"
@@ -7291,7 +7075,7 @@ class InvoiceLine(QBMixin):
         name = "InvoiceLine"
 
     Add: Type[InvoiceLineAdd] = InvoiceLineAdd
-    # Mod: Type[InvoiceLineMod] = InvoiceLineMod
+    Mod: Type[InvoiceLineMod] = InvoiceLineMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -7521,7 +7305,7 @@ class InvoiceLineGroupAdd(QBAddMixin):
 
 
 @dataclass
-class InvoiceLineGroupMod(QBMixin):
+class InvoiceLineGroupMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
         "OverrideUOMSetRef", "InvoiceLineMod"
@@ -7581,6 +7365,9 @@ class InvoiceLineGroup(QBMixin):
 
     class Meta:
         name = "InvoiceLineGroup"
+
+    Add: Type[InvoiceLineGroupAdd] = InvoiceLineGroupAdd
+    Mod: Type[InvoiceLineGroupMod] = InvoiceLineGroupMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -7668,171 +7455,7 @@ class InvoiceLineGroup(QBMixin):
 
 
 @dataclass
-class JournalDebitLine(QBMixin):
-    FIELD_ORDER = ["TxnLineID", "AccountRef", "Amount", "Memo", "EntityRef",
-                   "ClassRef", "BillableStatus"]
-
-    class Meta:
-        name = "JournalDebitLine"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-        },
-    )
-    account_ref: Optional[AccountRef] = field(
-        default=None,
-        metadata={
-            "name": "AccountRef",
-            "type": "Element",
-        },
-    )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    tax_amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "TaxAmount",
-            "type": "Element",
-        },
-    )
-    memo: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Memo",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    entity_ref: Optional[EntityRef] = field(
-        default=None,
-        metadata={
-            "name": "EntityRef",
-            "type": "Element",
-        },
-    )
-    class_ref: Optional[ClassInQBRef] = field(
-        default=None,
-        metadata={
-            "name": "ClassRef",
-            "type": "Element",
-        },
-    )
-    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemSalesTaxRef",
-            "type": "Element",
-        },
-    )
-    billable_status: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BillableStatus",
-            "type": "Element",
-            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
-        },
-    )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
-
-
-@dataclass
-class JournalCreditLine(QBMixin):
-    FIELD_ORDER = ["TxnLineID", "AccountRef", "Amount", "Memo", "EntityRef",
-                   "ClassRef", "BillableStatus"]
-
-    class Meta:
-        name = "JournalCreditLine"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-        },
-    )
-    account_ref: Optional[AccountRef] = field(
-        default=None,
-        metadata={
-            "name": "AccountRef",
-            "type": "Element",
-        },
-    )
-    amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "Amount",
-            "type": "Element",
-        },
-    )
-    tax_amount: Optional[Decimal] = field(
-        default=None,
-        metadata={
-            "name": "TaxAmount",
-            "type": "Element",
-        },
-    )
-    memo: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Memo",
-            "type": "Element",
-            "max_length": 4095,
-        },
-    )
-    entity_ref: Optional[EntityRef] = field(
-        default=None,
-        metadata={
-            "name": "EntityRef",
-            "type": "Element",
-        },
-    )
-    class_ref: Optional[ClassInQBRef] = field(
-        default=None,
-        metadata={
-            "name": "ClassRef",
-            "type": "Element",
-        },
-    )
-    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemSalesTaxRef",
-            "type": "Element",
-        },
-    )
-    billable_status: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "BillableStatus",
-            "type": "Element",
-            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
-        },
-    )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
-
-
-@dataclass
-class JournalLineMod(QBMixin):
+class JournalLineMod(QBModMixin):
     class Meta:
         name = "JournalLineMod"
 
@@ -7916,7 +7539,179 @@ class JournalLineMod(QBMixin):
 
 
 @dataclass
-class PurchaseOrderLineAdd(QBMixin):
+class JournalDebitLine(QBMixin):
+    FIELD_ORDER = ["TxnLineID", "AccountRef", "Amount", "Memo", "EntityRef",
+                   "ClassRef", "BillableStatus"]
+
+    # Add is a special case here because it's only one of 2 classes that actually references itself.
+    Add: Type = "self"
+    Mod: Type[JournalLineMod] = JournalLineMod
+
+    class Meta:
+        name = "JournalDebitLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class JournalCreditLine(QBMixin):
+    FIELD_ORDER = ["TxnLineID", "AccountRef", "Amount", "Memo", "EntityRef",
+                   "ClassRef", "BillableStatus"]
+
+    # Add is a special case here because it's only one of 2 classes that actually references itself.
+    Add: Type = 'self'
+    Mod: Type[JournalLineMod] = JournalLineMod
+
+    class Meta:
+        name = "JournalCreditLine"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+        },
+    )
+    account_ref: Optional[AccountRef] = field(
+        default=None,
+        metadata={
+            "name": "AccountRef",
+            "type": "Element",
+        },
+    )
+    amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "Amount",
+            "type": "Element",
+        },
+    )
+    tax_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "TaxAmount",
+            "type": "Element",
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+    class_ref: Optional[ClassInQBRef] = field(
+        default=None,
+        metadata={
+            "name": "ClassRef",
+            "type": "Element",
+        },
+    )
+    item_sales_tax_ref: Optional[ItemSalesTaxRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemSalesTaxRef",
+            "type": "Element",
+        },
+    )
+    billable_status: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "BillableStatus",
+            "type": "Element",
+            "valid_values": ["Billable", "NotBillable", "HasBeenBilled"],
+        },
+    )
+    def_macro: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "defMacro",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemRef", "ManufacturerPartNumber", "Desc", "Quantity", "UnitOfMeasure",
         "Rate", "ClassRef", "Amount", "InventorySiteLocationRef", "CustomerRef",
@@ -8060,69 +7855,7 @@ class PurchaseOrderLineAdd(QBMixin):
 
 
 @dataclass
-class PurchaseOrderLineGroupAdd(QBMixin):
-    FIELD_ORDER = [
-        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteLocationRef", "DataExt"
-    ]
-
-    class Meta:
-        name = "PurchaseOrderLineGroupAdd"
-
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    service_date: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "ServiceDate",
-            "type": "Element",
-        },
-    )
-    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class PurchaseOrderLineMod(QBMixin):
+class PurchaseOrderLineMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "ManufacturerPartNumber", "Desc", "Quantity",
         "UnitOfMeasure", "OverrideUOMSetRef", "Rate", "ClassRef", "Amount",
@@ -8275,62 +8008,6 @@ class PurchaseOrderLineMod(QBMixin):
 
 
 @dataclass
-class PurchaseOrderLineGroupMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
-        "OverrideUOMSetRef", "PurchaseOrderLineMod"
-    ]
-
-    class Meta:
-        name = "PurchaseOrderLineMod"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    override_uomset_ref: Optional[OverrideUomsetRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideUOMSetRef",
-            "type": "Element",
-        },
-    )
-    purchase_order_line_mod: List[PurchaseOrderLineMod] = field(
-        default_factory=list,
-        metadata={
-            "name": "PurchaseOrderLineMod",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
 class PurchaseOrderLine(QBMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "ManufacturerPartNumber", "Desc",
@@ -8342,6 +8019,9 @@ class PurchaseOrderLine(QBMixin):
 
     class Meta:
         name = "PurchaseOrderLine"
+
+    Add: Type[PurchaseOrderLineAdd] = PurchaseOrderLineAdd
+    Mod: Type[PurchaseOrderLineMod] = PurchaseOrderLineMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -8506,12 +8186,133 @@ class PurchaseOrderLine(QBMixin):
 
 
 @dataclass
+class PurchaseOrderLineGroupAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class PurchaseOrderLineGroupMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure",
+        "OverrideUOMSetRef", "PurchaseOrderLineMod"
+    ]
+
+    class Meta:
+        name = "PurchaseOrderLineMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    purchase_order_line_mod: List[PurchaseOrderLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "PurchaseOrderLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
 class PurchaseOrderLineGroup(QBMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure",
         "OverrideUOMSetRef", "IsPrintItemsInGroup", "TotalAmount",
         "PurchaseOrderLineRet", "DataExtRet"
     ]
+
+    Add: Type[PurchaseOrderLineGroupAdd] = PurchaseOrderLineGroupAdd
+    Mod: Type[PurchaseOrderLineGroupMod] = PurchaseOrderLineGroupMod
 
     class Meta:
         name = "PurchaseOrderLineGroup"
@@ -8601,9 +8402,8 @@ class PurchaseOrderLineGroup(QBMixin):
     )
 
 
-
 @dataclass
-class SalesOrderLineAdd(QBMixin):
+class SalesOrderLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
         "PriceLevelRef", "ClassRef", "Amount", "OptionForPriceRuleConflict",
@@ -8766,70 +8566,7 @@ class SalesOrderLineAdd(QBMixin):
 
 
 @dataclass
-class SalesOrderLineGroupAdd(QBMixin):
-    FIELD_ORDER = [
-        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
-        "InventorySiteLocationRef", "DataExt"
-    ]
-
-    class Meta:
-        name = "SalesOrderLineGroupAdd"
-
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    inventory_site_ref: Optional[InventorySiteRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteRef",
-            "type": "Element",
-        },
-    )
-    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class SalesOrderLineMod(QBMixin):
+class SalesOrderLineMod(QBModMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
         "Rate", "RatePercent", "PriceLevelRef", "ClassRef", "Amount",
@@ -9000,62 +8737,6 @@ class SalesOrderLineMod(QBMixin):
 
 
 @dataclass
-class SalesOrderLineGroupMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
-        "SalesOrderLineMod"
-    ]
-
-    class Meta:
-        name = "SalesOrderLineGroupMod"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    override_uomset_ref: Optional[OverrideUomsetRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideUOMSetRef",
-            "type": "Element",
-        },
-    )
-    sales_order_line_mod: List[SalesOrderLineMod] = field(
-        default_factory=list,
-        metadata={
-            "name": "SalesOrderLineMod",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
 class SalesOrderLine(QBMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
@@ -9066,6 +8747,9 @@ class SalesOrderLine(QBMixin):
 
     class Meta:
         name = "SalesOrderLine"
+
+    Add: Type[SalesOrderLineAdd] = SalesOrderLineAdd
+    Mod: Type[SalesOrderLineMod] = SalesOrderLineMod
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -9224,12 +8908,134 @@ class SalesOrderLine(QBMixin):
 
 
 @dataclass
+class SalesOrderLineGroupAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesOrderLineGroupMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "SalesOrderLineMod"
+    ]
+
+    class Meta:
+        name = "SalesOrderLineGroupMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    sales_order_line_mod: List[SalesOrderLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesOrderLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
 class SalesOrderLineGroup(QBMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure",
         "OverrideUOMSetRef", "IsPrintItemsInGroup", "TotalAmount", "SalesOrderLineRet",
         "DataExtRet"
     ]
+
+    Add: Type[SalesOrderLineGroupAdd] = SalesOrderLineGroupAdd
+    Mod: Type[SalesOrderLineGroupMod] = SalesOrderLineGroupMod
 
     class Meta:
         name = "SalesOrderLineGroup"
@@ -9312,9 +9118,8 @@ class SalesOrderLineGroup(QBMixin):
     )
 
 
-
 @dataclass
-class SalesReceiptLineAdd(QBMixin):
+class SalesReceiptLineAdd(QBAddMixin):
     FIELD_ORDER = [
         "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
         "PriceLevelRef", "ClassRef", "Amount", "OptionForPriceRuleConflict",
@@ -9685,132 +9490,6 @@ class SalesReceiptLineMod(QBModMixin):
 
 
 @dataclass
-class SalesReceiptLineGroupAdd(QBMixin):
-    FIELD_ORDER = [
-        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
-        "InventorySiteLocationRef", "DataExt"
-    ]
-
-    class Meta:
-        name = "SalesReceiptLineGroupAdd"
-
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    desc: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "Desc",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    service_date: Optional[QBDates] = field(
-        default=None,
-        metadata={
-            "name": "ServiceDate",
-            "type": "Element",
-        },
-    )
-    inventory_site_ref: Optional[InventorySiteRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteRef",
-            "type": "Element",
-        },
-    )
-    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
-        default=None,
-        metadata={
-            "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
-class SalesReceiptLineGroupMod(QBMixin):
-    FIELD_ORDER = [
-        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
-        "SalesReceiptLineMod"
-    ]
-
-    class Meta:
-        name = "SalesReceiptLineGroupMod"
-
-    txn_line_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnLineID",
-            "type": "Element",
-            "required": True,
-        },
-    )
-    item_group_ref: Optional[ItemGroupRef] = field(
-        default=None,
-        metadata={
-            "name": "ItemGroupRef",
-            "type": "Element",
-        },
-    )
-    quantity: Optional[float] = field(
-        default=None,
-        metadata={
-            "name": "Quantity",
-            "type": "Element",
-        },
-    )
-    unit_of_measure: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "UnitOfMeasure",
-            "type": "Element",
-            "max_length": 31,
-        },
-    )
-    override_uomset_ref: Optional[OverrideUomsetRef] = field(
-        default=None,
-        metadata={
-            "name": "OverrideUOMSetRef",
-            "type": "Element",
-        },
-    )
-    sales_receipt_line_mod: List[SalesReceiptLineMod] = field(
-        default_factory=list,
-        metadata={
-            "name": "SalesReceiptLineMod",
-            "type": "Element",
-        },
-    )
-
-
-@dataclass
 class SalesReceiptLine(QBMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
@@ -9818,6 +9497,9 @@ class SalesReceiptLine(QBMixin):
         "InventorySiteLocationRef", "SerialNumber", "LotNumber", "ServiceDate",
         "SalesTaxCodeRef", "Other1", "Other2", "CreditCardTxnInfo", "DataExtRet"
     ]
+
+    Add: Type[SalesReceiptLineAdd] = SalesReceiptLineAdd
+    Mod: Type[SalesReceiptLineMod] = SalesReceiptLineMod
 
     class Meta:
         name = "SalesReceiptLine"
@@ -9979,12 +9661,141 @@ class SalesReceiptLine(QBMixin):
 
 
 @dataclass
+class SalesReceiptLineGroupAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineGroupAdd"
+
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    desc: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    service_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ServiceDate",
+            "type": "Element",
+        },
+    )
+    inventory_site_ref: Optional[InventorySiteRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteRef",
+            "type": "Element",
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExt",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SalesReceiptLineGroupMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnLineID", "ItemGroupRef", "Quantity", "UnitOfMeasure", "OverrideUOMSetRef",
+        "SalesReceiptLineMod"
+    ]
+
+    class Meta:
+        name = "SalesReceiptLineGroupMod"
+
+    txn_line_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnLineID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    item_group_ref: Optional[ItemGroupRef] = field(
+        default=None,
+        metadata={
+            "name": "ItemGroupRef",
+            "type": "Element",
+        },
+    )
+    quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "Quantity",
+            "type": "Element",
+        },
+    )
+    unit_of_measure: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "UnitOfMeasure",
+            "type": "Element",
+            "max_length": 31,
+        },
+    )
+    override_uomset_ref: Optional[OverrideUomsetRef] = field(
+        default=None,
+        metadata={
+            "name": "OverrideUOMSetRef",
+            "type": "Element",
+        },
+    )
+    sales_receipt_line_mod: List[SalesReceiptLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "SalesReceiptLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
 class SalesReceiptLineGroup(QBMixin):
     FIELD_ORDER = [
         "TxnLineID", "ItemGroupRef", "Desc", "Quantity", "UnitOfMeasure",
         "OverrideUOMSetRef", "IsPrintItemsInGroup", "TotalAmount",
         "SalesReceiptLineRet", "DataExtRet"
     ]
+
+    Add: Type[SalesReceiptLineGroupAdd] = SalesReceiptLineGroupAdd
+    Mod: Type[SalesReceiptLineGroupMod] = SalesReceiptLineGroupMod
 
     class Meta:
         name = "SalesReceiptLineGroup"
@@ -10072,12 +9883,6 @@ class SalesReceiptLineGroup(QBMixin):
             "type": "Element",
         },
     )
-
-# endregion
-
-
-# region Queries
-
 
 # endregion
 
@@ -10221,7 +10026,7 @@ class AccountQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -10271,17 +10076,17 @@ class AccountQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default="0",
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
 
 
 @dataclass
-class AccountAdd(AccountBase, QBAddMixin):
+class AccountAdd(AccountBase, QBAddRqMixin):
     FIELD_ORDER = [
         "name", "is_active", "parent_ref", "account_type", "account_number",
         "bank_number", "desc", "open_balance", "open_balance_date",
@@ -10301,7 +10106,7 @@ class AccountAdd(AccountBase, QBAddMixin):
 
 
 @dataclass
-class SpecialAccountAdd(QBAddMixin):
+class SpecialAccountAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "SpecialAccountType", "CurrencyRef"
     ]
@@ -10336,7 +10141,7 @@ class SpecialAccountAdd(QBAddMixin):
 
 
 @dataclass
-class AccountMod(AccountBase, QBModMixin):
+class AccountMod(AccountBase, QBModRqMixin):
     FIELD_ORDER = [
         "list_id", "edit_sequence", "name", "is_active", "parent_ref",
         "account_type", "account_number", "bank_number", "desc",
@@ -10374,7 +10179,7 @@ class AccountMod(AccountBase, QBModMixin):
 
 
 @dataclass
-class Account(AccountBase, QBMixinWithQuery):
+class Account(AccountBase, QBMixinWithSave):
     class Meta:
         name = "Account"
 
@@ -10648,7 +10453,7 @@ class BillingRateQuery(QBQueryMixin):
 
 
 @dataclass
-class BillingRateAdd(QBAddMixin):
+class BillingRateAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "FixedBillingRate", "BillingRatePerItem"
     ]
@@ -10799,7 +10604,7 @@ class ClassInQBQuery(QBQueryMixin):
         },
     )
     from_modified_date: Optional[QBDates] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "FromModifiedDate",
             "type": "Element",
@@ -10834,25 +10639,25 @@ class ClassInQBQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class ClassInQBAdd(QBAddMixin):
+class ClassInQBAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "ParentRef"
     ]
@@ -10886,7 +10691,7 @@ class ClassInQBAdd(QBAddMixin):
 
 
 @dataclass
-class ClassInQBMod(QBModMixin):
+class ClassInQBMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive", "ParentRef"
     ]
@@ -10936,7 +10741,7 @@ class ClassInQBMod(QBModMixin):
 
 
 @dataclass
-class ClassInQB(QBMixinWithQuery):
+class ClassInQB(QBMixinWithSave):
     class Meta:
         name = "Class"
 
@@ -11087,7 +10892,7 @@ class CurrencyQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -11130,13 +10935,13 @@ class CurrencyQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
     # meta_data: CurrencyQueryRqTypeMetaData = field(
     #     default=CurrencyQueryRqTypeMetaData.NO_META_DATA,
     #     metadata={
@@ -11147,7 +10952,7 @@ class CurrencyQuery(QBQueryMixin):
 
 
 @dataclass
-class CurrencyAdd(QBAddMixin):
+class CurrencyAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "CurrencyCode", "CurrencyFormat", "IncludeRetElement"
     ]
@@ -11190,7 +10995,7 @@ class CurrencyAdd(QBAddMixin):
 
 
 @dataclass
-class CurrencyMod(QBModMixin):
+class CurrencyMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive", "CurrencyCode",
         "CurrencyFormat"
@@ -11249,7 +11054,7 @@ class CurrencyMod(QBModMixin):
 
 
 @dataclass
-class Currency(QBMixinWithQuery):
+class Currency(QBMixinWithSave):
     class Meta:
         name = "Currency"
 
@@ -11417,25 +11222,25 @@ class CustomerMsgQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"]
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"]
+    #     },
+    # )
 
 
 @dataclass
-class CustomerMsgAdd(QBAddMixin):
+class CustomerMsgAdd(QBAddRqMixin):
 
     class Meta:
         name = "CustomerMsgAdd"
@@ -11459,7 +11264,7 @@ class CustomerMsgAdd(QBAddMixin):
 
 
 @dataclass
-class CustomerMsg(QBMixinWithQuery):
+class CustomerMsg(QBMixinWithSave):
 
     class Meta:
         name = "CustomerMsg"
@@ -11558,7 +11363,7 @@ class CustomerQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -11632,7 +11437,7 @@ class CustomerQuery(QBQueryMixin):
 
 
 @dataclass
-class CustomerAdd(QBAddMixin):
+class CustomerAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "ClassRef", "ParentRef", "CompanyName", "Salutation",
         "FirstName", "MiddleName", "LastName", "JobTitle", "BillAddress",
@@ -12043,7 +11848,7 @@ class CustomerAdd(QBAddMixin):
     )
 
 @dataclass
-class CustomerMod(QBModMixin):
+class CustomerMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive", "ClassRef", "ParentRef",
         "CompanyName", "Salutation", "FirstName", "MiddleName", "LastName",
@@ -12442,7 +12247,7 @@ class CustomerMod(QBModMixin):
 
 
 @dataclass
-class Customer(QBMixinWithQuery):
+class Customer(QBMixinWithSave):
     class Meta:
         name = "Customer"
 
@@ -13200,7 +13005,7 @@ class EmployeeQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -13253,7 +13058,7 @@ class EmployeeQuery(QBQueryMixin):
 
 
 @dataclass
-class Employee(QBMixinWithQuery):
+class Employee(QBMixinWithSave):
     class Meta:
         name = "Employee"
 
@@ -13751,7 +13556,7 @@ class InventorySiteQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -13797,7 +13602,7 @@ class InventorySiteQuery(QBQueryMixin):
 
 
 @dataclass
-class InventorySiteAdd(QBAddMixin):
+class InventorySiteAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "ParentSiteRef", "SiteDesc", "Contact", "Phone",
         "Fax", "Email", "SiteAddress", "IncludeRetElement"
@@ -13879,7 +13684,7 @@ class InventorySiteAdd(QBAddMixin):
 
 
 @dataclass
-class InventorySiteMod(QBModMixin):
+class InventorySiteMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive", "ParentSiteRef", "SiteDesc",
         "Contact", "Phone", "Fax", "Email", "SiteAddress", "IncludeRetElement"
@@ -13977,7 +13782,7 @@ class InventorySiteMod(QBModMixin):
 
 
 @dataclass
-class InventorySite(QBMixinWithQuery):
+class InventorySite(QBMixinWithSave):
 
     class Meta:
         name = "InventorySite"
@@ -14274,7 +14079,7 @@ class ItemQueryMixin(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -14487,7 +14292,7 @@ class ItemSubtotalQuery(ItemQueryMixin):
 
 
 @dataclass
-class ItemAddMixin(QBAddMixin):
+class ItemAddMixin(QBAddRqMixin):
     FIELD_ORDER = []
     class Meta:
         name = ""
@@ -15116,7 +14921,7 @@ class ItemSubtotalAdd(ItemAddMixin):
 
 
 @dataclass
-class ItemModMixin(QBModMixin):
+class ItemModMixin(QBModRqMixin):
     FIELD_ORDER = []
     class Meta:
         name = ""
@@ -15869,7 +15674,7 @@ class ItemWithClassAndTaxMixin(ItemMixin):
 
 
 @dataclass
-class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemDiscount"
 
@@ -15938,7 +15743,7 @@ class ItemDiscounts(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemGroup"
 
@@ -16008,7 +15813,7 @@ class ItemGroups(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemInventory"
 
@@ -16184,7 +15989,7 @@ class ItemInventories(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemInventoryAssembly"
 
@@ -16367,7 +16172,7 @@ class ItemInventoryAssemblies(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemNonInventory"
 
@@ -16450,7 +16255,7 @@ class ItemNonInventories(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithQuery):
+class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemOtherCharge"
 
@@ -16526,7 +16331,7 @@ class ItemOtherCharges(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemPayment(ItemMixin, QBMixinWithQuery):
+class ItemPayment(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemPayment"
 
@@ -16581,7 +16386,7 @@ class ItemPayments(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemSalesTax(ItemMixin, QBMixinWithQuery):
+class ItemSalesTax(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemSalesTax"
 
@@ -16650,7 +16455,7 @@ class ItemSalesTaxes(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemSalesTaxGroup(ItemMixin, QBMixinWithQuery):
+class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemSalesTaxGroup"
 
@@ -16698,7 +16503,7 @@ class ItemSalesTaxGroups(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemService(ItemMixin, QBMixinWithQuery):
+class ItemService(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemService"
 
@@ -16774,7 +16579,7 @@ class ItemServices(PluralMixin, PluralListSaveMixin):
 
 
 @dataclass
-class ItemSubtotal(ItemMixin, QBMixinWithQuery):
+class ItemSubtotal(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemSubtotal"
 
@@ -16853,7 +16658,7 @@ class JobTypeQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -16896,25 +16701,25 @@ class JobTypeQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class JobTypeAdd(QBAddMixin):
+class JobTypeAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "ParentRef"
     ]
@@ -16948,7 +16753,7 @@ class JobTypeAdd(QBAddMixin):
 
 
 @dataclass
-class JobType(QBMixinWithQuery):
+class JobType(QBMixinWithSave):
 
     class Meta:
         name = "JobType"
@@ -17066,7 +16871,7 @@ class OtherNameQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -17117,16 +16922,16 @@ class OtherNameQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
 
 @dataclass
-class OtherNameAdd(QBAddMixin):
+class OtherNameAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "CompanyName", "Salutation", "FirstName",
         "MiddleName", "LastName", "OtherNameAddress", "Phone",
@@ -17273,7 +17078,7 @@ class OtherNameAdd(QBAddMixin):
     )
 
 @dataclass
-class OtherNameMod(QBModMixin):
+class OtherNameMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive", "CompanyName",
         "Salutation", "FirstName", "MiddleName", "LastName",
@@ -17430,7 +17235,7 @@ class OtherNameMod(QBModMixin):
 
 
 @dataclass
-class OtherName(QBMixinWithQuery):
+class OtherName(QBMixinWithSave):
     class Meta:
         name = "OtherName"
 
@@ -17656,7 +17461,7 @@ class PaymentMethodQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -17710,25 +17515,25 @@ class PaymentMethodQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class PaymentMethodAdd(QBAddMixin):
+class PaymentMethodAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "PaymentMethodType"
     ]
@@ -17766,7 +17571,7 @@ class PaymentMethodAdd(QBAddMixin):
 
 
 @dataclass
-class PaymentMethod(QBMixinWithQuery):
+class PaymentMethod(QBMixinWithSave):
     class Meta:
         name = "PaymentMethod"
 
@@ -18013,7 +17818,7 @@ class PriceLevelQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -18070,24 +17875,24 @@ class PriceLevelQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 @dataclass
-class PriceLevelAdd(QBAddMixin):
+class PriceLevelAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "PriceLevelFixedPercentage",
         "PriceLevelPerItem", "CurrencyRef"
@@ -18136,7 +17941,7 @@ class PriceLevelAdd(QBAddMixin):
 
 
 @dataclass
-class PriceLevelMod(QBModMixin):
+class PriceLevelMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive",
         "PriceLevelFixedPercentage", "PriceLevelPerItem",
@@ -18202,7 +18007,7 @@ class PriceLevelMod(QBModMixin):
 
 
 @dataclass
-class PriceLevel(QBMixinWithQuery):
+class PriceLevel(QBMixinWithSave):
 
     class Meta:
         name = "PriceLevel"
@@ -18326,7 +18131,7 @@ class SalesRepQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -18369,25 +18174,25 @@ class SalesRepQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class SalesRepAdd(QBAddMixin):
+class SalesRepAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Initial", "IsActive", "SalesRepEntityRef"
     ]
@@ -18422,7 +18227,7 @@ class SalesRepAdd(QBAddMixin):
 
 
 @dataclass
-class SalesRepMod(QBModMixin):
+class SalesRepMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Initial", "IsActive",
         "SalesRepEntityRef"
@@ -18473,7 +18278,7 @@ class SalesRepMod(QBModMixin):
 
 
 @dataclass
-class SalesRep(QBMixinWithQuery):
+class SalesRep(QBMixinWithSave):
 
     class Meta:
         name = "SalesRep"
@@ -18575,7 +18380,7 @@ class SalesTaxCodeQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -18618,25 +18423,25 @@ class SalesTaxCodeQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class SalesTaxCodeAdd(QBAddMixin):
+class SalesTaxCodeAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "IsTaxable", "Desc"
     ]
@@ -18693,7 +18498,7 @@ class SalesTaxCodeAdd(QBAddMixin):
 
 
 @dataclass
-class SalesTaxCodeMod(QBModMixin):
+class SalesTaxCodeMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive",
         "IsTaxable", "Desc"
@@ -18766,7 +18571,7 @@ class SalesTaxCodeMod(QBModMixin):
 
 
 @dataclass
-class SalesTaxCode(QBMixinWithQuery):
+class SalesTaxCode(QBMixinWithSave):
     class Meta:
         name = "SalesTaxCode"
 
@@ -18895,7 +18700,7 @@ class ShipMethodQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -18938,25 +18743,25 @@ class ShipMethodQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class ShipMethodAdd(QBAddMixin):
+class ShipMethodAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive"
     ]
@@ -18983,7 +18788,7 @@ class ShipMethodAdd(QBAddMixin):
 
 
 @dataclass
-class ShipMethod(QBMixinWithQuery):
+class ShipMethod(QBMixinWithSave):
     class Meta:
         name = "ShipMethod"
 
@@ -19077,7 +18882,7 @@ class StandardTermsQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -19120,25 +18925,25 @@ class StandardTermsQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class StandardTermsAdd(QBAddMixin):
+class StandardTermsAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "StdDueDays", "StdDiscountDays", "DiscountPct"
     ]
@@ -19186,7 +18991,7 @@ class StandardTermsAdd(QBAddMixin):
 
 
 @dataclass
-class StandardTerm(QBMixinWithQuery):
+class StandardTerm(QBMixinWithSave):
     class Meta:
         name = "StandardTerms"
 
@@ -19388,7 +19193,7 @@ class UnitOfMeasureSetQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -19431,25 +19236,25 @@ class UnitOfMeasureSetQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class UnitOfMeasureSetAdd(QBAddMixin):
+class UnitOfMeasureSetAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "UnitOfMeasureType", "BaseUnit",
         "RelatedUnit", "DefaultUnit"
@@ -19508,7 +19313,7 @@ class UnitOfMeasureSetAdd(QBAddMixin):
 
 
 @dataclass
-class UnitOfMeasureSet(QBMixinWithQuery):
+class UnitOfMeasureSet(QBMixinWithSave):
 
     class Meta:
         name = "Unit Of Measure Set"
@@ -19633,7 +19438,7 @@ class VendorTypeQuery(QBQueryMixin):
         },
     )
     active_status: Optional[str] = field(
-        default=None,
+        default="All",
         metadata={
             "name": "ActiveStatus",
             "type": "Element",
@@ -19676,25 +19481,25 @@ class VendorTypeQuery(QBQueryMixin):
             "max_length": 50,
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
-    meta_data: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "metaData",
-            "type": "Attribute",
-            "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
+    # meta_data: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "metaData",
+    #         "type": "Attribute",
+    #         "valid_values": ["NoMetaData", "MetaDataOnly", "MetaDataAndResponseData"],
+    #     },
+    # )
 
 
 @dataclass
-class VendorTypeAdd(QBAddMixin):
+class VendorTypeAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "ParentRef"
     ]
@@ -19728,7 +19533,7 @@ class VendorTypeAdd(QBAddMixin):
 
 
 @dataclass
-class VendorType(QBMixinWithQuery):
+class VendorType(QBMixinWithSave):
     class Meta:
         name = "VendorType"
 
@@ -19919,7 +19724,7 @@ class VendorQuery(QBQueryMixin):
 
 
 @dataclass
-class VendorAdd(QBAddMixin):
+class VendorAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "Name", "IsActive", "ClassRef", "CompanyName", "Salutation",
         "FirstName", "MiddleName", "LastName", "JobTitle", "VendorAddress",
@@ -20227,7 +20032,7 @@ class VendorAdd(QBAddMixin):
 
 
 @dataclass
-class VendorMod(QBModMixin):
+class VendorMod(QBModRqMixin):
     FIELD_ORDER = [
         "ListID", "EditSequence", "Name", "IsActive", "ClassRef",
         "CompanyName", "Salutation", "FirstName", "MiddleName",
@@ -20531,7 +20336,7 @@ class VendorMod(QBModMixin):
 
 
 @dataclass
-class Vendor(QBMixinWithQuery):
+class Vendor(QBMixinWithSave):
 
     class Meta:
         name = "Vendor"
@@ -20999,7 +20804,7 @@ class ARRefundCreditCardQuery(QBQueryMixin):
 
 
 @dataclass
-class ARRefundCreditCardAdd(QBAddMixin):
+class ARRefundCreditCardAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "RefundFromAccountRef", "ARAccountRef", "TxnDate",
         "RefNumber", "Address", "PaymentMethodRef", "Memo",
@@ -21100,7 +20905,7 @@ class ARRefundCreditCardAdd(QBAddMixin):
     )
 
 @dataclass
-class ARRefundCreditCard(QBMixinWithQuery):
+class ARRefundCreditCard(QBMixinWithSave):
     class Meta:
         name = "ARRefundCreditCard"
 
@@ -21389,7 +21194,7 @@ class BillPaymentCheckQuery(QBQueryMixin):
 
 
 @dataclass
-class BillPaymentCheckAdd(QBAddMixin):
+class BillPaymentCheckAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "PayeeEntityRef", "APAccountRef", "TxnDate", "BankAccountRef",
         "IsToBePrinted", "RefNumber", "Memo", "ExchangeRate",
@@ -21484,7 +21289,7 @@ class BillPaymentCheckAdd(QBAddMixin):
 
 
 @dataclass
-class BillPaymentCheckMod(QBModMixin):
+class BillPaymentCheckMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "TxnDate", "BankAccountRef",
         "Amount", "ExchangeRate", "IsToBePrinted", "RefNumber",
@@ -21572,7 +21377,7 @@ class BillPaymentCheckMod(QBModMixin):
 
 
 @dataclass
-class BillPaymentCheck(QBMixinWithQuery):
+class BillPaymentCheck(QBMixinWithSave):
     class Meta:
         name = "BillPaymentCheck"
 
@@ -21853,7 +21658,7 @@ class BillPaymentCreditCardQuery(QBQueryMixin):
 
 
 @dataclass
-class BillPaymentCreditCardAdd(QBAddMixin):
+class BillPaymentCreditCardAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "PayeeEntityRef", "APAccountRef", "TxnDate", "CreditCardAccountRef",
         "RefNumber", "Memo", "ExchangeRate", "ExternalGUID", "AppliedToTxnAdd"
@@ -21940,7 +21745,7 @@ class BillPaymentCreditCardAdd(QBAddMixin):
 
 
 @dataclass
-class BillPaymentCreditCard(QBMixinWithQuery):
+class BillPaymentCreditCard(QBMixinWithSave):
     class Meta:
         name = "BillPaymentCreditCard"
 
@@ -22216,7 +22021,7 @@ class BillQuery(QBQueryMixin):
 
 
 @dataclass
-class BillAdd(QBAddMixin):
+class BillAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "VendorRef", "VendorAddress", "APAccountRef", "TxnDate",
         "DueDate", "RefNumber", "TermsRef", "Memo", "ExchangeRate",
@@ -22352,7 +22157,7 @@ class BillAdd(QBAddMixin):
 
 
 @dataclass
-class BillMod(QBModMixin):
+class BillMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "VendorRef", "VendorAddress",
         "APAccountRef", "TxnDate", "DueDate", "RefNumber",
@@ -22498,7 +22303,7 @@ class BillMod(QBModMixin):
 
 
 @dataclass
-class Bill(QBMixinWithQuery):
+class Bill(QBMixinWithSave):
 
     class Meta:
         name = "Bill"
@@ -22816,7 +22621,7 @@ class BuildAssemblyQuery(QBQueryMixin):
 
 
 @dataclass
-class BuildAssemblyAdd(QBAddMixin):
+class BuildAssemblyAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "ItemInventoryAssemblyRef", "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber",
         "LotNumber", "TxnDate", "RefNumber", "Memo", "QuantityToBuild", "MarkPendingIfRequired",
@@ -22912,7 +22717,7 @@ class BuildAssemblyAdd(QBAddMixin):
 
 
 @dataclass
-class BuildAssemblyMod(QBModMixin):
+class BuildAssemblyMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber",
         "LotNumber", "TxnDate", "RefNumber", "Memo", "QuantityToBuild", "MarkPendingIfRequired",
@@ -23016,7 +22821,7 @@ class BuildAssemblyMod(QBModMixin):
 
 
 @dataclass
-class BuildAssembly(QBMixinWithQuery):
+class BuildAssembly(QBMixinWithSave):
     class Meta:
         name = "BuildAssembly"
 
@@ -23305,7 +23110,7 @@ class ChargeQuery(QBQueryMixin):
 
 
 @dataclass
-class ChargeAdd(QBAddMixin):
+class ChargeAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "TxnDate", "RefNumber", "ItemRef", "InventorySiteRef",
         "InventorySiteLocationRef", "Quantity", "UnitOfMeasure", "Rate",
@@ -23460,7 +23265,7 @@ class ChargeAdd(QBAddMixin):
 
 
 @dataclass
-class ChargeMod(QBModMixin):
+class ChargeMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "CustomerRef", "TxnDate", "RefNumber",
         "ItemRef", "InventorySiteRef", "InventorySiteLocationRef", "Quantity",
@@ -23624,7 +23429,7 @@ class ChargeMod(QBModMixin):
 
 
 @dataclass
-class Charge(QBMixinWithQuery):
+class Charge(QBMixinWithSave):
     class Meta:
         name = "Charge"
 
@@ -23850,13 +23655,13 @@ class ApplyCheckToTxnBase:
 
 
 @dataclass
-class ApplyCheckToTxnAdd(ApplyCheckToTxnBase, QBAddMixin):
+class ApplyCheckToTxnAdd(ApplyCheckToTxnBase, QBAddRqMixin):
     class Meta:
         name = "ApplyCheckToTxnAdd"
 
 
 @dataclass
-class ApplyCheckToTxnMod(ApplyCheckToTxnBase, QBAddMixin):
+class ApplyCheckToTxnMod(ApplyCheckToTxnBase, QBAddRqMixin):
     class Meta:
         name = "ApplyCheckToTxnMod"
 
@@ -23983,7 +23788,7 @@ class CheckQuery(QBQueryMixin):
 
 
 @dataclass
-class CheckAdd(QBAddMixin):
+class CheckAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "defMacro", "AccountRef", "PayeeEntityRef", "RefNumber", "TxnDate",
         "Memo", "Address", "IsToBePrinted", "ExchangeRate", "ExternalGUID",
@@ -24111,7 +23916,7 @@ class CheckAdd(QBAddMixin):
 
 
 @dataclass
-class CheckMod(QBModMixin):
+class CheckMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "AccountRef", "PayeeEntityRef", "RefNumber",
         "TxnDate", "Memo", "Address", "IsToBePrinted", "ExchangeRate",
@@ -24256,7 +24061,7 @@ class CheckMod(QBModMixin):
 
 
 @dataclass
-class Check(QBMixinWithQuery):
+class Check(QBMixinWithSave):
     class Meta:
         name = "Check"
 
@@ -24551,7 +24356,7 @@ class CreditCardChargeQuery(QBQueryMixin):
 
 
 @dataclass
-class CreditCardChargeAdd(QBAddMixin):
+class CreditCardChargeAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "AccountRef", "PayeeEntityRef", "TxnDate", "RefNumber", "Memo",
         "ExchangeRate", "ExternalGUID", "ExpenseLineAdd", "ItemLineAdd",
@@ -24658,7 +24463,7 @@ class CreditCardChargeAdd(QBAddMixin):
 
 
 @dataclass
-class CreditCardChargeMod(QBModMixin):
+class CreditCardChargeMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "AccountRef", "PayeeEntityRef", "TxnDate",
         "RefNumber", "Memo", "ExchangeRate", "ClearExpenseLines",
@@ -24767,7 +24572,7 @@ class CreditCardChargeMod(QBModMixin):
 
 
 @dataclass
-class CreditCardCharge(QBMixinWithQuery):
+class CreditCardCharge(QBMixinWithSave):
     class Meta:
         name = "CurrencyFilter"
 
@@ -25034,7 +24839,7 @@ class CreditCardCreditQuery(QBQueryMixin):
 
 
 @dataclass
-class CreditCardCreditAdd(QBAddMixin):
+class CreditCardCreditAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "AccountRef", "PayeeEntityRef", "TxnDate", "RefNumber", "Memo",
         "ExchangeRate", "ExternalGUID", "ExpenseLineAdd", "ItemLineAdd",
@@ -25141,7 +24946,7 @@ class CreditCardCreditAdd(QBAddMixin):
 
 
 @dataclass
-class CreditCardCreditMod(QBModMixin):
+class CreditCardCreditMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "AccountRef", "PayeeEntityRef", "TxnDate",
         "RefNumber", "Memo", "ExchangeRate", "ClearExpenseLines",
@@ -25250,7 +25055,7 @@ class CreditCardCreditMod(QBModMixin):
 
 
 @dataclass
-class CreditCardCredit(QBMixinWithQuery):
+class CreditCardCredit(QBMixinWithSave):
     class Meta:
         name = "CurrencyFilter"
 
@@ -25527,7 +25332,7 @@ class CreditMemoQuery(QBQueryMixin):
 
 
 @dataclass
-class CreditMemoAdd(QBAddMixin):
+class CreditMemoAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "ClassRef", "ARAccountRef", "TemplateRef", "TxnDate", "RefNumber",
         "BillAddress", "ShipAddress", "IsPending", "PONumber", "TermsRef", "DueDate",
@@ -25737,7 +25542,7 @@ class CreditMemoAdd(QBAddMixin):
 
 
 @dataclass
-class CreditMemoMod(QBModMixin):
+class CreditMemoMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "CustomerRef", "ClassRef", "ARAccountRef", "TemplateRef",
         "TxnDate", "RefNumber", "BillAddress", "ShipAddress", "IsPending", "PONumber",
@@ -25964,7 +25769,7 @@ class CreditMemoMod(QBModMixin):
 
 
 @dataclass
-class CreditMemo(QBMixinWithQuery):
+class CreditMemo(QBMixinWithSave):
     class Meta:
         name = "CreditMemo"
 
@@ -26323,7 +26128,7 @@ class CashBackInfoAdd(QBMixin):
 
 
 @dataclass
-class CashBackInfoMod(QBModMixin):
+class CashBackInfoMod(QBModRqMixin):
     FIELD_ORDER = [
         "AccountRef", "Memo", "Amount"
     ]
@@ -26481,7 +26286,7 @@ class DepositQuery(QBQueryMixin):
 
 
 @dataclass
-class DepositAdd(QBAddMixin):
+class DepositAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "TxnDate", "DepositToAccountRef", "Memo", "CashBackInfoAdd", "CurrencyRef",
         "ExchangeRate", "ExternalGUID", "DepositLineAdd"
@@ -26558,7 +26363,7 @@ class DepositAdd(QBAddMixin):
 
 
 @dataclass
-class DepositMod(QBModMixin):
+class DepositMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "TxnDate", "DepositToAccountRef", "Memo",
         "CashBackInfoMod", "CurrencyRef", "ExchangeRate", "DepositLineMod"
@@ -26637,7 +26442,7 @@ class DepositMod(QBModMixin):
 
 
 @dataclass
-class Deposit(QBMixinWithQuery):
+class Deposit(QBMixinWithSave):
     class Meta:
         name = "NameFilter"
 
@@ -26888,17 +26693,17 @@ class EstimateQuery(QBQueryMixin):
             "type": "Element",
         },
     )
-    request_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "requestID",
-            "type": "Attribute",
-        },
-    )
+    # request_id: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "requestID",
+    #         "type": "Attribute",
+    #     },
+    # )
 
 
 @dataclass
-class EstimateAdd(QBAddMixin):
+class EstimateAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "ClassRef", "TemplateRef", "TxnDate", "RefNumber",
         "BillAddress", "ShipAddress", "IsActive", "PONumber", "TermsRef", "DueDate",
@@ -27285,7 +27090,7 @@ class EstimateMod(QBMixin):
 
 
 @dataclass
-class Estimate(QBMixinWithQuery):
+class Estimate(QBMixinWithSave):
     class Meta:
         name = "Estimate"
 
@@ -27693,7 +27498,7 @@ class InventoryAdjustmentQuery(QBQueryMixin):
 
 
 @dataclass
-class InventoryAdjustmentAdd(QBAddMixin):
+class InventoryAdjustmentAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "defMacro", "AccountRef", "TxnDate", "RefNumber", "InventorySiteRef",
         "CustomerRef", "ClassRef", "Memo", "ExternalGUID", "InventoryAdjustmentLineAdd"
@@ -27779,7 +27584,7 @@ class InventoryAdjustmentAdd(QBAddMixin):
 
 
 @dataclass
-class InventoryAdjustmentMod(QBModMixin):
+class InventoryAdjustmentMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "AccountRef", "InventorySiteRef", "TxnDate",
         "RefNumber", "CustomerRef", "ClassRef", "Memo", "InventoryAdjustmentLineMod"
@@ -27866,7 +27671,7 @@ class InventoryAdjustmentMod(QBModMixin):
 
 
 @dataclass
-class InventoryAdjustment(QBMixinWithQuery):
+class InventoryAdjustment(QBMixinWithSave):
     class Meta:
         name = "InventoryAdjustment"
 
@@ -28125,7 +27930,7 @@ class InvoiceQuery(QBQueryMixin):
 
 
 @dataclass
-class InvoiceAdd(QBAddMixin):
+class InvoiceAdd(QBAddRqMixin):
 
     FIELD_ORDER = [
         "customer_ref", "class_ref", "ar_account_ref", "template_ref", "txn_date",
@@ -28365,7 +28170,7 @@ class InvoiceAdd(QBAddMixin):
 
 
 @dataclass
-class InvoiceMod(QBModMixin):
+class InvoiceMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "CustomerRef", "ClassRef", "ARAccountRef",
         "TemplateRef", "TxnDate", "RefNumber", "BillAddress", "ShipAddress",
@@ -28593,7 +28398,7 @@ class InvoiceMod(QBModMixin):
 
 
 @dataclass
-class Invoice(QBMixinWithQuery):
+class Invoice(QBMixinWithSave):
 
     class Meta:
         name = "Invoice"
@@ -29072,7 +28877,7 @@ class JournalEntryQuery(QBQueryMixin):
 
 
 @dataclass
-class JournalEntryAdd(QBAddMixin):
+class JournalEntryAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "TxnDate", "RefNumber", "IsAdjustment", "IsHomeCurrencyAdjustment",
         "IsAmountsEnteredInHomeCurrency", "CurrencyRef", "ExchangeRate",
@@ -29111,13 +28916,15 @@ class JournalEntryAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    is_home_currency_adjustment: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsHomeCurrencyAdjustment",
-            "type": "Element",
-        },
-    )
+    #todo: is_home_currency_adjustment and is_amounts_entered_in_home_currency/currency_ref are part of an "or".
+    #       So they can't both be in the add xml at the same time.
+    # is_home_currency_adjustment: Optional[bool] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "IsHomeCurrencyAdjustment",
+    #         "type": "Element",
+    #     },
+    # )
     is_amounts_entered_in_home_currency: Optional[bool] = field(
         default=None,
         metadata={
@@ -29170,7 +28977,7 @@ class JournalEntryAdd(QBAddMixin):
 
 
 @dataclass
-class JournalEntryMod(QBModMixin):
+class JournalEntryMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "TxnDate", "RefNumber", "IsAdjustment",
         "IsAmountsEnteredInHomeCurrency", "CurrencyRef", "ExchangeRate",
@@ -29250,7 +29057,7 @@ class JournalEntryMod(QBModMixin):
 
 
 @dataclass
-class JournalEntry(QBMixinWithQuery):
+class JournalEntry(QBMixinWithSave):
     class Meta:
         name = "JournalEntry"
 
@@ -29519,7 +29326,7 @@ class PurchaseOrderQuery(QBQueryMixin):
 
 
 @dataclass
-class PurchaseOrderAdd(QBAddMixin):
+class PurchaseOrderAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "VendorRef", "ClassRef", "InventorySiteRef", "ShipToEntityRef",
         "TemplateRef", "TxnDate", "RefNumber", "VendorAddress",
@@ -29716,7 +29523,7 @@ class PurchaseOrderAdd(QBAddMixin):
 
 
 @dataclass
-class PurchaseOrderMod(QBModMixin):
+class PurchaseOrderMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "VendorRef", "ClassRef", "InventorySiteRef",
         "ShipToEntityRef", "TemplateRef", "TxnDate", "RefNumber", "VendorAddress",
@@ -29922,7 +29729,7 @@ class PurchaseOrderMod(QBModMixin):
     )
 
 @dataclass
-class PurchaseOrder(QBMixinWithQuery):
+class PurchaseOrder(QBMixinWithSave):
 
     class Meta:
         name = "PurchaseOrder"
@@ -30556,7 +30363,7 @@ class ReceivePaymentQuery(QBQueryMixin):
 
 
 @dataclass
-class ReceivePaymentAdd(QBAddMixin):
+class ReceivePaymentAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "ARAccountRef", "TxnDate", "RefNumber", "TotalAmount",
         "ExchangeRate", "PaymentMethodRef", "Memo", "DepositToAccountRef",
@@ -30670,7 +30477,7 @@ class ReceivePaymentAdd(QBAddMixin):
 
 
 @dataclass
-class ReceivePaymentMod(QBModMixin):
+class ReceivePaymentMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "CustomerRef", "ARAccountRef", "TxnDate", "RefNumber",
         "TotalAmount", "ExchangeRate", "PaymentMethodRef", "Memo", "DepositToAccountRef",
@@ -30779,7 +30586,7 @@ class ReceivePaymentMod(QBModMixin):
 
 
 @dataclass
-class ReceivePayment(QBMixinWithQuery):
+class ReceivePayment(QBMixinWithSave):
     class Meta:
         name = "ReceivePayment"
 
@@ -31069,7 +30876,7 @@ class SalesOrderQuery(QBQueryMixin):
 
 
 @dataclass
-class SalesOrderAdd(QBAddMixin):
+class SalesOrderAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "ClassRef", "TemplateRef", "TxnDate", "RefNumber", "BillAddress",
         "ShipAddress", "PONumber", "TermsRef", "DueDate", "SalesRepRef", "FOB", "ShipDate",
@@ -31286,7 +31093,7 @@ class SalesOrderAdd(QBAddMixin):
 
 
 @dataclass
-class SalesOrderMod(QBModMixin):
+class SalesOrderMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "CustomerRef", "ClassRef", "TemplateRef", "TxnDate",
         "RefNumber", "BillAddress", "ShipAddress", "PONumber", "TermsRef", "DueDate",
@@ -31499,7 +31306,7 @@ class SalesOrderMod(QBModMixin):
 
 
 @dataclass
-class SalesOrder(QBMixinWithQuery):
+class SalesOrder(QBMixinWithSave):
     class Meta:
         name = "SalesOrder"
 
@@ -31939,7 +31746,7 @@ class SalesReceiptQuery(QBQueryMixin):
 
 
 @dataclass
-class SalesReceiptAdd(QBAddMixin):
+class SalesReceiptAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "CustomerRef", "ClassRef", "TemplateRef", "TxnDate", "RefNumber",
         "BillAddress", "ShipAddress", "IsPending", "CheckNumber",
@@ -32157,7 +31964,7 @@ class SalesReceiptAdd(QBAddMixin):
 
 
 @dataclass
-class SalesReceiptMod(QBModMixin):
+class SalesReceiptMod(QBModRqMixin):
     FIELD_ORDER_SALES_RECEIPT_MOD = [
         "TxnID", "EditSequence", "CustomerRef", "ClassRef", "TemplateRef", "TxnDate",
         "RefNumber", "BillAddress", "ShipAddress", "IsPending", "CheckNumber",
@@ -32377,7 +32184,7 @@ class SalesReceiptMod(QBModMixin):
 
 
 @dataclass
-class SalesReceipt(QBMixinWithQuery):
+class SalesReceipt(QBMixinWithSave):
     class Meta:
         name = "SalesReceipt"
 
@@ -32783,7 +32590,7 @@ class TimeTrackingQuery(QBQueryMixin):
 
 
 @dataclass
-class TimeTrackingAdd(QBAddMixin):
+class TimeTrackingAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "TxnDate", "EntityRef", "CustomerRef", "ItemServiceRef",
         "Duration", "ClassRef", "PayrollItemWageRef", "Notes",
@@ -32877,7 +32684,7 @@ class TimeTrackingAdd(QBAddMixin):
 
 
 @dataclass
-class TimeTrackingMod(QBModMixin):
+class TimeTrackingMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "TxnDate", "EntityRef",
         "CustomerRef", "ItemServiceRef", "Duration", "ClassRef",
@@ -32981,7 +32788,7 @@ class TimeTrackingMod(QBModMixin):
 
 
 @dataclass
-class TimeTracking(QBMixinWithQuery):
+class TimeTracking(QBMixinWithSave):
     class Meta:
         name = "TimeTracking"
 
@@ -33575,7 +33382,7 @@ class TransactionQuery(QBQueryMixin):
 
 
 @dataclass
-class Transaction(QBMixinWithQuery):
+class Transaction(QBMixinWithSave):
 
     class Meta:
         name = "Transaction"
@@ -33751,7 +33558,7 @@ class TransferQuery(QBQueryMixin):
 
 
 @dataclass
-class TransferAdd(QBAddMixin):
+class TransferAdd(QBAddRqMixin):
     FIELD_ORDER = [
         "TxnDate", "TransferFromAccountRef", "TransferToAccountRef",
         "ClassRef", "Amount", "Memo"
@@ -33813,7 +33620,7 @@ class TransferAdd(QBAddMixin):
 
 
 @dataclass
-class TransferMod(QBModMixin):
+class TransferMod(QBModRqMixin):
     FIELD_ORDER = [
         "TxnID", "EditSequence", "TxnDate", "TransferFromAccountRef",
         "TransferToAccountRef", "ClassRef", "Amount", "Memo"
@@ -33885,7 +33692,7 @@ class TransferMod(QBModMixin):
 
 
 @dataclass
-class Transfer(QBMixinWithQuery):
+class Transfer(QBMixinWithSave):
     class Meta:
         name = "Transfer"
 
@@ -33993,6 +33800,7 @@ class Transfers(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "Transfer"
         plural_of = Transfer
+
 
 @dataclass
 class TxnDel(QBMixin):

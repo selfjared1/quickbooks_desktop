@@ -6,6 +6,7 @@ from typing import Optional, List
 from src.quickbooks_desktop.quickbooks_desktop import (
     FromXmlMixin, CustomerRef, Invoice, InvoiceLine, JournalEntry,
 )
+from datetime import datetime
 
 
 @dataclass
@@ -139,69 +140,7 @@ class TestFromXmlMixin(unittest.TestCase):
         self.assertEqual(instance.invoice_lines[0].item_ref.full_name, "Estimating")
         self.assertEqual(instance.invoice_lines[1].desc, "Product Custom Description")
 
-    def test_basic_from_xml_06(self):
-        # Test case for a simple XML element matching defined fields
-        journal_xml = """
-                <JournalEntryRet>
-                    <TxnID>19C72-1627671245</TxnID>
-                    <TimeCreated>2021-07-30T12:54:05-07:00</TimeCreated>
-                    <TimeModified>2022-01-31T15:33:12-07:00</TimeModified>
-                    <EditSequence>1627671245</EditSequence>
-                    <TxnNumber>34217</TxnNumber>
-                    <TxnDate>2005-10-18</TxnDate>
-                    <RefNumber>1</RefNumber>
-                    <IsAdjustment>false</IsAdjustment>
-                    <IsHomeCurrencyAdjustment>false</IsHomeCurrencyAdjustment>
-                    <IsAmountsEnteredInHomeCurrency>false</IsAmountsEnteredInHomeCurrency>
-                    <CurrencyRef>
-                    <ListID>80000096-1622403877</ListID>
-                    <FullName>US Dollar</FullName>
-                    </CurrencyRef>
-                    <ExchangeRate>1</ExchangeRate>
-                    <JournalCreditLine>
-                    <TxnLineID>19C73-1627671245</TxnLineID>
-                    <AccountRef>
-                    <ListID>80000015-1622404240</ListID>
-                    <FullName>Notes - Sample, Inc.</FullName>
-                    </AccountRef>
-                    <Amount>210000.00</Amount>
-                    <Memo>original purchase</Memo>
-                    </JournalCreditLine>
-                    <JournalDebitLine>
-                    <TxnLineID>19C74-1627671245</TxnLineID>
-                    <AccountRef>
-                    <ListID>8000005D-1627666939</ListID>
-                    <FullName>Automobiles</FullName>
-                    </AccountRef>
-                    <Amount>4500.00</Amount>
-                    <Memo>original purchase</Memo>
-                    </JournalDebitLine>
-                    <JournalDebitLine>
-                    <TxnLineID>19C75-1627671245</TxnLineID>
-                    <AccountRef>
-                    <ListID>8000005E-1627666939</ListID>
-                    <FullName>Furniture &amp; Fixtures</FullName>
-                    </AccountRef>
-                    <Amount>2000.00</Amount>
-                    <Memo>original purchase</Memo>
-                    </JournalDebitLine>
-                    <JournalDebitLine>
-                    <TxnLineID>19C76-1627671245</TxnLineID>
-                    <AccountRef>
-                    <ListID>8000005C-1627666939</ListID>
-                    <FullName>Inventory</FullName>
-                    </AccountRef>
-                    <Amount>203500.00</Amount>
-                    <Memo>original purchase</Memo>
-                    </JournalDebitLine>
-                </JournalEntryRet>
-                """
-        element = et.fromstring(journal_xml)
-        instance = JournalEntry.from_xml(element)
 
-        self.assertEqual(instance.ref_number, )
-        self.assertEqual(len(instance.journal_credit_lines), 1)
-        self.assertEqual(instance.journal_credit_lines[0].txn_line_id, "19C73-1627671245")
 
 
     def test__get_init_args(self):
@@ -309,4 +248,112 @@ class TestFromXmlMixin(unittest.TestCase):
 
         self.assertEqual(instance.value, True)  # Since "Yes" should map to True
         TestClass.IS_YES_NO_FIELD_LIST = []  # Reset for other tests
+
+    def test_full_from_xml_01(self):
+        # Test case for a simple XML element matching defined fields
+        journal_xml = """
+                <JournalEntryRet>
+                    <TxnID>19C72-1627671245</TxnID>
+                    <TimeCreated>2021-07-30T12:54:05-07:00</TimeCreated>
+                    <TimeModified>2022-01-31T15:33:12-07:00</TimeModified>
+                    <EditSequence>1627671245</EditSequence>
+                    <TxnNumber>34217</TxnNumber>
+                    <TxnDate>2005-10-18</TxnDate>
+                    <RefNumber>1</RefNumber>
+                    <IsAdjustment>false</IsAdjustment>
+                    <IsHomeCurrencyAdjustment>false</IsHomeCurrencyAdjustment>
+                    <IsAmountsEnteredInHomeCurrency>false</IsAmountsEnteredInHomeCurrency>
+                    <CurrencyRef>
+                    <ListID>80000096-1622403877</ListID>
+                    <FullName>US Dollar</FullName>
+                    </CurrencyRef>
+                    <ExchangeRate>1</ExchangeRate>
+                    <JournalCreditLine>
+                    <TxnLineID>19C73-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>80000015-1622404240</ListID>
+                    <FullName>Notes - Sample, Inc.</FullName>
+                    </AccountRef>
+                    <Amount>210000.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalCreditLine>
+                    <JournalDebitLine>
+                    <TxnLineID>19C74-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>8000005D-1627666939</ListID>
+                    <FullName>Automobiles</FullName>
+                    </AccountRef>
+                    <Amount>4500.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalDebitLine>
+                    <JournalDebitLine>
+                    <TxnLineID>19C75-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>8000005E-1627666939</ListID>
+                    <FullName>Furniture &amp; Fixtures</FullName>
+                    </AccountRef>
+                    <Amount>2000.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalDebitLine>
+                    <JournalDebitLine>
+                    <TxnLineID>19C76-1627671245</TxnLineID>
+                    <AccountRef>
+                    <ListID>8000005C-1627666939</ListID>
+                    <FullName>Inventory</FullName>
+                    </AccountRef>
+                    <Amount>203500.00</Amount>
+                    <Memo>original purchase</Memo>
+                    </JournalDebitLine>
+                </JournalEntryRet>
+                """
+        element = et.fromstring(journal_xml)
+        instance = JournalEntry.from_xml(element)
+
+        self.assertEqual(instance.ref_number, '1')
+        self.assertEqual(len(instance.journal_credit_lines), 1)
+        self.assertEqual(instance.journal_credit_lines[0].txn_line_id, "19C73-1627671245")
+
+        # Assertions for main JournalEntry attributes
+        self.assertEqual(instance.txn_id, '19C72-1627671245')
+        self.assertEqual(instance.time_created.datetime_value, datetime.fromisoformat('2021-07-30T12:54:05-07:00'))
+        self.assertEqual(instance.time_modified.datetime_value, datetime.fromisoformat('2022-01-31T15:33:12-07:00'))
+        self.assertEqual(instance.edit_sequence, '1627671245')
+        self.assertEqual(instance.txn_number, '34217')
+        self.assertEqual(instance.txn_date.__str__(), '2005-10-18')
+        self.assertEqual(instance.ref_number, '1')
+        self.assertFalse(instance.is_adjustment)
+        self.assertFalse(instance.is_home_currency_adjustment)
+        self.assertFalse(instance.is_amounts_entered_in_home_currency)
+        self.assertEqual(instance.currency_ref.list_id, '80000096-1622403877')
+        self.assertEqual(instance.currency_ref.full_name, 'US Dollar')
+        self.assertEqual(instance.exchange_rate, 1)
+
+        # Assertions for JournalCreditLine
+        self.assertEqual(len(instance.journal_credit_lines), 1)
+        self.assertEqual(instance.journal_credit_lines[0].txn_line_id, "19C73-1627671245")
+        self.assertEqual(instance.journal_credit_lines[0].account_ref.list_id, "80000015-1622404240")
+        self.assertEqual(instance.journal_credit_lines[0].account_ref.full_name, "Notes - Sample, Inc.")
+        self.assertEqual(instance.journal_credit_lines[0].amount, 210000.00)
+        self.assertEqual(instance.journal_credit_lines[0].memo, "original purchase")
+
+        # Assertions for JournalDebitLines
+        self.assertEqual(len(instance.journal_debit_lines), 3)
+
+        self.assertEqual(instance.journal_debit_lines[0].txn_line_id, "19C74-1627671245")
+        self.assertEqual(instance.journal_debit_lines[0].account_ref.list_id, "8000005D-1627666939")
+        self.assertEqual(instance.journal_debit_lines[0].account_ref.full_name, "Automobiles")
+        self.assertEqual(instance.journal_debit_lines[0].amount, 4500.00)
+        self.assertEqual(instance.journal_debit_lines[0].memo, "original purchase")
+
+        self.assertEqual(instance.journal_debit_lines[1].txn_line_id, "19C75-1627671245")
+        self.assertEqual(instance.journal_debit_lines[1].account_ref.list_id, "8000005E-1627666939")
+        self.assertEqual(instance.journal_debit_lines[1].account_ref.full_name, "Furniture & Fixtures")
+        self.assertEqual(instance.journal_debit_lines[1].amount, 2000.00)
+        self.assertEqual(instance.journal_debit_lines[1].memo, "original purchase")
+
+        self.assertEqual(instance.journal_debit_lines[2].txn_line_id, "19C76-1627671245")
+        self.assertEqual(instance.journal_debit_lines[2].account_ref.list_id, "8000005C-1627666939")
+        self.assertEqual(instance.journal_debit_lines[2].account_ref.full_name, "Inventory")
+        self.assertEqual(instance.journal_debit_lines[2].amount, 203500.00)
+        self.assertEqual(instance.journal_debit_lines[2].memo, "original purchase")
 

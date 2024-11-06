@@ -63,23 +63,30 @@ class TestCopyFromParent(unittest.TestCase):
                 </JournalEntryRet>
                 """
 
-    def test_copy_from_parent(self):
+    def test_copy_add_or_mod_from_parent_keep_ids(self):
         element = et.fromstring(self.journal_xml)
         journal_entry = JournalEntry.from_xml(element)
-        qb = QuickbooksDesktop()
-        jounal_entry_add_w_ids = JournalEntry.Add.create_add_from_parent(journal_entry)
+        # qb = QuickbooksDesktop()
+        jounal_entry_add_w_ids = JournalEntry.Add.create_add_or_mod_from_parent(journal_entry, add_or_mod='Add')
         self.assertTrue(isinstance(jounal_entry_add_w_ids, JournalEntry.Add))
         self.assertEqual(jounal_entry_add_w_ids.ref_number, "1")
         self.assertEqual(jounal_entry_add_w_ids.journal_credit_lines[0].account_ref.full_name, "Notes - Sample, Inc.")
 
         self.assertFalse(hasattr(jounal_entry_add_w_ids, 'txn_id')) #you can't add with the main txn_id
         self.assertTrue(hasattr(jounal_entry_add_w_ids.currency_ref, 'list_id'))
-        self.assertTrue(hasattr(jounal_entry_add_w_ids.journal_credit_lines, 'txn_line_id'))
+        self.assertTrue(hasattr(jounal_entry_add_w_ids.journal_credit_lines[0], 'txn_line_id'))
+        jounal_entry_add_w_ids_xml = jounal_entry_add_w_ids.to_xml()
+        print(et.tostring(jounal_entry_add_w_ids_xml))
 
-        jounal_entry_add_wo_ids = JournalEntry.Add.create_add_from_parent(journal_entry, keep_ids=False)
+    def test_copy_add_or_mod_from_parent_not_keep_ids(self):
+        element = et.fromstring(self.journal_xml)
+        journal_entry = JournalEntry.from_xml(element)
+        jounal_entry_add_wo_ids = JournalEntry.Add.create_add_or_mod_from_parent(journal_entry, add_or_mod='Add', keep_ids=False)
         self.assertFalse(hasattr(jounal_entry_add_wo_ids, 'txn_id'))
-        self.assertFalse(hasattr(jounal_entry_add_wo_ids.currency_ref, 'list_id'))
-        self.assertFalse(hasattr(jounal_entry_add_wo_ids.journal_credit_lines, 'txn_line_id'))
+        self.assertIsNone(jounal_entry_add_wo_ids.currency_ref.list_id)
+        self.assertIsNone(jounal_entry_add_wo_ids.journal_credit_lines[0].txn_line_id)
+        jounal_entry_add_wo_ids_xml = jounal_entry_add_wo_ids.to_xml()
+        print(et.tostring(jounal_entry_add_wo_ids_xml))
 
     #todo: add invoice, so, bill, etc. test to test to make sure lines copy over correctly.
 
