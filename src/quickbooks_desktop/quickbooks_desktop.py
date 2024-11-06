@@ -211,7 +211,7 @@ class QuickbooksDesktop():
         return full_request
 
 
-    def send_xml(self, requestXML, encoding="utf-8"):
+    def send_xml(self, requestXML, encoding="utf-8", raw_response=False):
         """
         This method
             1. finishes the XML build
@@ -259,7 +259,9 @@ class QuickbooksDesktop():
         else:
             self.close_qb()
 
-        if QBXMLMsgsRs is not None:
+        if raw_response:
+            return responseXML
+        elif QBXMLMsgsRs is not None:
             responses = QBXMLMsgsRs.getchildren()
             # todo: parse into actual objects
             return responses
@@ -9515,11 +9517,13 @@ class AccountMod(AccountBase, QBModRqMixin):
 class Account(AccountBase, QBMixinWithSave):
     class Meta:
         name = "Account"
+        plural_class_name = "Accounts"
 
     Query: Type[AccountQuery] = AccountQuery
     Add: Type[AccountAdd] = AccountAdd
     SpecialAccountAdd: Type[SpecialAccountAdd] = SpecialAccountAdd
     Mod: Type[AccountMod] = AccountMod
+    PluralName = "Accounts"
 
     list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
@@ -9798,6 +9802,7 @@ class BillingRateAdd(QBAddRqMixin):
 class BillingRate(QBMixin):
     class Meta:
         name = "BillingRate"
+        plural_class_name = "BillingRates"
 
     Query: Type[BillingRateQuery] = BillingRateQuery
     Add: Type[BillingRateAdd] = BillingRateAdd
@@ -10027,6 +10032,7 @@ class ClassInQBMod(QBModRqMixin):
 class ClassInQB(QBMixinWithSave):
     class Meta:
         name = "Class"
+        plural_class_name = "ClassesInQB"
 
     Query: Type[ClassInQBQuery] = ClassInQBQuery
     Add: Type[ClassInQBAdd] = ClassInQBAdd
@@ -10315,6 +10321,7 @@ class CurrencyMod(QBModRqMixin):
 class Currency(QBMixinWithSave):
     class Meta:
         name = "Currency"
+        plural_class_name = "Currencies"
 
     Query: Type[CurrencyQuery] = CurrencyQuery
     Add: Type[CurrencyAdd] = CurrencyAdd
@@ -10508,6 +10515,7 @@ class CustomerMsg(QBMixinWithSave):
 
     class Meta:
         name = "CustomerMsg"
+        plural_class_name = "CustomerMsgs"
 
     Query: Type[CustomerMsgQuery] = CustomerMsgQuery
     Add: Type[CustomerMsgAdd] = CustomerMsgAdd
@@ -11465,6 +11473,7 @@ class CustomerMod(QBModRqMixin):
 class Customer(QBMixinWithSave):
     class Meta:
         name = "Customer"
+        plural_class_name = "Customers"
 
     Query: Type[CustomerQuery] = CustomerQuery
     Add: Type[CustomerAdd] = CustomerAdd
@@ -12251,6 +12260,7 @@ class EmployeeQuery(QBQueryMixin):
 class Employee(QBMixinWithSave):
     class Meta:
         name = "Employee"
+        plural_class_name = "Employees"
 
     class Query(EmployeeQuery):
         pass
@@ -12951,6 +12961,7 @@ class InventorySite(QBMixinWithSave):
 
     class Meta:
         name = "InventorySite"
+        plural_class_name = "InventorySites"
 
     Query: Type[InventorySiteQuery] = InventorySiteQuery
     Add: Type[InventorySiteAdd] = InventorySiteAdd
@@ -14797,6 +14808,7 @@ class ItemWithClassAndTaxMixin(ItemMixin):
 class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemDiscount"
+        plural_class_name = "ItemDiscounts"
 
     Query: Type[ItemDiscountQuery] = ItemDiscountQuery
     Add: Type[ItemDiscountAdd] = ItemDiscountAdd
@@ -14866,6 +14878,7 @@ class ItemDiscounts(PluralMixin, PluralListSaveMixin):
 class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemGroup"
+        plural_class_name = "ItemGroups"
 
     Query: Type[ItemGroupQuery] = ItemGroupQuery
     Add: Type[ItemGroupAdd] = ItemGroupAdd
@@ -14936,6 +14949,7 @@ class ItemGroups(PluralMixin, PluralListSaveMixin):
 class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemInventory"
+        plural_class_name = "ItemInventories"
 
     Query: Type[ItemInventoryQuery] = ItemInventoryQuery
     Add: Type[ItemInventoryAdd] = ItemInventoryAdd
@@ -15112,6 +15126,7 @@ class ItemInventories(PluralMixin, PluralListSaveMixin):
 class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemInventoryAssembly"
+        plural_class_name = "ItemInventoryAssemblies"
 
     Query: Type[ItemInventoryAssemblyQuery] = ItemInventoryAssemblyQuery
     Add: Type[ItemInventoryAssemblyAdd] = ItemInventoryAssemblyAdd
@@ -15295,6 +15310,7 @@ class ItemInventoryAssemblies(PluralMixin, PluralListSaveMixin):
 class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemNonInventory"
+        plural_class_name = "ItemInventories"
 
     Query: Type[ItemNonInventoryQuery] = ItemNonInventoryQuery
     Add: Type[ItemNonInventoryAdd] = ItemNonInventoryAdd
@@ -15378,6 +15394,7 @@ class ItemNonInventories(PluralMixin, PluralListSaveMixin):
 class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
     class Meta:
         name = "ItemOtherCharge"
+        plural_class_name = "ItemOtherCharges"
 
     Query: Type[ItemOtherChargeQuery] = ItemOtherChargeQuery
     Add: Type[ItemOtherChargeAdd] = ItemOtherChargeAdd
@@ -15454,6 +15471,7 @@ class ItemOtherCharges(PluralMixin, PluralListSaveMixin):
 class ItemPayment(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemPayment"
+        plural_class_name = "ItemPayments"
 
     Query: Type[ItemPaymentQuery] = ItemPaymentQuery
     Add: Type[ItemPaymentAdd] = ItemPaymentAdd
@@ -15509,6 +15527,7 @@ class ItemPayments(PluralMixin, PluralListSaveMixin):
 class ItemSalesTax(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemSalesTax"
+        plural_class_name = "ItemSalesTaxes"
 
     Query: Type[ItemSalesTaxQuery] = ItemSalesTaxQuery
     Add: Type[ItemSalesTaxAdd] = ItemSalesTaxAdd
@@ -15578,6 +15597,7 @@ class ItemSalesTaxes(PluralMixin, PluralListSaveMixin):
 class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemSalesTaxGroup"
+        plural_class_name = "ItemSalesTaxGroups"
 
     Query: Type[ItemSalesTaxGroupQuery] = ItemSalesTaxGroupQuery
     Add: Type[ItemSalesTaxGroupAdd] = ItemSalesTaxGroupAdd
@@ -15626,6 +15646,7 @@ class ItemSalesTaxGroups(PluralMixin, PluralListSaveMixin):
 class ItemService(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemService"
+        plural_class_name = "ItemServices"
 
     Query: Type[ItemServiceQuery] = ItemServiceQuery
     Add: Type[ItemServiceAdd] = ItemServiceAdd
@@ -15702,6 +15723,7 @@ class ItemServices(PluralMixin, PluralListSaveMixin):
 class ItemSubtotal(ItemMixin, QBMixinWithSave):
     class Meta:
         name = "ItemSubtotal"
+        plural_class_name = "ItemSubtotals"
 
     Query: Type[ItemSubtotalQuery] = ItemSubtotalQuery
     Add: Type[ItemSubtotalAdd] = ItemSubtotalAdd
@@ -15865,6 +15887,7 @@ class JobType(QBMixinWithSave):
 
     class Meta:
         name = "JobType"
+        plural_class_name = "JobTypes"
 
     Query: Type[JobTypeQuery] = JobTypeQuery
     Add: Type[JobTypeAdd] = JobTypeAdd
@@ -16314,6 +16337,7 @@ class OtherNameMod(QBModRqMixin):
 class OtherName(QBMixinWithSave):
     class Meta:
         name = "OtherName"
+        plural_class_name = "OtherNames"
 
     Query: Type[OtherNameQuery] = OtherNameQuery
     Add: Type[OtherNameAdd] = OtherNameAdd
@@ -16632,6 +16656,7 @@ class PaymentMethodAdd(QBAddRqMixin):
 class PaymentMethod(QBMixinWithSave):
     class Meta:
         name = "PaymentMethod"
+        plural_class_name = "PaymentMethods"
 
     Query: Type[PaymentMethodQuery] = PaymentMethodQuery
     Add: Type[PaymentMethodAdd] = PaymentMethodAdd
@@ -16757,7 +16782,6 @@ class PayrollItemWage(QBMixin):
 
     def __post_init__(self):
         self._validate_str_from_list_of_values('wage_type', self.wage_type, self.VALID_WAGE_TYPE_VALUES)
-
 
 
 @dataclass
@@ -17038,6 +17062,7 @@ class PriceLevel(QBMixinWithSave):
 
     class Meta:
         name = "PriceLevel"
+        plural_class_name = "PriceLevels"
 
     Query: Type[PriceLevelQuery] = PriceLevelQuery
     Add: Type[PriceLevelAdd] = PriceLevelAdd
@@ -17284,6 +17309,7 @@ class SalesRep(QBMixinWithSave):
 
     class Meta:
         name = "SalesRep"
+        plural_class_name = "SalesReps"
 
     Query: Type[SalesRepQuery] = SalesRepQuery
     Add: Type[SalesRepAdd] = SalesRepAdd
@@ -17551,6 +17577,7 @@ class SalesTaxCodeMod(QBModRqMixin):
 class SalesTaxCode(QBMixinWithSave):
     class Meta:
         name = "SalesTaxCode"
+        plural_class_name = "SalesTaxCodes"
 
     Query: Type[SalesTaxCodeQuery] = SalesTaxCodeQuery
     Add: Type[SalesTaxCodeAdd] = SalesTaxCodeAdd
@@ -17750,6 +17777,7 @@ class ShipMethodAdd(QBAddRqMixin):
 class ShipMethod(QBMixinWithSave):
     class Meta:
         name = "ShipMethod"
+        plural_class_name = "ShipMethods"
 
     Query: Type[ShipMethodQuery] = ShipMethodQuery
     Add: Type[ShipMethodAdd] = ShipMethodAdd
@@ -17935,6 +17963,7 @@ class StandardTermsAdd(QBAddRqMixin):
 class StandardTerm(QBMixinWithSave):
     class Meta:
         name = "StandardTerms"
+        plural_class_name = "StandardTerms"
 
     Query: Type[StandardTermsQuery] = StandardTermsQuery
     Add: Type[StandardTermsAdd] = StandardTermsAdd
@@ -18239,7 +18268,8 @@ class UnitOfMeasureSetAdd(QBAddRqMixin):
 class UnitOfMeasureSet(QBMixinWithSave):
 
     class Meta:
-        name = "Unit Of Measure Set"
+        name = "UnitOfMeasureSet"
+        plural_class_name = "UnitOfMeasureSets"
 
     Query: Type[UnitOfMeasureSetQuery] = UnitOfMeasureSetQuery
     Add: Type[UnitOfMeasureSetAdd] = UnitOfMeasureSetAdd
@@ -18441,6 +18471,7 @@ class VendorTypeAdd(QBAddRqMixin):
 class VendorType(QBMixinWithSave):
     class Meta:
         name = "VendorType"
+        plural_class_name = "VendorTypes"
 
     Query: Type[VendorTypeQuery] = VendorTypeQuery
     Add: Type[VendorTypeAdd] = VendorTypeAdd
@@ -19213,6 +19244,7 @@ class Vendor(QBMixinWithSave):
 
     class Meta:
         name = "Vendor"
+        plural_class_name = "Vendors"
 
     Query: Type[VendorQuery] = VendorQuery
     Add: Type[VendorAdd] = VendorAdd
@@ -19775,6 +19807,7 @@ class ARRefundCreditCardAdd(QBAddRqMixin):
 class ARRefundCreditCard(QBMixinWithSave):
     class Meta:
         name = "ARRefundCreditCard"
+        plural_class_name = "ARRefundCreditCards"
 
     Query: Type[ARRefundCreditCardQuery] = ARRefundCreditCardQuery
     Add: Type[ARRefundCreditCardAdd] = ARRefundCreditCardAdd
@@ -20241,6 +20274,7 @@ class BillPaymentCheckMod(QBModRqMixin):
 class BillPaymentCheck(QBMixinWithSave):
     class Meta:
         name = "BillPaymentCheck"
+        plural_class_name = "BillPaymentChecks"
 
     Query: Type[BillPaymentCheckQuery] = BillPaymentCheckQuery
     Add: Type[BillPaymentCheckAdd] = BillPaymentCheckAdd
@@ -20603,6 +20637,7 @@ class BillPaymentCreditCardAdd(QBAddRqMixin):
 class BillPaymentCreditCard(QBMixinWithSave):
     class Meta:
         name = "BillPaymentCreditCard"
+        plural_class_name = "BillPaymentCreditCards"
 
     Query: Type[BillPaymentCreditCardQuery] = BillPaymentCreditCardQuery
     Add: Type[BillPaymentCreditCardAdd] = BillPaymentCreditCardAdd
@@ -21156,6 +21191,7 @@ class Bill(QBMixinWithSave):
 
     class Meta:
         name = "Bill"
+        plural_class_name = "Bills"
 
     Query: Type[BillQuery] = BillQuery
     Add: Type[BillAdd] = BillAdd
@@ -21673,6 +21709,7 @@ class BuildAssemblyMod(QBModRqMixin):
 class BuildAssembly(QBMixinWithSave):
     class Meta:
         name = "BuildAssembly"
+        plural_class_name = "BuildAssemblies"
 
     Query: Type[BuildAssemblyQuery] = BuildAssemblyQuery
     Add: Type[BuildAssemblyAdd] = BuildAssemblyAdd
@@ -22269,6 +22306,7 @@ class ChargeMod(QBModRqMixin):
 class Charge(QBMixinWithSave):
     class Meta:
         name = "Charge"
+        plural_class_name = "Charges"
 
     Query: Type[ChargeQuery] = ChargeQuery
     Add: Type[ChargeAdd] = ChargeAdd
@@ -22889,6 +22927,7 @@ class CheckMod(QBModRqMixin):
 class Check(QBMixinWithSave):
     class Meta:
         name = "Check"
+        plural_class_name = "Checks"
 
     Query: Type[CheckQuery] = CheckQuery
     Add: Type[CheckAdd] = CheckAdd
@@ -23394,6 +23433,7 @@ class CreditCardChargeMod(QBModRqMixin):
 class CreditCardCharge(QBMixinWithSave):
     class Meta:
         name = "CurrencyFilter"
+        plural_class_name = "CurrencyFilters"
 
     Query: Type[CreditCardChargeQuery] = CreditCardChargeQuery
     Add: Type[CreditCardChargeAdd] = CreditCardChargeAdd
@@ -23870,7 +23910,8 @@ class CreditCardCreditMod(QBModRqMixin):
 @dataclass
 class CreditCardCredit(QBMixinWithSave):
     class Meta:
-        name = "CurrencyFilter"
+        name = "CreditCardCredits"
+        plural_class_name = "CreditCardCredits"
 
     Query: Type[CreditCardCreditQuery] = CreditCardCreditQuery
     Add: Type[CreditCardCreditAdd] = CreditCardCreditAdd
@@ -24013,8 +24054,6 @@ class CreditCardCredits(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "CreditCardCredit"
         plural_of = CreditCardCredit
-
-
 
 
 @dataclass
@@ -24579,6 +24618,7 @@ class CreditMemoMod(QBModRqMixin):
 class CreditMemo(QBMixinWithSave):
     class Meta:
         name = "CreditMemo"
+        plural_class_name = "CreditMemos"
 
     Query: Type[CreditMemoQuery] = CreditMemoQuery
     Add: Type[CreditMemoAdd] = CreditMemoAdd
@@ -24963,6 +25003,7 @@ class CashBackInfo(QBMixin):
 
     class Meta:
         name = "CashBackInfo"
+        plural_class_name = "CashBackInfo"
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -25233,7 +25274,8 @@ class DepositMod(QBModRqMixin):
 @dataclass
 class Deposit(QBMixinWithSave):
     class Meta:
-        name = "NameFilter"
+        name = "Deposit"
+        plural_class_name = "Deposits"
 
     Query: Type[DepositQuery] = DepositQuery
     Add: Type[DepositAdd] = DepositAdd
@@ -25882,6 +25924,7 @@ class EstimateMod(QBMixin):
 class Estimate(QBMixinWithSave):
     class Meta:
         name = "Estimate"
+        plural_class_name = "Estimates"
 
     Query: Type[EstimateQuery] = EstimateQuery
     Add: Type[EstimateAdd] = EstimateAdd
@@ -26166,11 +26209,6 @@ class Estimates(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "Estimate"
         plural_of = Estimate
-
-
-
-
-
 
 
 @dataclass
@@ -26463,6 +26501,7 @@ class InventoryAdjustmentMod(QBModRqMixin):
 class InventoryAdjustment(QBMixinWithSave):
     class Meta:
         name = "InventoryAdjustment"
+        plural_class_name = "InventoryAdjustments"
 
     Query: Type[InventoryAdjustmentQuery] = InventoryAdjustmentQuery
     Add: Type[InventoryAdjustmentAdd] = InventoryAdjustmentAdd
@@ -26583,9 +26622,6 @@ class InventoryAdjustments(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "InventoryAdjustment"
         plural_of = InventoryAdjustment
-
-
-
 
 
 @dataclass
@@ -27191,6 +27227,7 @@ class Invoice(QBMixinWithSave):
 
     class Meta:
         name = "Invoice"
+        plural_class_name = "Invoices"
 
     Query: Type[InvoiceQuery] = InvoiceQuery
     Add: Type[InvoiceAdd] = InvoiceAdd
@@ -27849,6 +27886,7 @@ class JournalEntryMod(QBModRqMixin):
 class JournalEntry(QBMixinWithSave):
     class Meta:
         name = "JournalEntry"
+        plural_class_name = "JournalEntries"
 
     Query: Type[JournalEntryQuery] = JournalEntryQuery
     Add: Type[JournalEntryAdd] = JournalEntryAdd
@@ -27984,13 +28022,10 @@ class JournalEntries(PluralMixin, PluralTrxnSaveMixin):
         plural_of = JournalEntry
 
 
-
 @dataclass
 class ShipToEntityRef(QBRefMixin):
     class Meta:
         name = "ShipToEntityRef"
-
-
 
 
 @dataclass
@@ -28522,6 +28557,7 @@ class PurchaseOrder(QBMixinWithSave):
 
     class Meta:
         name = "PurchaseOrder"
+        plural_class_name = "PurchaseOrders"
 
     Query: Type[PurchaseOrderQuery] = PurchaseOrderQuery
     Add: Type[PurchaseOrderAdd] = PurchaseOrderAdd
@@ -29378,6 +29414,7 @@ class ReceivePaymentMod(QBModRqMixin):
 class ReceivePayment(QBMixinWithSave):
     class Meta:
         name = "ReceivePayment"
+        plural_class_name = "ReceivePayments"
 
     Query: Type[ReceivePaymentQuery] = ReceivePaymentQuery
     Add: Type[ReceivePaymentAdd] = ReceivePaymentAdd
@@ -29547,8 +29584,6 @@ class ReceivePayments(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "ReceivePayment"
         plural_of = ReceivePayment
-
-
 
 
 @dataclass
@@ -30098,6 +30133,7 @@ class SalesOrderMod(QBModRqMixin):
 class SalesOrder(QBMixinWithSave):
     class Meta:
         name = "SalesOrder"
+        plural_class_name = "SalesOrders"
 
     Query: Type[SalesOrderQuery] = SalesOrderQuery
     Add: Type[SalesOrderAdd] = SalesOrderAdd
@@ -30417,8 +30453,6 @@ class SalesOrders(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "SalesOrder"
         plural_of = SalesOrder
-
-
 
 
 @dataclass
@@ -30976,6 +31010,7 @@ class SalesReceiptMod(QBModRqMixin):
 class SalesReceipt(QBMixinWithSave):
     class Meta:
         name = "SalesReceipt"
+        plural_class_name = "SalesReceipts"
 
     Query: Type[SalesReceiptQuery] = SalesReceiptQuery
     Add: Type[SalesReceiptAdd] = SalesReceiptAdd
@@ -31568,6 +31603,7 @@ class TimeTrackingMod(QBModRqMixin):
 class TimeTracking(QBMixinWithSave):
     class Meta:
         name = "TimeTracking"
+        plural_class_name = "TimeTrackings"
 
     Query: Type[TimeTrackingQuery] = TimeTrackingQuery
     Add: Type[TimeTrackingAdd] = TimeTrackingAdd
@@ -31695,7 +31731,6 @@ class TimeTrackings(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "TimeTracking"
         plural_of = TimeTracking
-
 
 
 @dataclass
@@ -32109,6 +32144,7 @@ class Transaction(QBMixinWithSave):
 
     class Meta:
         name = "Transaction"
+        plural_class_name = "Transactions"
 
     Query: Type[TransactionQuery] = TransactionQuery
     #No Add
@@ -32400,6 +32436,7 @@ class TransferMod(QBModRqMixin):
 class Transfer(QBMixinWithSave):
     class Meta:
         name = "Transfer"
+        plural_class_name = "Transfers"
 
     Query: Type[TransferQuery] = TransferQuery
     Add: Type[TransferAdd] = TransferAdd
