@@ -1,416 +1,20 @@
 import win32com.client, re, json, threading, time, logging, easygui
 from lxml import etree as et
 import xml.etree.ElementTree as ETree
-from dataclasses import dataclass, field, fields, is_dataclass, MISSING
-from typing import Optional, Union, Dict, Type, Any, get_origin, get_args, List
+from dataclasses import field
+
 import datetime as dt
 from dateutil import parser
 from datetime import timedelta, datetime
-import tkinter as tk
-from PIL import Image, ImageTk
 from decimal import Decimal
 from collections import defaultdict
 
+from .qb_common_fields_lists_dicts import *
+from .qb_special_fields import *
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# region Common Lists and Dicts
-
-
-yes_no_dict = {'Yes': True, 'yes': True, 'No': False, 'no': False}
-
-VALID_TXN_DATA_EXT_TYPE_VALUES = [
-    "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
-    "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
-    "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
-    "ItemReceipt", "JournalEntry", "PurchaseOrder", "ReceivePayment",
-    "SalesOrder", "SalesReceipt", "SalesTaxPaymentCheck", "VendorCredit"
-]
-
-VALID_LIST_DATA_EXT_TYPE_VALUES = ["Account", "Customer", "Employee", "Item", "OtherName", "Vendor"]
-
-VALID_TXN_TYPE_VALUES = [
-    "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard", "BuildAssembly",
-    "Charge", "Check", "CreditCardCharge", "CreditCardCredit", "CreditMemo", "Deposit",
-    "Estimate", "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry",
-    "LiabilityAdjustment", "Paycheck", "PayrollLiabilityCheck", "PurchaseOrder",
-    "ReceivePayment", "SalesOrder", "SalesReceipt", "SalesTaxPaymentCheck",
-    "Transfer", "VendorCredit", "YTDAdjustment"
-]
-
-VALID_OPERATOR_VALUES = ["LessThan", "LessThanEqual", "Equal", "GreaterThan", "GreaterThanEqual"]
-
-VALID_RELATION_VALUES = [
-        "Spouse", "Partner", "Mother", "Father", "Sister", "Brother",
-        "Son", "Daughter", "Friend", "Other"
-    ]
-
-VALID_ACCOUNT_TYPE_VALUES = [
-    "AccountsPayable", "AccountsReceivable", "Bank", "CostOfGoodsSold", "CreditCard",
-    "Equity", "Expense", "FixedAsset", "Income", "LongTermLiability", "NonPosting",
-    "OtherAsset", "OtherCurrentAsset", "OtherCurrentLiability", "OtherExpense", "OtherIncome"
-]
-
-VALID_DETAIL_ACCOUNT_TYPE_VALUES = [
-    "AP", "AR", "AccumulatedAdjustment", "AccumulatedAmortization", "AccumulatedAmortizationOfOtherAssets",
-    "AccumulatedDepletion", "AccumulatedDepreciation", "AdvertisingOrPromotional", "AllowanceForBadDebts",
-    "Amortization", "Auto", "BadDebts", "BankCharges", "Buildings", "CashOnHand", "CharitableContributions",
-    "Checking", "CommonStock", "CostOfLabor", "CostOfLaborCOS", "CreditCard", "DepletableAssets",
-    "Depreciation", "DevelopmentCosts", "DiscountsOrRefundsGiven", "DividendIncome", "DuesAndSubscriptions",
-    "EmployeeCashAdvances", "Entertainment", "EntertainmentMeals", "EquipmentRental", "EquipmentRentalCOS",
-    "FederalIncomeTaxPayable", "FurnitureAndFixtures", "Goodwill", "Insurance", "InsurancePayable",
-    "IntangibleAssets", "InterestEarned", "InterestPaid", "Inventory", "InvestmentMortgageOrRealEstateLoans",
-    "InvestmentOther", "InvestmentTaxExemptSecurities", "InvestmentUSGovObligations", "Land", "LeaseBuyout",
-    "LeaseholdImprovements", "LegalAndProfessionalFees", "Licenses", "LineOfCredit", "LoanPayable",
-    "LoansToOfficers", "LoansToOthers", "LoansToStockholders", "MachineryAndEquipment", "MoneyMarket",
-    "NonProfitIncome", "NotesPayable", "OfficeOrGeneralAdministrativeExpenses", "OpeningBalanceEquity",
-    "OrganizationalCosts", "OtherCostsOfServiceCOS", "OtherCurrentAssets", "OtherCurrentLiab",
-    "OtherFixedAssets", "OtherInvestmentIncome", "OtherLongTermAssets", "OtherLongTermLiab", "OtherMiscExpense",
-    "OtherMiscIncome", "OtherMiscServiceCost", "OtherPrimaryIncome", "OwnersEquity", "PaidInCapitalOrSurplus",
-    "PartnerContributions", "PartnerDistributions", "PartnersEquity", "PayrollClearing", "PayrollExpenses",
-    "PayrollTaxPayable", "PenaltiesAndSettlements", "PreferredStock", "PrepaidExpenses", "PrepaidExpensesPayable",
-    "PromotionalMeals", "RentOrLeaseOfBuildings", "RentsHeldInTrust", "RentsInTrustLiab", "RepairAndMaintenance",
-    "Retainage", "RetainedEarnings", "SalesOfProductIncome", "SalesTaxPayable", "Savings", "SecurityDeposits",
-    "ServiceOrFeeIncome", "ShareholderNotesPayable", "ShippingFreightAndDelivery", "ShippingFreightAndDeliveryCOS",
-    "StateOrLocalIncomeTaxPayable", "SuppliesAndMaterials", "SuppliesAndMaterialsCOGS", "TaxExemptInterest",
-    "TaxesPaid", "Travel", "TravelMeals", "TreasuryStock", "TrustAccounts", "TrustAccountsLiab",
-    "UndepositedFunds", "Utilities", "Vehicles"
-]
-
-VALID_SPECIAL_ACCOUNT_TYPE_VALUES = [
-    "AccountsPayable", "AccountsReceivable", "CondenseItemAdjustmentExpenses", "CostOfGoodsSold",
-    "DirectDepositLiabilities", "Estimates", "ExchangeGainLoss", "InventoryAssets", "ItemReceiptAccount",
-    "OpeningBalanceEquity", "PayrollExpenses", "PayrollLiabilities", "PettyCash", "PurchaseOrders",
-    "ReconciliationDifferences", "RetainedEarnings", "SalesOrders", "SalesTaxPayable", "UncategorizedExpenses",
-    "UncategorizedIncome", "UndepositedFunds"
-]
-
-VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Financing", "NotApplicable"]
-
-
-# endregion
-
-
-# region Special Fields
-
-
-@dataclass
-class QBDates:
-    _name = 'QBDates'
-    date: Optional[Union[str, dt.date, dt.datetime]] = field(default=None)
-    date_is_macro: bool = field(init=False, default=False)
-
-    # def __post_init__(self):
-    #     self.date = self.date  # Trigger the setter for initial date value
-
-    @property
-    def macro_dict(self):
-        return self.get_macro_dict()
-
-    @property
-    def date(self) -> Optional[Union[str, dt.date, dt.datetime]]:
-        return self._date
-
-    @date.setter
-    def date(self, value: Optional[Union[str, dt.date, dt.datetime]]):
-        if value is None:
-            raise ValueError("You did not include a date")
-        else:
-            self._date = self.parse_date(value)
-
-    def parse_date(self, date: Union[str, dt.date, dt.datetime]) -> str:
-        if isinstance(date, str):
-            if date.lower() in self.macro_dict:
-                self.date_is_macro = True
-                return str(self.macro_dict[date.lower()])
-            else:
-                try:
-                    date_parsed = parser.parse(date)
-                    return date_parsed
-                except Exception as e:
-                    raise ValueError(f'Your date parameter "{date}" could not be parsed: {e}')
-        elif isinstance(date, dt.datetime):
-            return date
-        elif isinstance(date, dt.date):
-            return date
-        else:
-            raise ValueError(f'Unsupported date type: {type(date)}')
-
-    @staticmethod
-    def get_macro_dict() -> Dict[str, int]:
-        return {
-            "rdmall": 0,
-            "rdmtoday": 1,
-            "rdmthisweek": 2,
-            "rdmthisweektodate": 3,
-            "rdmthismonth": 4,
-            "rdmthismonthtodate": 5,
-            "rdmthisquarter": 6,
-            "rdmthisquartertodate": 7,
-            "rdmthisyear": 8,
-            "rdmthisyeartodate": 9,
-            "rdmyesterday": 10,
-            "rdmlastweek": 11,
-            "rdmlastweektodate": 12,
-            "rdmlastmonth": 13,
-            "rdmlastmonthtodate": 14,
-            "rdmlastquarter": 15,
-            "rdmlastquartertodate": 16,
-            "rdmlastyear": 17,
-            "rdmlastyearTodate": 18,
-            "rdmnextweek": 19,
-            "rdmnextfourweeks": 20,
-            "rdmnextmonth": 21,
-            "rdmnextquarter": 22,
-            "rdmnextyear": 23,
-            "all": 0,
-            "today": 1,
-            "this_week": 2,
-            "this_week_to_date": 3,
-            "this_month": 4,
-            "this_month_to_date": 5,
-            "this_quarter": 6,
-            "this_quarter_to_date": 7,
-            "this_year": 8,
-            "this_year_to_date": 9,
-            "yesterday": 10,
-            "last_week": 11,
-            "last_week_to_date": 12,
-            "last_month": 13,
-            "last_month_to_date": 14,
-            "last_quarter": 15,
-            "last_quarter_to_date": 16,
-            "last_year": 17,
-            "last_year_to_date": 18,
-            "next_week": 19,
-            "next_four_weeks": 20,
-            "next_month": 21,
-            "next_quarter": 22,
-            "next_year": 23,
-        }
-
-    def __str__(self):
-        if isinstance(self._date, int):  # Macro values are stored as integers
-            return str(self._date)
-        elif isinstance(self._date, str):
-            return self._date
-        else:
-            return self._date.strftime("%Y-%m-%d")
-
-    def to_xml(self, field_name):
-        element = et.Element(snake_to_camel(field_name))
-        element.text = self.__str__()
-        return element
-
-
-    @classmethod
-    def from_xml(cls, xml_element):
-        qb_date = cls(xml_element.text)
-        return qb_date
-
-
-@dataclass
-class QBDateTime:
-    _name = 'QBDateTime'
-    datetime_value: Optional[Union[str, datetime]] = field(default=None)
-
-    @property
-    def datetime_value(self) -> Optional[Union[str, datetime]]:
-        return self._datetime_value
-
-    @datetime_value.setter
-    def datetime_value(self, value: Optional[Union[str, datetime]]):
-        if value is None:
-            raise ValueError("You did not include a datetime value")
-        else:
-            self._datetime_value = self.parse_datetime(value)
-
-    def parse_datetime(self, datetime_str: Union[str, datetime]) -> datetime:
-        if isinstance(datetime_str, str):
-            try:
-                # Parse datetime string in ISO 8601 format
-                return parser.isoparse(datetime_str)
-            except Exception as e:
-                raise ValueError(f'Your datetime parameter "{datetime_str}" could not be parsed: {e}')
-        elif isinstance(datetime_str, datetime):
-            return datetime_str
-        else:
-            raise ValueError(f'Unsupported datetime type: {type(datetime_str)}')
-
-    def __str__(self):
-        if isinstance(self._datetime_value, datetime):
-            # Format as ISO 8601 string
-            return self._datetime_value.isoformat()
-        return str(self._datetime_value)
-
-    def to_xml(self, field_name: str) -> et.Element:
-        element = et.Element(field_name)
-        element.text = self.__str__()
-        return element
-
-    @classmethod
-    def from_xml(cls, xml_element: et.Element) -> 'QBDateTime':
-        datetime_str = xml_element.text
-        return cls(datetime_str)
-
-
-@dataclass
-class QBTime:
-    def __init__(self, duration: timedelta):
-        self.duration = duration
-        self.value = self._convert_to_qb_format(duration)
-
-    @staticmethod
-    def is_valid_xml_format(duration_str):
-        if isinstance(duration_str, str):
-            pattern = r"([+\-]?)PT((\d+)H)?((\d+)M)?((\d+)S)?"
-            return bool(re.fullmatch(pattern, duration_str))
-        else:
-            return False
-
-    @staticmethod
-    def is_valid_time_format(duration_str):
-        if isinstance(duration_str, str):
-            pattern = r"^\d{2}:\d{2}(:\d{2})?$"
-            return bool(re.fullmatch(pattern, duration_str))
-        else:
-            return False
-
-    @staticmethod
-    def _convert_to_qb_format(duration: timedelta) -> str:
-        if isinstance(duration, str) and str(duration).isnumeric():
-            parts = duration.split('.')
-            hours = int(parts[0])
-            minutes = int(parts[1])
-            duration = timedelta(hours=hours, minutes=minutes)
-        elif isinstance(duration, str) and QBTime.is_valid_xml_format(duration):
-            return duration
-        elif QBTime.is_valid_xml_format(duration):
-            time = QBTime.from_hhmm_format(duration)
-            duration = time.value
-        else:
-            pass
-
-        total_seconds = int(duration.total_seconds())
-        sign = '-' if total_seconds < 0 else ''
-        total_seconds = abs(total_seconds)
-
-        hours, remainder = divmod(total_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-
-        duration_str = f"{sign}PT"
-        if hours > 0:
-            duration_str += f"{hours}H"
-        if minutes > 0:
-            duration_str += f"{minutes}M"
-        if seconds > 0:
-            duration_str += f"{seconds}S"
-
-        return duration_str
-
-    @classmethod
-    def from_qb_format(cls, duration_str: str) -> 'QBTime':
-        pattern = r"([+\-]?)PT((\d+)H)?((\d+)M)?((\d+)S)?"
-        match = re.fullmatch(pattern, duration_str)
-        if not match:
-            raise ValueError(f"Invalid QuickBooks duration format: {duration_str}")
-
-        sign = -1 if match.group(1) == '-' else 1
-        hours = int(match.group(3)) if match.group(3) else 0
-        minutes = int(match.group(5)) if match.group(5) else 0
-        seconds = int(match.group(7)) if match.group(7) else 0
-
-        duration = timedelta(hours=hours, minutes=minutes, seconds=seconds) * sign
-        return cls(duration)
-
-    @classmethod
-    def from_hhmm_format(cls, time_str: str) -> 'QBTime':
-        """Convert a time string in HH:MM or HH:MM:SS format to a QBTime object."""
-        try:
-            parts = time_str.split(':')
-            if len(parts) == 2:
-                hours, minutes = map(int, parts)
-                seconds = 0
-            elif len(parts) == 3:
-                hours, minutes, seconds = map(int, parts)
-            else:
-                raise ValueError
-            duration = timedelta(hours=hours, minutes=minutes, seconds=seconds)
-            return cls(duration)
-        except ValueError:
-            raise ValueError(f"Invalid HH:MM or HH:MM:SS format: {time_str}")
-
-    @classmethod
-    def parse(cls, time_str: str) -> 'QBTime':
-        """Convert a time string in either QuickBooks or HH:MM or HH:MM:SS format to a QBTime object."""
-        if time_str.startswith("PT") or time_str.startswith("-PT"):
-            return cls.from_qb_format(time_str)
-        elif re.match(r"^\d+:\d{2}(:\d{2})?$", time_str):
-            return cls.from_hhmm_format(time_str)
-        else:
-            raise ValueError(f"Invalid time format: {time_str}")
-
-    @classmethod
-    def from_float_hours(cls, hours_float):
-        hours = int(hours_float)
-        minutes = int((hours_float - hours) * 60)
-        time_delta = timedelta(hours=hours, minutes=minutes)
-        qb_time = cls(time_delta)
-        return qb_time
-
-    @classmethod
-    def from_xml(cls, element: et.Element) -> 'QBTime':
-        duration_str = element.text.strip()
-        return cls.from_qb_format(duration_str)
-
-    def to_xml(self, field_name) -> et.Element:
-        element = et.Element(snake_to_camel(field_name))
-        element.text = self._convert_to_qb_format(self.value)
-        return element
-
-    def to_float_hours(self):
-        total_minutes = int(self.duration.total_seconds() / 60)
-        return total_minutes / 60
-
-    def __str__(self):
-        return self._convert_to_qb_format(self.value)
-
-
-@dataclass
-class QBPriceType(str):
-    def __new__(cls, value):
-        return super().__new__(cls, value)
-
-    @staticmethod
-    def _validate_price(value) -> None:
-        pattern = r"([+\-]?[0-9]{1,10}(\.[0-9]{1,5})?)?"
-        if value is not None and not re.fullmatch(pattern, value):
-            raise ValueError(
-                f"Invalid price: {value}. Must be a number with up to 10 digits before the decimal and up to 5 digits after. "
-                f"Examples of valid values: '12345', '-12345', '12345.6789', '-0.12345', '+0.12345'."
-            )
-
-    @classmethod
-    def from_xml(cls, element: et.Element) -> 'QBPriceType':
-        price_str = element.text.strip()
-        return cls(price_str)
-
-    def to_xml(self) -> et.Element:
-        self._validate_price(self)
-        element = et.Element("QuickBooksPrice")
-        element.text = str(self)
-        return element
-
-
-# endregion
-
-
-# region Common Fields
-
-
-
-# endregion
 
 
 # region Connection To Desktop And Utilities
@@ -1467,21 +1071,8 @@ class PluralTrxnSaveMixin:
 @dataclass
 class QBRefMixin(QBMixin):
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element"
-        },
-    )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-            "max_length": 209
-        },
-    )
+    list_id: Optional[str] = list_id
+    full_name: Optional[str] = full_name
 
 # endregion
 
@@ -2131,13 +1722,7 @@ class Contacts(QBMixin):
     class Meta:
         name = "Contacts"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element"
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -2230,13 +1815,7 @@ class ContactsMod(QBMixin):
         name = "ContactsMod"
 
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -2837,20 +2416,8 @@ class ClassFilter(ToXmlMixin):
     class Meta:
         name = "ClassFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -2934,20 +2501,8 @@ class EntityFilter(ToXmlMixin):
     class Meta:
         name = "EntityFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -2969,20 +2524,8 @@ class AccountFilter(ToXmlMixin):
     class Meta:
         name = "AccountFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -3049,13 +2592,7 @@ class ItemFilter(ToXmlMixin):
     class Meta:
         name = "ItemFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
     full_name: List[str] = field(
         default_factory=list,
         metadata={
@@ -10004,20 +9541,8 @@ class AccountQuery(QBQueryMixin):
     class Meta:
         name = "AccountQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -10152,14 +9677,8 @@ class AccountMod(AccountBase, QBModRqMixin):
     class Meta:
         name = "AccountMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
+            
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -10188,13 +9707,7 @@ class Account(AccountBase, QBMixinWithSave):
     SpecialAccountAdd: Type[SpecialAccountAdd] = SpecialAccountAdd
     Mod: Type[AccountMod] = AccountMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -10217,14 +9730,7 @@ class Account(AccountBase, QBMixinWithSave):
             "max_length": 16,
         },
     )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-            "max_length": 159,
-        },
-    )
+    full_name: Optional[str] = field(default=None, metadata={**full_name.metadata, "max_length": 159})
     sublevel: Optional[int] = field(
         default=None,
         metadata={
@@ -10386,20 +9892,8 @@ class BillingRateQuery(QBQueryMixin):
     class Meta:
         name = "BillingRateQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -10495,13 +9989,7 @@ class BillingRate(QBMixin):
     Add: Type[BillingRateAdd] = BillingRateAdd
     # there is no Mod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -10574,20 +10062,8 @@ class ClassInQBQuery(QBQueryMixin):
     class Meta:
         name = "ClassQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -10699,14 +10175,7 @@ class ClassInQBMod(QBModRqMixin):
     class Meta:
         name = "ClassMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -10749,13 +10218,7 @@ class ClassInQB(QBMixinWithSave):
     Add: Type[ClassInQBAdd] = ClassInQBAdd
     Mod: Type[ClassInQBMod] = ClassInQBMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element"
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -10870,20 +10333,8 @@ class CurrencyQuery(QBQueryMixin):
     class Meta:
         name = "CurrencyQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -11004,14 +10455,7 @@ class CurrencyMod(QBModRqMixin):
     class Meta:
         name = "CurrencyMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -11062,13 +10506,7 @@ class Currency(QBMixinWithSave):
     Add: Type[CurrencyAdd] = CurrencyAdd
     Mod: Type[CurrencyMod] = CurrencyMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -11157,20 +10595,8 @@ class CustomerMsgQuery(QBQueryMixin):
     class Meta:
         name = "CustomerMsgQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -11274,13 +10700,7 @@ class CustomerMsg(QBMixinWithSave):
     #There is no Mod
 
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -11341,20 +10761,8 @@ class CustomerQuery(QBQueryMixin):
     class Meta:
         name = "CustomerQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -11865,14 +11273,7 @@ class CustomerMod(QBModRqMixin):
     class Meta:
         name = "CustomerMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -12255,13 +11656,7 @@ class Customer(QBMixinWithSave):
     Add: Type[CustomerAdd] = CustomerAdd
     Mod: Type[CustomerMod] = CustomerMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element"
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -12292,14 +11687,7 @@ class Customer(QBMixinWithSave):
             "max_length": 41
         },
     )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-            "max_length": 209
-        },
-    )
+    full_name: Optional[str] = full_name
     is_active: Optional[bool] = field(
         default=None,
         metadata={
@@ -12983,20 +12371,8 @@ class EmployeeQuery(QBQueryMixin):
     class Meta:
         name = "EmployeeQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -13066,13 +12442,7 @@ class Employee(QBMixinWithSave):
         pass
 
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -13541,20 +12911,8 @@ class InventorySiteQuery(QBQueryMixin):
     class Meta:
         name = "InventorySiteQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     active_status: Optional[str] = field(
         default="All",
         metadata={
@@ -13693,14 +13051,7 @@ class InventorySiteMod(QBModRqMixin):
     class Meta:
         name = "InventorySiteMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -13791,13 +13142,7 @@ class InventorySite(QBMixinWithSave):
     Add: Type[InventorySiteAdd] = InventorySiteAdd
     Mod: Type[InventorySiteMod] = InventorySiteMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -14057,20 +13402,8 @@ class ItemQueryMixin(QBQueryMixin):
     class Meta:
         name = ""
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -14926,14 +14259,7 @@ class ItemModMixin(QBModRqMixin):
     class Meta:
         name = ""
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -15102,14 +14428,7 @@ class ItemInventoryModMixin(ItemModWithClassAndTaxMixin):
     class Meta:
         name = ""
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -15591,13 +14910,7 @@ class ItemMixin:
     class Meta:
         name = ""
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -15628,14 +14941,7 @@ class ItemMixin:
             "max_length": 31,
         },
     )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-            "max_length": 159,
-        },
-    )
+    full_name: Optional[str] = field(default=None, metadata={**full_name.metadata, "max_length": 159})
     bar_code_value: Optional[str] = field(
         default=None,
         metadata={
@@ -16636,20 +15942,8 @@ class JobTypeQuery(QBQueryMixin):
     class Meta:
         name = "JobTypeQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -16763,13 +16057,7 @@ class JobType(QBMixinWithSave):
     #There is no Mod
 
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -16800,14 +16088,7 @@ class JobType(QBMixinWithSave):
             "max_length": 31,
         },
     )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-            "max_length": 159,
-        },
-    )
+    full_name: Optional[str] = field(default=None, metadata={**full_name.metadata, "max_length": 159})
     is_active: Optional[bool] = field(
         default=None,
         metadata={
@@ -16849,20 +16130,8 @@ class OtherNameQuery(QBQueryMixin):
     class Meta:
         name = "OtherNameQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -17089,14 +16358,7 @@ class OtherNameMod(QBModRqMixin):
     class Meta:
         name = "OtherNameMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -17243,13 +16505,7 @@ class OtherName(QBMixinWithSave):
     Add: Type[OtherNameAdd] = OtherNameAdd
     Mod: Type[OtherNameMod] = OtherNameMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -17439,20 +16695,8 @@ class PaymentMethodQuery(QBQueryMixin):
     class Meta:
         name = "PaymentMethodQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -17579,13 +16823,7 @@ class PaymentMethod(QBMixinWithSave):
     Add: Type[PaymentMethodAdd] = PaymentMethodAdd
     # There is no Mod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -17647,13 +16885,7 @@ class PaymentMethods(PluralMixin, PluralListSaveMixin):
 class PayrollItemWage(QBMixin):
 
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -17796,20 +17028,8 @@ class PriceLevelQuery(QBQueryMixin):
     class Meta:
         name = "PriceLevelQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -17951,14 +17171,7 @@ class PriceLevelMod(QBModRqMixin):
     class Meta:
         name = "PriceLevelMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -18016,13 +17229,7 @@ class PriceLevel(QBMixinWithSave):
     Add: Type[PriceLevelAdd] = PriceLevelAdd
     Mod: Type[PriceLevelMod] = PriceLevelMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -18109,20 +17316,8 @@ class SalesRepQuery(QBQueryMixin):
     class Meta:
         name = "SalesRepQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -18236,14 +17431,7 @@ class SalesRepMod(QBModRqMixin):
     class Meta:
         name = "SalesRepMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -18287,13 +17475,7 @@ class SalesRep(QBMixinWithSave):
     Add: Type[SalesRepAdd] = SalesRepAdd
     Mod: Type[SalesRepMod] = SalesRepMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -18358,20 +17540,8 @@ class SalesTaxCodeQuery(QBQueryMixin):
     class Meta:
         name = "SalesTaxCodeQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -18507,14 +17677,7 @@ class SalesTaxCodeMod(QBModRqMixin):
     class Meta:
         name = "SalesTaxCodeMod"
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -18579,13 +17742,7 @@ class SalesTaxCode(QBMixinWithSave):
     Add: Type[SalesTaxCodeAdd] = SalesTaxCodeAdd
     Mod: Type[SalesTaxCodeMod] = SalesTaxCodeMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -18678,20 +17835,8 @@ class ShipMethodQuery(QBQueryMixin):
     class Meta:
         name = "ShipMethodQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -18796,13 +17941,7 @@ class ShipMethod(QBMixinWithSave):
     Add: Type[ShipMethodAdd] = ShipMethodAdd
     # Does not have Mod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -18860,20 +17999,8 @@ class StandardTermsQuery(QBQueryMixin):
     class Meta:
         name = "StandardTermsQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -18999,13 +18126,7 @@ class StandardTerm(QBMixinWithSave):
     Add: Type[StandardTermsAdd] = StandardTermsAdd
     # Doesn't Have Mod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -19171,20 +18292,8 @@ class UnitOfMeasureSetQuery(QBQueryMixin):
     class Meta:
         name = "UnitOfMeasureSetQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -19322,13 +18431,7 @@ class UnitOfMeasureSet(QBMixinWithSave):
     Add: Type[UnitOfMeasureSetAdd] = UnitOfMeasureSetAdd
     # No Mod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -19416,20 +18519,8 @@ class VendorTypeQuery(QBQueryMixin):
     class Meta:
         name = "VendorTypeQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -19541,13 +18632,7 @@ class VendorType(QBMixinWithSave):
     Add: Type[VendorTypeAdd] = VendorTypeAdd
     # No Mod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -19578,14 +18663,7 @@ class VendorType(QBMixinWithSave):
             "max_length": 31,
         },
     )
-    full_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-            "max_length": 159,
-        },
-    )
+    full_name: Optional[str] = field(default=None, metadata={**full_name.metadata, "max_length": 159})
     is_active: Optional[bool] = field(
         default=None,
         metadata={
@@ -19628,20 +18706,8 @@ class VendorQuery(QBQueryMixin):
     class Meta:
         name = "VendorQuery"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     max_returned: Optional[int] = field(
         default=None,
         metadata={
@@ -20049,14 +19115,7 @@ class VendorMod(QBModRqMixin):
         name = "VendorMod"
 
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-            "required": True,
-        },
-    )
+    list_id: Optional[str] = field(default=None, metadata={**list_id.metadata, "required": True})
     edit_sequence: Optional[str] = field(
         default=None,
         metadata={
@@ -20345,13 +19404,7 @@ class Vendor(QBMixinWithSave):
     Add: Type[VendorAdd] = VendorAdd
     Mod: Type[VendorMod] = VendorMod
 
-    list_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_id: Optional[str] = list_id
     time_created: Optional[QBDateTime] = field(
         default=None,
         metadata={
@@ -32517,20 +31570,8 @@ class TimeTrackingEntityFilter(QBMixin):
     class Meta:
         name = "TimeTrackingEntityFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
 
 
 @dataclass
@@ -33003,20 +32044,8 @@ class TransactionEntityFilter(QBMixin):
             "valid_values": ["Customer", "Employee", "OtherName", "Vendor"]
         },
     )
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -33063,20 +32092,8 @@ class TransactionAccountFilter(QBMixin):
             ],
         },
     )
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -33116,20 +32133,8 @@ class TransactionItemFilter(QBMixin):
             ]
         },
     )
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -33155,20 +32160,8 @@ class TransactionClassFilter(QBMixin):
     class Meta:
         name = "TransactionClassFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
-    full_name: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "FullName",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
+    full_names: List[str] = full_names
     list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
@@ -33194,13 +32187,7 @@ class CurrencyFilter(QBMixin):
     class Meta:
         name = "CurrencyFilter"
 
-    list_id: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "ListID",
-            "type": "Element",
-        },
-    )
+    list_ids: List[str] = list_ids
     full_name: List[str] = field(
         default_factory=list,
         metadata={
