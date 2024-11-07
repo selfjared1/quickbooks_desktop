@@ -2,7 +2,6 @@ import win32com.client, re, json, threading, time, logging, easygui
 from lxml import etree as et
 import xml.etree.ElementTree as ETree
 from dataclasses import field
-
 import datetime as dt
 from dateutil import parser
 from datetime import timedelta, datetime
@@ -18,6 +17,124 @@ logger.addHandler(logging.NullHandler())
 
 
 # region Connection To Desktop And Utilities
+
+@dataclass
+class ErrorRecovery:
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    owner_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class QueryRs:
+    class Meta:
+        name = "QueryRs"
+
+    ret: Optional[TempPluralVar] = field(
+        default=None,
+        metadata={
+            "name": "Ret",
+            "type": "Element",
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    status_code: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "statusCode",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+    status_severity: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "statusSeverity",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+    status_message: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "statusMessage",
+            "type": "Attribute",
+        },
+    )
+    ret_count: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "retCount",
+            "type": "Attribute",
+        },
+    )
+    iterator_remaining_count: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "iteratorRemainingCount",
+            "type": "Attribute",
+        },
+    )
+    iterator_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "iteratorID",
+            "type": "Attribute",
+        },
+    )
+
+    @classmethod
+    def from_xml(cls, xml_rs):
+        pass
+
+
+
 
 class QuickbooksDesktop():
     """
@@ -211,7 +328,7 @@ class QuickbooksDesktop():
         return full_request
 
 
-    def send_xml(self, requestXML, encoding="utf-8", raw_response=False):
+    def send_xml(self, requestXML, encoding="utf-8", is_full_request=False, raw_response=False):
         """
         This method
             1. finishes the XML build
@@ -221,7 +338,10 @@ class QuickbooksDesktop():
         :return: responseXML from the quickbooks processor
         """
 
-        full_request = self._create_full_request(requestXML, encoding)
+        if not is_full_request:
+            full_request = self._create_full_request(requestXML, encoding)
+        else:
+            full_request = requestXML
 
         logger.debug(f'Opening connection to QuickBooks')
         if not self.qbXMLRP:
@@ -403,6 +523,7 @@ def xml_bool_to_py_bool(element):
         return False
     else:
         raise ValueError("Invalid input; expected 'true' or 'false' in element text.")
+
 
 # endregion
 
@@ -733,13 +854,13 @@ class CreateAddOrModFromParentMixin:
         for attr, value in parent.__dict__.items():
             if value is None:
                 pass
-            elif hasattr(instance, attr) and not isinstance(value, list):
-                instance._handle_regular_sub_value(attr, value, keep_ids)
-            elif isinstance(value, list):
-                instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
+            elif hasattr(instance, attr):
+                if isinstance(value, list):
+                    instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
+                else:
+                    instance._handle_regular_sub_value(attr, value, keep_ids)
             else:
                 pass
-
         if getattr(instance, 'validate', False):
             instance.validate()
         else:
@@ -840,7 +961,6 @@ class PluralMixin:
         plural_of = ''
         plural_of_db_model = ''
 
-
     def __init__(self):
         self._items = []
 
@@ -918,7 +1038,7 @@ class PluralMixin:
             for instance_xml in list_of_ret:
                 plural_of_class = cls.Meta.plural_of
                 plural_of_instance = plural_of_class.from_xml(instance_xml)
-                plural_instance._items.append(plural_of_instance)
+                plural_instance.add_item(plural_of_instance)
             return plural_instance
 
     @classmethod
@@ -992,7 +1112,7 @@ class PluralMixin:
 
 
 class PluralListSaveMixin:
-    def save_all(self, qb):
+    def save_all(self, qb, raw_response=False):
         xml_requests = []
         for item in self:
             if item.list_id is not None:
@@ -1001,11 +1121,21 @@ class PluralListSaveMixin:
             else:
                 add_xml = item._get_add_rq_xml()
                 xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests)
+        response = qb.send_xml(xml_requests, raw_response=raw_response)
         return response
 
+    def add_all(self, qb, raw_response=False):
+        xml_requests = []
+        for item in self:
+            add_xml = item._get_add_rq_xml()
+            xml_requests.append(add_xml)
+        response = qb.send_xml(xml_requests, raw_response=raw_response)
+        return response
+
+
 class PluralTrxnSaveMixin:
-    def save_all(self, qb):
+
+    def save_all(self, qb, raw_response=False):
         xml_requests = []
         for trxn in self:
             if trxn.trxn_id is not None:
@@ -1014,15 +1144,15 @@ class PluralTrxnSaveMixin:
             else:
                 add_xml = trxn._get_add_rq_xml()
                 xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests)
+        response = qb.send_xml(xml_requests, raw_response=raw_response)
         return response
 
-    def add_all(self, qb):
+    def add_all(self, qb, raw_response=False):
         xml_requests = []
         for trxn in self:
             add_xml = trxn._get_add_rq_xml()
             xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests)
+        response = qb.send_xml(xml_requests, raw_response=raw_response)
         return response
 
     def set_ids_to_none(self, id_name):
@@ -9523,7 +9653,6 @@ class Account(AccountBase, QBMixinWithSave):
     Add: Type[AccountAdd] = AccountAdd
     SpecialAccountAdd: Type[SpecialAccountAdd] = SpecialAccountAdd
     Mod: Type[AccountMod] = AccountMod
-    PluralName = "Accounts"
 
     list_id: Optional[str] = list_id
     time_created: Optional[QBDates] = field(
@@ -9645,7 +9774,8 @@ class Accounts(PluralMixin, PluralListSaveMixin):
         name = "Account"
         plural_of = Account
 
-
+    def __init__(self):
+        super().__init__()
 
     # endregion
 
@@ -9869,6 +9999,9 @@ class BillingRates(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "BillingRate"
         plural_of = BillingRate
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -10105,6 +10238,9 @@ class ClassesInQB(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "Class"
         plural_of = ClassInQB
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -10409,6 +10545,9 @@ class Currencies(PluralMixin, PluralListSaveMixin):
         name = "Currency"
         plural_of = Currency
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class CustomerMsgQuery(QBQueryMixin):
@@ -10568,6 +10707,9 @@ class CustomerMsgs(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "CustomerMsg"
         plural_of = CustomerMsg
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -11937,6 +12079,9 @@ class Customers(PluralMixin, PluralListSaveMixin):
         name = "Customer"
         plural_of = Customer
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class EmergencyContact(QBMixin):
@@ -12679,6 +12824,9 @@ class Employees(PluralMixin, PluralListSaveMixin):
         plural_of = Employee
         # plural_of_db_model = DBEmployee
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class SiteAddress(AddressBlock):
@@ -13081,6 +13229,8 @@ class InventorySites(PluralMixin, PluralListSaveMixin):
         name = "InventorySite"
         plural_of = InventorySite
 
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -14873,6 +15023,9 @@ class ItemDiscounts(PluralMixin, PluralListSaveMixin):
         name = "ItemDiscount"
         plural_of = ItemDiscount
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
@@ -14943,6 +15096,9 @@ class ItemGroups(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "ItemGroup"
         plural_of = ItemGroup
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -15120,6 +15276,9 @@ class ItemInventories(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "ItemInventory"
         plural_of = ItemInventory
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -15305,6 +15464,9 @@ class ItemInventoryAssemblies(PluralMixin, PluralListSaveMixin):
         name = "ItemInventoryAssembly"
         plural_of = ItemInventoryAssembly
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
@@ -15389,6 +15551,9 @@ class ItemNonInventories(PluralMixin, PluralListSaveMixin):
         name = "ItemNonInventory"
         plural_of = ItemNonInventory
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
@@ -15466,6 +15631,9 @@ class ItemOtherCharges(PluralMixin, PluralListSaveMixin):
         name = "ItemOtherCharge"
         plural_of = ItemOtherCharge
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ItemPayment(ItemMixin, QBMixinWithSave):
@@ -15521,6 +15689,9 @@ class ItemPayments(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "ItemPayment"
         plural_of = ItemPayment
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -15592,6 +15763,9 @@ class ItemSalesTaxes(PluralMixin, PluralListSaveMixin):
         name = "ItemSalesTax"
         plural_of = ItemSalesTax
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
@@ -15640,6 +15814,9 @@ class ItemSalesTaxGroups(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "ItemSalesTaxGroup"
         plural_of = ItemSalesTaxGroup
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -15718,6 +15895,9 @@ class ItemServices(PluralMixin, PluralListSaveMixin):
         name = "ItemService"
         plural_of = ItemService
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ItemSubtotal(ItemMixin, QBMixinWithSave):
@@ -15765,6 +15945,9 @@ class ItemSubtotals(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "ItemSubtotal"
         plural_of = ItemSubtotal
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -15953,6 +16136,9 @@ class JobTypes(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "JobType"
         plural_of = JobType
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -16521,6 +16707,9 @@ class OtherNames(PluralMixin, PluralListSaveMixin):
         name = "OtherName"
         plural_of = OtherName
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class PaymentMethodQuery(QBQueryMixin):
@@ -16718,6 +16907,9 @@ class PaymentMethods(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "PaymentMethod"
         plural_of = PaymentMethod
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -17143,6 +17335,9 @@ class PriceLevels(PluralMixin, PluralListSaveMixin):
         name = "PriceLevel"
         plural_of = PriceLevel
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class SalesRepQuery(QBQueryMixin):
@@ -17367,6 +17562,9 @@ class SalesReps(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "SalesRep"
         plural_of = SalesRep
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -17658,6 +17856,9 @@ class SalesTaxCodes(PluralMixin, PluralListSaveMixin):
         name = "SalesTaxCode"
         plural_of = SalesTaxCode
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class CustomerSalesTaxCodeRef(QBRefMixin):
@@ -17828,6 +18029,9 @@ class ShipMethods(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "ShipMethod"
         plural_of = ShipMethod
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -18036,6 +18240,8 @@ class StandardTerms(PluralMixin, PluralListSaveMixin):
         name = "StandardTerms"
         plural_of = StandardTerm
 
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -18351,6 +18557,9 @@ class UnitOfMeasureSets(PluralMixin, PluralListSaveMixin):
         name = "UnitOfMeasureSet"
         plural_of = UnitOfMeasureSet
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class VendorTypeQuery(QBQueryMixin):
@@ -18537,6 +18746,9 @@ class VendorTypes(PluralMixin, PluralListSaveMixin):
     class Meta:
         name = "VendorType"
         plural_of = VendorType
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -19582,6 +19794,9 @@ class Vendors(PluralMixin, PluralListSaveMixin):
         name = "Vendor"
         plural_of = Vendor
 
+    def __init__(self):
+        super().__init__()
+
 
 # endregion
 
@@ -19978,6 +20193,9 @@ class ARRefundCreditCards(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "ARRefundCreditCard"
         plural_of = ARRefundCreditCard
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -20432,6 +20650,9 @@ class BillPaymentChecks(PluralMixin, PluralTrxnSaveMixin):
         name = "BillPaymentCheck"
         plural_of = BillPaymentCheck
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class BillPaymentCreditCardQuery(QBQueryMixin):
@@ -20773,6 +20994,9 @@ class BillPaymentCreditCards(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "BillPaymentCreditCard"
         plural_of = BillPaymentCreditCard
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -21397,6 +21621,9 @@ class Bills(PluralMixin, PluralTrxnSaveMixin):
         name = "Bill"
         plural_of = Bill
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class BuildAssemblyQuery(QBQueryMixin):
@@ -21880,6 +22107,9 @@ class BuildAssemblies(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "BuildAssembly"
         plural_of = BuildAssembly
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -22500,6 +22730,9 @@ class Charges(PluralMixin, PluralTrxnSaveMixin):
         name = "Charge"
         plural_of = Charge
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class ApplyCheckToTxnBase:
@@ -23099,6 +23332,9 @@ class Checks(PluralMixin, PluralTrxnSaveMixin):
         name = "Check"
         plural_of = Check
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class CreditCardChargeQuery(QBQueryMixin):
@@ -23577,6 +23813,9 @@ class CreditCardCharges(PluralMixin, PluralTrxnSaveMixin):
         name = "CreditCardCharge"
         plural_of = CreditCardCharge
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class CreditCardCreditQuery(QBQueryMixin):
@@ -24054,6 +24293,9 @@ class CreditCardCredits(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "CreditCardCredit"
         plural_of = CreditCardCredit
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -24939,6 +25181,9 @@ class CreditMemos(PluralMixin, PluralTrxnSaveMixin):
         name = "CreditMemo"
         plural_of = CreditMemo
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class CashBackInfoAdd(QBMixin):
@@ -25404,6 +25649,9 @@ class Deposits(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "Deposit"
         plural_of = Deposit
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -26210,6 +26458,9 @@ class Estimates(PluralMixin, PluralTrxnSaveMixin):
         name = "Estimate"
         plural_of = Estimate
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class InventoryAdjustmentQuery(QBQueryMixin):
@@ -26622,6 +26873,9 @@ class InventoryAdjustments(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "InventoryAdjustment"
         plural_of = InventoryAdjustment
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -27578,6 +27832,9 @@ class Invoices(PluralMixin, PluralTrxnSaveMixin):
         name = "Invoice"
         plural_of = Invoice
 
+    def __init__(self):
+        super().__init__()
+
     def split_invoices_by_tax(self) -> Dict[str, List[Invoice]]:
         result = defaultdict(list)
 
@@ -28020,6 +28277,9 @@ class JournalEntries(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "JournalEntry"
         plural_of = JournalEntry
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -28845,6 +29105,9 @@ class PurchaseOrders(PluralMixin, PluralTrxnSaveMixin):
         name = "PurchaseOrder"
         plural_of = PurchaseOrder
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class CreditCardTxnInputInfoMod(QBMixin):
@@ -29584,6 +29847,9 @@ class ReceivePayments(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "ReceivePayment"
         plural_of = ReceivePayment
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -30453,6 +30719,9 @@ class SalesOrders(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "SalesOrder"
         plural_of = SalesOrder
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -31331,6 +31600,9 @@ class SalesReceipts(PluralMixin, PluralTrxnSaveMixin):
         name = "SalesReceipt"
         plural_of = SalesReceipt
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class TimeTrackingEntityFilter(QBMixin):
@@ -31731,6 +32003,9 @@ class TimeTrackings(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "TimeTracking"
         plural_of = TimeTracking
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
@@ -32261,6 +32536,9 @@ class Transactions(PluralMixin):
         name = "Transaction"
         plural_of = Transaction
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class TransferQuery(QBQueryMixin):
@@ -32536,6 +32814,9 @@ class Transfers(PluralMixin, PluralTrxnSaveMixin):
     class Meta:
         name = "Transfer"
         plural_of = Transfer
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
