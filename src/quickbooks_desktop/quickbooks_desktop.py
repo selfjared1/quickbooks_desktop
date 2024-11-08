@@ -1174,27 +1174,7 @@ class PluralListSaveMixin:
 
 class PluralTrxnSaveMixin:
 
-    def save_all(self, qb, raw_response=False):
-        xml_requests = []
-        for trxn in self:
-            if trxn.trxn_id is not None:
-                mod_xml = trxn._get_mod_rq_xml()
-                xml_requests.append(mod_xml)
-            else:
-                add_xml = trxn._get_add_rq_xml()
-                xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, response_type=raw_response)
-        return response
-
-    def add_all(self, qb, raw_response=False):
-        xml_requests = []
-        for trxn in self:
-            add_xml = trxn._get_add_rq_xml()
-            xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, response_type=raw_response)
-        return response
-
-    def set_ids_to_none(self, id_name):
+    def _set_ids_to_none(self, id_name):
         # Iterate over each item in the _items list, assuming they are instances of some class
         for item in self:
             self._set_list_id_in_instance_to_none(item, id_name)
@@ -1237,6 +1217,37 @@ class PluralTrxnSaveMixin:
                         setattr(obj, attr_name, None)
                     else:
                         pass
+
+    def _index_data_ext(self):
+        data_ext_dict = {}
+        for trxn in self:
+            if len(trxn.data_ext):
+                data_ext_dict[trxn] = {index: ext for index, ext in enumerate(trxn.data_ext, start=1)}
+        return data_ext_dict
+
+    def save_all(self, qb, raw_response=False):
+        xml_requests = []
+        for trxn in self:
+            if trxn.trxn_id is not None:
+                mod_xml = trxn._get_mod_rq_xml()
+                xml_requests.append(mod_xml)
+            else:
+                add_xml = trxn._get_add_rq_xml()
+                xml_requests.append(add_xml)
+        response = qb.send_xml(xml_requests, response_type=raw_response)
+        return response
+
+    def add_all(self, qb, raw_response=False):
+        xml_requests = []
+        for trxn in self:
+            add_xml = trxn._get_add_rq_xml()
+            xml_requests.append(add_xml)
+        data_ext_dict = self._index_data_ext()
+        response = qb.send_xml(xml_requests, response_type=raw_response)
+        return response
+
+
+
 
 
 @dataclass
@@ -30210,13 +30221,6 @@ class SalesOrderAdd(QBAddRqMixin):
         metadata={
             "name": "SalesOrderLineGroupAdd",
             "type": "Element",
-        },
-    )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
         },
     )
 
