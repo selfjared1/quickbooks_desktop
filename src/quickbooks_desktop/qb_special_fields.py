@@ -4,6 +4,7 @@ from .qb_common_fields_lists_dicts import *
 import datetime as dt
 from dateutil import parser
 from datetime import timedelta, datetime
+from .utilities import snake_to_camel
 
 @dataclass
 class QBDates:

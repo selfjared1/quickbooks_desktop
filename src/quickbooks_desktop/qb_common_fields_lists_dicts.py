@@ -2,6 +2,7 @@ from dataclasses import dataclass, field, fields, is_dataclass, MISSING
 from typing import Optional, Union, Dict, Type, Any, get_origin, get_args, List, TypeVar
 from decimal import Decimal
 
+
 TempPluralVar = TypeVar('T')
 
 yes_no_dict = {'Yes': True, 'yes': True, 'No': False, 'no': False}

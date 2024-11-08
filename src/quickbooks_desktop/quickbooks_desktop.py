@@ -1,15 +1,10 @@
-import win32com.client, re, json, threading, time, logging, easygui
-from lxml import etree as et
+import win32com.client, threading, time, logging, easygui
 import xml.etree.ElementTree as ETree
 from dataclasses import field
-import datetime as dt
-from dateutil import parser
-from datetime import timedelta, datetime
-from decimal import Decimal
 from collections import defaultdict
 
-from .qb_common_fields_lists_dicts import *
 from .qb_special_fields import *
+from .utilities import to_lower_camel_case
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -291,6 +286,66 @@ class QuickbooksDesktop():
 
         return QBXML, QBXMLMsgsRq
 
+    def _get_class_name_from_response_tag(self, response_tag):
+        if 'QueryRs' in response_tag:
+            class_name = response_tag.replace('QueryRs', '')
+        elif 'AddRs' in response_tag:
+            class_name = response_tag.replace('AddRs', '')
+        elif 'ModRs' in response_tag:
+            class_name = response_tag.replace('ModRs', '')
+        else:
+            class_name = None
+        return class_name
+
+    def _create_response_list_from_elements(self):
+        pass
+
+    def _create_response_dict_from_responses(self, responses):
+        instances = {}
+        for response in responses:
+            request_id = response.get("requestID")
+            class_name = self._get_class_name_from_response_tag(response.tag)
+            try:
+                cls = globals().get(class_name)
+                elements = response.getchildren()
+                instance_list = []
+                for element in elements:
+                    single_instance = cls.from_xml(element)
+                    instance_list.append(single_instance)
+                instances[request_id] = instance_list
+            except (ModuleNotFoundError, AttributeError) as e:
+                print(f"Error loading class for {class_name}: {e}")
+        return instances
+
+    def _break_response_into_single_instances(self, responses):
+        instances = {}
+        for response in responses:
+            class_name = self._get_class_name_from_response_tag(response.tag)
+            try:
+                cls = globals().get(class_name)
+                elements = response.getchildren()
+                instance_list = []
+                for element in elements:
+                    single_instance = cls.from_xml(element)
+                    instance_list.append(single_instance)
+                instances[class_name] = instance_list
+            except (ModuleNotFoundError, AttributeError) as e:
+                print(f"Error loading class for {class_name}: {e}")
+        return instances
+
+    def _break_response_into_plural_instances(self, responses):
+        instances = self._break_response_into_single_instances(responses)
+        plural_instances = []
+        for class_name, list_of_instances in instances.items():
+            try:
+                cls = globals().get(class_name)
+                plural_cls = globals().get(cls.Meta.plural_class_name)
+                plural_instance = plural_cls.from_list(list_of_instances)
+                plural_instances.append(plural_instance)
+            except (ModuleNotFoundError, AttributeError) as e:
+                print(f"Error loading class for {class_name}: {e}")
+        return plural_instances
+
     def _create_full_request(self, requestXML, encoding="utf-8"):
         """
         Combines converting the request to lxml and ensuring the proper structure for the XML request.
@@ -327,9 +382,49 @@ class QuickbooksDesktop():
         logger.debug(f'full_request to go to qb: {full_request}')
         return full_request
 
-
-    def send_xml(self, requestXML, encoding="utf-8", is_full_request=False, raw_response=False):
+    def _process_response(self, responseXML, response_type='raw_str'):
         """
+        valid_response types can be one of the following:
+            'raw_str' -> unedited response and the default response
+            'response_list' -> a list of lxml.etree.Element objects representing the responses.
+            'response_dict' -> a dictionary with the key being the request_id and the value being a class instance
+            'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
+            'plural_list' -> a list of plural class instances
+            'none' -> response won't be returned
+        """
+
+        if response_type == 'raw_str':
+            return responseXML
+        elif response_type == 'none':
+            return None
+        else:
+            QBXML = et.fromstring(responseXML)
+            QBXMLMsgsRs = QBXML.find('QBXMLMsgsRs')
+            if QBXMLMsgsRs is not None:
+                responses = QBXMLMsgsRs.getchildren()
+                if response_type == 'response_list':
+                    return responses
+                elif response_type == 'response_dict':
+                    response_dict = self._create_response_dict_from_elements()
+                elif response_type == 'instances_dict':
+                    instances = self._break_response_into_single_instances(responses)
+                    return instances
+                elif response_type == 'plural_list':
+                    plural_instances = self._break_response_into_plural_instances(responses)
+                    return plural_instances
+                else:
+                    return None
+            else:
+                return None
+
+    def send_xml(self, requestXML, encoding="utf-8", is_full_request=False, response_type='raw_str'):
+        """
+        valid_response types can be one of the following:
+            'raw_str' -> unedited response and the default response
+            'response_list' -> a list of lxml.etree.Element objects representing the responses.
+            'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
+            'plural' -> a list of plural class instances
+            'none' -> response won't be returned
         This method
             1. finishes the XML build
             2. ensures the XML request has key components
@@ -358,9 +453,6 @@ class QuickbooksDesktop():
         logger.debug(f'Connection to QuickBooks is open')
         try:
             responseXML = self.qbXMLRP.ProcessRequest(self.ticket, full_request)
-            # Additional Things:
-            QBXML = et.fromstring(responseXML)
-            QBXMLMsgsRs = QBXML.find('QBXMLMsgsRs')
         except Exception as e:
             easygui.msgbox(f"There was an error trying to send data to QuickBooks. Error: {e}", title="Error")
             if self.keep_session_open:
@@ -379,15 +471,8 @@ class QuickbooksDesktop():
         else:
             self.close_qb()
 
-        if raw_response:
-            return responseXML
-        elif QBXMLMsgsRs is not None:
-            responses = QBXMLMsgsRs.getchildren()
-            # todo: parse into actual objects
-            return responses
-        else:
-            logging.debug(f'responseXML = {responseXML}')
-            return None
+        response = self._process_response(responseXML, response_type)
+        return response
 
     def __del__(self):
         try:
@@ -419,65 +504,6 @@ class QuickbooksDesktop():
        """
         self.end_session()
         self.close_connection()
-
-
-def to_lower_camel_case(snake_str):
-    components = snake_str.split('_')
-    return components[0].lower() + ''.join(x.title() for x in components[1:])
-
-def snake_to_camel(snake_str):
-    components = snake_str.split('_')
-    # Capitalize the first letter of each component
-    return ''.join(x.title() for x in components)
-
-def convert_datetime(date_str):
-    if isinstance(date_str, str):
-        if date_str == '':
-            return None
-        else:
-            try:
-                logger.debug(date_str)
-                return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
-            except ValueError as e:
-                logger.debug(f"Error parsing date: {e}")
-                raise
-    elif isinstance(date_str, datetime):
-        return date_str  # Already a datetime object, no conversion needed
-    else:
-        return None  # None or other inappropriate data types
-
-def convert_float(float_str):
-    if float_str == "":
-        return None  # Return None immediately if the input is an empty string
-    try:
-        return float(float_str)
-    except (TypeError, ValueError) as e:
-        logger.debug(f"Error parsing float: {e}")
-        raise
-
-
-def convert_to_json_string(data):
-    if isinstance(data, (dict, list)):
-        return json.dumps(data)
-    return data
-
-def convert_all_dicts_and_lists(obj):
-    """
-    Go through all attributes of an object, converting any that are dictionaries to JSON strings.
-    """
-    for key, value in vars(obj).items():
-        setattr(obj, key, convert_to_json_string(value))
-
-
-def convert_integer(value):
-    if isinstance(value, int):
-        if value == 1:
-            return 'True'
-        elif value == 0:
-            return 'False'
-        else:
-            return str(value)
-    return value
 
 
 class EasyGuiPopup:
@@ -545,10 +571,7 @@ class ToXmlMixin:
     IS_YES_NO_FIELD_LIST = []
 
     def to_xml(self):
-        if "Query" in self.Meta.name:
-            root = et.Element(str(self.Meta.name) + "Rq")
-        else:
-            root = et.Element(self.Meta.name)
+        root = et.Element(self.Meta.name)
 
         # Retrieve the custom field order if available, otherwise use natural order
         field_order = getattr(self, 'FIELD_ORDER', None)
@@ -574,6 +597,18 @@ class ToXmlMixin:
                     pass
 
         return root
+
+    def to_xml_rq(self):
+        root = self.to_xml()
+        if self.Meta.name[-5:] == "Query":
+            root.tag = str(self.Meta.name) + "Rq"
+            return root
+        elif self.Meta.name[-3:] == 'Add' or self.Meta.name[-3:] == 'Mod':
+            rq = et.Element(str(self.Meta.name) + "Rq")
+            rq.append(root)
+            return rq
+        else:
+            raise NotImplementedError(f"Must Be Query, Add, or Mod Class: Class is {self.__class__.__name__}")
 
     def _get_sorted_fields(self, field_order):
         """
@@ -1053,24 +1088,24 @@ class PluralMixin:
             plural_instance._items.append(obj)
         return plural_instance
 
-    @classmethod
-    def update_db(cls, qb, session):
-        qb_max_time_modified = cls.__get_last_time_modified_from_db(session)
-        plural_instance = cls.__get_last_time_modified(qb_max_time_modified, qb)
-        plural_instance.to_db(session)
-
-    @classmethod
-    def populate_db(cls, qb, session):
-        instances = cls.get_all_from_qb(qb)
-        instances.to_db(session)
-
-    @classmethod
-    def populate_or_update_db(cls, qb, session):
-        qb_max_time_modified = cls.__get_last_time_modified_from_db(session)
-        if qb_max_time_modified:
-            cls.update_db(qb, session)
-        else:
-            cls.populate_db(qb, session)
+    # @classmethod
+    # def update_db(cls, qb, session):
+    #     qb_max_time_modified = cls.__get_last_time_modified_from_db(session)
+    #     plural_instance = cls.__get_last_time_modified(qb_max_time_modified, qb)
+    #     plural_instance.to_db(session)
+    #
+    # @classmethod
+    # def populate_db(cls, qb, session):
+    #     instances = cls.get_all_from_qb(qb)
+    #     instances.to_db(session)
+    #
+    # @classmethod
+    # def populate_or_update_db(cls, qb, session):
+    #     qb_max_time_modified = cls.__get_last_time_modified_from_db(session)
+    #     if qb_max_time_modified:
+    #         cls.update_db(qb, session)
+    #     else:
+    #         cls.populate_db(qb, session)
 
     def to_xml(self):
         """
@@ -1083,6 +1118,19 @@ class PluralMixin:
             xml_elements.append(xml_element)
         return xml_elements
 
+    def to_add_xml(self):
+        """
+        Converts all items in the plural mixin into a list of add lxml elements
+        by calling each child's `to_xml` method.
+        """
+        xml_elements = []
+        for item in self._items:
+            add_cls = getattr(item, 'Add', None)
+            add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=False)
+            xml_element = add_instance.to_xml_rq()
+            xml_elements.append(xml_element)
+        return xml_elements
+
     def to_xml_file(self, file_path: str) -> None:
         """
         Generates an XML file with the plural objects.
@@ -1091,23 +1139,14 @@ class PluralMixin:
         Args:
             file_path (str): The path of the file to write the XML to. The file will be replaced if it exists.
         """
-        # Convert each child to an XML element
+
         list_of_xml = self.to_xml()
-
-        # Create the root element using the Meta class name
         root = et.Element(f"{self.Meta.name}QueryRs")
-
-        # Append each child XML element to the root
         for xml_element in list_of_xml:
             root.append(xml_element)
-
-        # Convert the root element to a formatted XML string
         xml_str = et.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode()
-
-        # Write the XML string to the specified file path, replacing the file if it exists
         with open(file_path, "w") as file:
             file.write(xml_str)
-
         logger.debug('Finished to_xml_file')
 
 
@@ -1121,7 +1160,7 @@ class PluralListSaveMixin:
             else:
                 add_xml = item._get_add_rq_xml()
                 xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, raw_response=raw_response)
+        response = qb.send_xml(xml_requests, response_type=raw_response)
         return response
 
     def add_all(self, qb, raw_response=False):
@@ -1129,7 +1168,7 @@ class PluralListSaveMixin:
         for item in self:
             add_xml = item._get_add_rq_xml()
             xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, raw_response=raw_response)
+        response = qb.send_xml(xml_requests, response_type=raw_response)
         return response
 
 
@@ -1144,7 +1183,7 @@ class PluralTrxnSaveMixin:
             else:
                 add_xml = trxn._get_add_rq_xml()
                 xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, raw_response=raw_response)
+        response = qb.send_xml(xml_requests, response_type=raw_response)
         return response
 
     def add_all(self, qb, raw_response=False):
@@ -1152,7 +1191,7 @@ class PluralTrxnSaveMixin:
         for trxn in self:
             add_xml = trxn._get_add_rq_xml()
             xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, raw_response=raw_response)
+        response = qb.send_xml(xml_requests, response_type=raw_response)
         return response
 
     def set_ids_to_none(self, id_name):
