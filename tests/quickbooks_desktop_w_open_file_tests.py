@@ -62,13 +62,15 @@ class TestQuickbooksDesktop(unittest.TestCase):
         </JournalEntryRet>
         """
 
-    def test_add_journal_entry(self):
-        qb = QuickbooksDesktop()
-        qb.qbXMLRP = qb.dispatch()
-        print('trying begin_session')
-        qb.open_connection()
-        print('began begin_session')
-        qb.begin_session()
-        journal_entry = JournalEntry.from_xml(self.journal_xml)
-        journal_entry.save(qb)
-        qb.close_connection()
+    # only uncomment if you have a file open.
+
+    # def test_add_journal_entry(self):
+    #     qb = QuickbooksDesktop()
+    #     qb.qbXMLRP = qb.dispatch()
+    #     print('trying begin_session')
+    #     qb.open_connection()
+    #     print('began begin_session')
+    #     qb.begin_session()
+    #     journal_entry = JournalEntry.from_xml(self.journal_xml)
+    #     journal_entry.save(qb)
+    #     qb.close_connection()

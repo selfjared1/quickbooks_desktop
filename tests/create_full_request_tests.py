@@ -67,7 +67,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
         element = et.fromstring(self.journal_xml)
         journal_entry = JournalEntry.from_xml(element)
         qb = QuickbooksDesktop()
-        jounal_entry_add = JournalEntry.Add.create_add_or_mod_from_parent(journal_entry)
+        jounal_entry_add = JournalEntry.Add.create_add_or_mod_from_parent(journal_entry, add_or_mod="Add")
         jounal_entry_add_xml = jounal_entry_add.to_xml()
         full_request = qb._create_full_request(jounal_entry_add_xml)
         self.assertIsInstance(full_request, str)

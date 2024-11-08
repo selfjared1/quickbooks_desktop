@@ -3,7 +3,7 @@ from typing import Optional, Union, Dict, Type, Any, get_origin, get_args, List,
 from decimal import Decimal
 
 
-TempPluralVar = TypeVar('T')
+TempVar = TypeVar('T')
 
 yes_no_dict = {'Yes': True, 'yes': True, 'No': False, 'no': False}
 
@@ -118,6 +118,7 @@ amount: Optional[Decimal] = field(
             "required": False,
         },
     )
+
 
 
 

@@ -1,5 +1,6 @@
 import win32com.client, threading, time, logging, easygui
 import xml.etree.ElementTree as ETree
+from lxml import etree as et
 from dataclasses import field
 from collections import defaultdict
 
@@ -12,6 +13,7 @@ logger.addHandler(logging.NullHandler())
 
 
 # region Connection To Desktop And Utilities
+
 
 @dataclass
 class ErrorRecovery:
@@ -65,7 +67,7 @@ class QueryRs:
     class Meta:
         name = "QueryRs"
 
-    ret: Optional[TempPluralVar] = field(
+    ret: Optional[TempVar] = field(
         default=None,
         metadata={
             "name": "Ret",
@@ -128,7 +130,66 @@ class QueryRs:
     def from_xml(cls, xml_rs):
         pass
 
+@dataclass
+class QBRequest:
+    data: Optional[TempVar] = field(
+        default=None,
+        metadata={
+            "name": "Ret",
+            "type": "Element",
+        },
+    )
+    # include_ret_element: List[str] = field(
+    #     default_factory=list,
+    #     metadata={
+    #         "name": "IncludeRetElement",
+    #         "type": "Element",
+    #         "max_length": 50,
+    #     },
+    # )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+    response: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
 
+
+@dataclass
+class QBRequests:
+
+    def __init__(self):
+        self._items = []
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __getitem__(self, index):
+        return self._items[index]
+
+    def __setitem__(self, index, value):
+        self._items[index] = value
+
+    def __len__(self):
+        return len(self._items)
+
+    def add_item(self, item):
+        self._items.append(item)
+
+    @classmethod
+    def from_list(cls, items):
+        instance = cls()
+        for item in items:
+            instance.add_item(item)
+        return instance
 
 
 class QuickbooksDesktop():
@@ -304,6 +365,9 @@ class QuickbooksDesktop():
         instances = {}
         for response in responses:
             request_id = response.get("requestID")
+            status_code = response.get("statusCode")
+            status_severity = response.get("statusSeverity")
+            status_message = response.get("statusMessage")
             class_name = self._get_class_name_from_response_tag(response.tag)
             try:
                 cls = globals().get(class_name)
@@ -387,9 +451,13 @@ class QuickbooksDesktop():
         valid_response types can be one of the following:
             'raw_str' -> unedited response and the default response
             'response_list' -> a list of lxml.etree.Element objects representing the responses.
-            'response_dict' -> a dictionary with the key being the request_id and the value being a class instance
+            'plural' -> a list of plural class instances
+            'response_dict' -> a dictionary with the key being the request_id and the value being another dictionary with:
+                    'status_code'
+                    'status_severity'
+                    'status_message'
+                    'plural_instance'
             'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
-            'plural_list' -> a list of plural class instances
             'none' -> response won't be returned
         """
 
@@ -405,7 +473,8 @@ class QuickbooksDesktop():
                 if response_type == 'response_list':
                     return responses
                 elif response_type == 'response_dict':
-                    response_dict = self._create_response_dict_from_elements()
+                    response_dict = self._create_response_dict_from_responses(responses)
+                    return response_dict
                 elif response_type == 'instances_dict':
                     instances = self._break_response_into_single_instances(responses)
                     return instances
@@ -422,6 +491,11 @@ class QuickbooksDesktop():
         valid_response types can be one of the following:
             'raw_str' -> unedited response and the default response
             'response_list' -> a list of lxml.etree.Element objects representing the responses.
+            'response_dict' -> a dictionary with the key being the request_id and the value being another dictionary with:
+                    'statusCode'
+                    'statusSeverity'
+                    'statusMessage'
+                    'response_list'
             'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
             'plural' -> a list of plural class instances
             'none' -> response won't be returned
@@ -711,13 +785,18 @@ class FromXmlMixin:
     IS_YES_NO_FIELD_LIST = []
 
     @staticmethod
-    def _validate_from_xml_arg_type(element):
-        if not isinstance(element, et._Element):
-            raise TypeError(f'element must be an instance of lxml.etree._Element. Your element is type {type(element)}')
-        # elif element.tag[-3:] != 'Ret':
-        #     raise ValueError(f"Invalid tag: {element.tag}. Must end with 'Ret' (as in RETurn from Quickbooks).")
+    def _ensure_lxml_type(element):
+        if isinstance(element, et._Element):
+            return element
+        elif isinstance(element, ETree.Element):
+            element = et.fromstring(et.tostring(element))
+        elif isinstance(element, str):
+            element = et.fromstring(element)
         else:
-            pass
+            raise TypeError(
+                f"Invalid type {type(element)}. Expected lxml.etree._Element, xml.etree.ElementTree.Element, or str.")
+
+        return element
 
     @staticmethod
     def _get_field_type(field):
@@ -767,12 +846,7 @@ class FromXmlMixin:
         init_args = {}
         for xml_element in element:
             field_name = xml_element.tag
-            if field_name == 'DataExtRet':  # Check for DataExtRet tag
-                ext_name = to_lower_camel_case(
-                    xml_element.find('DataExtName').text.replace(' ', '_').lower())  # Convert to lower camel case
-                ext_value = xml_element.find('DataExtValue').text
-                init_args[ext_name] = ext_value
-            elif field_name in field_names:
+            if field_name in field_names:
                 field = field_names[field_name]
                 field_type = cls._get_field_type(field)
                 init_args = cls._parse_field_according_to_type(init_args, field, field_type, xml_element)
@@ -785,7 +859,7 @@ class FromXmlMixin:
 
     @classmethod
     def from_xml(cls, element: et.Element) -> Any:
-        cls._validate_from_xml_arg_type(element)
+        element = cls._ensure_lxml_type(element)
 
         field_names = {field.metadata.get("name", field.name): field for field in cls.__dataclass_fields__.values()}
         init_args = cls._get_init_args(element, field_names)
@@ -1131,6 +1205,17 @@ class PluralMixin:
             xml_elements.append(xml_element)
         return xml_elements
 
+    def _create_data_ext_mod(self, add_response):
+        xml_elements = []
+        start_request_id = 100
+        for item in self._items:
+            request_id = start_request_id/100
+            data_ext = getattr(item, 'Add', None)
+            add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=False)
+            xml_element = add_instance.to_xml_rq()
+            xml_elements.append(xml_element)
+        return xml_elements
+
     def to_xml_file(self, file_path: str) -> None:
         """
         Generates an XML file with the plural objects.
@@ -1218,12 +1303,20 @@ class PluralTrxnSaveMixin:
                     else:
                         pass
 
-    def _index_data_ext(self):
-        data_ext_dict = {}
-        for trxn in self:
-            if len(trxn.data_ext):
-                data_ext_dict[trxn] = {index: ext for index, ext in enumerate(trxn.data_ext, start=1)}
-        return data_ext_dict
+    # def _index_data_ext(self):
+    #     data_ext_dict = {}
+    #     for trxn in self:
+    #         if hasattr(trxn, 'data_ext') and len(trxn.data_ext):
+    #             data_ext_dict[trxn] = {index: ext for index, ext in enumerate(trxn.data_ext, start=1)}
+    #     return data_ext_dict
+    #
+    # def _create_data_ext_mod_requests(self, response):
+    #     data_ext_dict = self._index_data_ext()
+    #
+    #
+    # def _handle_data_ext_with_add_request(self, response, qb):
+    #     data_ext_mod_request = self._create_data_ext_mod_requests(response)
+    #     data_ext_mod_response = qb.send_xml(data_ext_mod_request, response_type='raw_response')
 
     def save_all(self, qb, raw_response=False):
         xml_requests = []
@@ -1242,8 +1335,9 @@ class PluralTrxnSaveMixin:
         for trxn in self:
             add_xml = trxn._get_add_rq_xml()
             xml_requests.append(add_xml)
-        data_ext_dict = self._index_data_ext()
-        response = qb.send_xml(xml_requests, response_type=raw_response)
+
+        response = qb.send_xml(xml_requests, response_type='')
+        self._handle_data_ext_with_add_request(response, qb)
         return response
 
 
@@ -2176,7 +2270,7 @@ class DataExtAdd(QBAddRqMixin):
         metadata={
             "name": "ListDataExtType",
             "type": "Element",
-            "valid_values": ["Account", "Customer", "Employee", "Item", "OtherName", "Vendor"]
+            "valid_values": VALID_LIST_DATA_EXT_TYPE_VALUES
         },
     )
     list_obj_ref: Optional[ListObjRef] = field(
@@ -2338,7 +2432,7 @@ class DataExt(QBMixin):
             "name": "DataExtType",
             "type": "Element",
             "required": True,
-            "valid_values": VALID_TXN_DATA_EXT_TYPE_VALUES + VALID_LIST_DATA_EXT_TYPE_VALUES + ["Company"],
+            "valid_values": ["AMTTYPE", "DATETIMETYPE", "INTTYPE", "PERCENTTYPE", "PRICETYPE", "QUANTYPE", "STR1024TYPE", "STR255TYPE"],
         },
     )
     data_ext_value: Optional[str] = field(
@@ -3665,7 +3759,7 @@ class ExpenseLine(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -4104,7 +4198,7 @@ class ItemLine(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -4895,7 +4989,7 @@ class CreditMemoLine(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -5120,7 +5214,7 @@ class CreditMemoLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -5863,7 +5957,7 @@ class EstimateLine(QBMixin):
             "max_length": 29,
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -6068,7 +6162,7 @@ class EstimateLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -6829,7 +6923,7 @@ class InvoiceLine(QBMixin):
             "max_length": 29,
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -7050,7 +7144,7 @@ class InvoiceLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -7745,7 +7839,7 @@ class PurchaseOrderLine(QBMixin):
             "max_length": 29,
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -7962,7 +8056,7 @@ class PurchaseOrderLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -8449,7 +8543,7 @@ class SalesOrderLine(QBMixin):
             "max_length": 29,
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -8660,7 +8754,7 @@ class SalesOrderLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -9184,7 +9278,7 @@ class SalesReceiptLine(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -9409,7 +9503,7 @@ class SalesReceiptLineGroup(QBMixin):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -9809,7 +9903,7 @@ class Account(AccountBase, QBMixinWithSave):
         },
     )
 
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -12113,7 +12207,7 @@ class Customer(QBMixinWithSave):
             "type": "Element"
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -12841,7 +12935,7 @@ class Employee(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15057,7 +15151,7 @@ class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15131,7 +15225,7 @@ class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15311,7 +15405,7 @@ class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15498,7 +15592,7 @@ class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15585,7 +15679,7 @@ class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15665,7 +15759,7 @@ class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15724,7 +15818,7 @@ class ItemPayment(ItemMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15797,7 +15891,7 @@ class ItemSalesTax(ItemMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15849,7 +15943,7 @@ class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15929,7 +16023,7 @@ class ItemService(ItemMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -15981,7 +16075,7 @@ class ItemSubtotal(ItemMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -16742,7 +16836,7 @@ class OtherName(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -19830,7 +19924,7 @@ class Vendor(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -20228,7 +20322,7 @@ class ARRefundCreditCard(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -20685,7 +20779,7 @@ class BillPaymentCheck(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -21030,7 +21124,7 @@ class BillPaymentCreditCard(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -22143,7 +22237,7 @@ class BuildAssembly(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -22765,7 +22859,7 @@ class Charge(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -23367,7 +23461,7 @@ class Check(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -23848,7 +23942,7 @@ class CreditCardCharge(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -24329,7 +24423,7 @@ class CreditCardCredit(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -25216,7 +25310,7 @@ class CreditMemo(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -25685,7 +25779,7 @@ class Deposit(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -25842,7 +25936,7 @@ class EstimateAdd(QBAddRqMixin):
     ]
 
     class Meta:
-        name = "EstimateQuery"
+        name = "EstimateAdd"
 
     customer_ref: Optional[CustomerRef] = field(
         default=None,
@@ -26031,7 +26125,7 @@ class EstimateMod(QBMixin):
     ]
 
     class Meta:
-        name = "NameFilter"
+        name = "EstimateMod"
 
     txn_id: Optional[str] = field(
         default=None,
@@ -26493,7 +26587,7 @@ class Estimate(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -26909,7 +27003,7 @@ class InventoryAdjustment(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -27866,7 +27960,7 @@ class Invoice(QBMixinWithSave):
         },
     )
 
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -28313,7 +28407,7 @@ class JournalEntry(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -29139,7 +29233,7 @@ class PurchaseOrder(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -29883,7 +29977,7 @@ class ReceivePayment(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -30748,7 +30842,7 @@ class SalesOrder(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
@@ -31628,7 +31722,7 @@ class SalesReceipt(QBMixinWithSave):
             "type": "Element",
         },
     )
-    data_ext_ret: List[DataExt] = field(
+    data_ext: List[DataExt] = field(
         default_factory=list,
         metadata={
             "name": "DataExtRet",
