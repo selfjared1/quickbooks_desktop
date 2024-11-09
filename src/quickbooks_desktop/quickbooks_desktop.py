@@ -811,7 +811,7 @@ class FromXmlMixin:
 
     @staticmethod
     def _parse_list_field_type(init_args, field, field_type, an_xml_list_element):
-        instance = field_type.__args__[0].from_xml(an_xml_list_element)
+        instance = field_type.__args__[0].create_from_xml(an_xml_list_element)
         if field.name in init_args.keys():
             if isinstance(init_args[field.name], list):
                 init_args[field.name].append(instance)
@@ -827,7 +827,7 @@ class FromXmlMixin:
     def _parse_field_according_to_type(cls, init_args, field, field_type, xml_element):
         # Check if the field type is a dataclass
         if is_dataclass(field_type):
-            init_args[field.name] = field_type.from_xml(xml_element)
+            init_args[field.name] = field_type.create_from_xml(xml_element)
         elif hasattr(field_type, '_name') and field_type._name == 'List':
             init_args = cls._parse_list_field_type(init_args, field, field_type, xml_element)
         elif field.name in cls.IS_YES_NO_FIELD_LIST:
@@ -1106,7 +1106,7 @@ class PluralMixin:
         self._items.append(item)
 
     @classmethod
-    def from_list(cls, items):
+    def create_from_list(cls, items):
         instance = cls()
         for item in items:
             instance.add_item(item)
@@ -1148,7 +1148,7 @@ class PluralMixin:
         return self._items
 
     @classmethod
-    def from_xml(cls, list_of_ret):
+    def create_from_xml(cls, list_of_ret):
         """A Ret should be passed in but it's sometimes not."""
         if not isinstance(list_of_ret, list):
             logger.debug(f'from_xml expects a list. Ret must be an instance of lxml.etree._Element. Your Ret is type {type(list_of_ret)}')
@@ -1168,7 +1168,7 @@ class PluralMixin:
             return plural_instance
 
     @classmethod
-    def __get_last_time_modified(cls, qb_max_time_modified, qb):
+    def get_by_last_time_modified(cls, qb_max_time_modified, qb):
         plural_instance = cls()
         query = plural_instance.Meta.plural_of.Query()
         query.from_modified_date = qb_max_time_modified
@@ -1178,6 +1178,12 @@ class PluralMixin:
             obj = plural_instance.Meta.plural_of.from_xml(Ret)
             plural_instance._items.append(obj)
         return plural_instance
+
+    def get_by_id(self, id_value):
+        for item in self._items:
+            if getattr(item, 'trx_id', None) == id_value or getattr(item, 'list_id', None) == id_value:
+                return item
+        return None
 
     # @classmethod
     # def update_db(cls, qb, session):
