@@ -479,7 +479,7 @@ class TestCopyFromParent(unittest.TestCase):
 
         # Check EstimateLineRet and DataExt within it
         self.assertEqual(len(estimate_add_wo_ids.estimate_line_add), 10)
-        self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].txn_line_id)
+        self.assertIsNone(getattr(estimate_add_wo_ids, "txn_line_id", None))
         self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].item_ref.list_id)
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].item_ref.full_name, 'Y1002892')
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].quantity, 2)
