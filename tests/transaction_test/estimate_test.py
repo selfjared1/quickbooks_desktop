@@ -355,19 +355,19 @@ class TestCreateEstimate(unittest.TestCase):
                 </EstimateRet>
                 """
 
-    # def test_create_estimate_just_data_ext(self):
-    #     estimate = Estimate.from_xml(self.estimate_just_data_ext_xml)
-    #     # DataExtRet checks
-    #     self.assertEqual(len(estimate.data_ext), 10)
-    #     self.assertEqual(estimate.data_ext[0].data_ext_name, 'Customer Type')
-    #     self.assertEqual(estimate.data_ext[0].data_ext_value, 'Dealer')
-    #     self.assertEqual(estimate.data_ext[1].data_ext_name, 'As Of')
-    #     self.assertEqual(estimate.data_ext[1].data_ext_value, '01-25-13')
-    #     self.assertEqual(estimate.data_ext[2].data_ext_name, 'UHL Account No.')
-    #     self.assertEqual(estimate.data_ext[2].data_ext_value, '12248')
-    #     self.assertEqual(estimate.data_ext[3].data_ext_name, 'AKA / DBA')
-    #     self.assertEqual(estimate.data_ext[3].data_ext_value, 'SYSTECH SKN NSK IEC')
-    #     self.assertEqual(len(estimate.estimate_lines[0].data_ext), 1)
+    def test_create_estimate_just_data_ext(self):
+        estimate = Estimate.from_xml(self.estimate_just_data_ext_xml)
+        # DataExtRet checks
+        self.assertEqual(len(estimate.data_ext), 10)
+        self.assertEqual(estimate.data_ext[0].data_ext_name, 'Customer Type')
+        self.assertEqual(estimate.data_ext[0].data_ext_value, 'Dealer')
+        self.assertEqual(estimate.data_ext[1].data_ext_name, 'As Of')
+        self.assertEqual(estimate.data_ext[1].data_ext_value, '01-25-13')
+        self.assertEqual(estimate.data_ext[2].data_ext_name, 'UHL Account No.')
+        self.assertEqual(estimate.data_ext[2].data_ext_value, '12248')
+        self.assertEqual(estimate.data_ext[3].data_ext_name, 'AKA / DBA')
+        self.assertEqual(estimate.data_ext[3].data_ext_value, 'SYSTECH SKN NSK IEC')
+        self.assertEqual(len(estimate.estimate_lines[0].data_ext), 1)
 
 
     def test_create_estimate(self):

@@ -947,7 +947,7 @@ class CreateAddOrModFromParentMixin:
                 converted_sub_instance = sub_instance.__class__.create_add_or_mod_from_parent(sub_instance, add_or_mod, keep_ids=keep_ids)
             else:
                 # Add class is already assigned
-                converted_sub_instance = add_or_mod_class.create_add_or_mod_from_parent(sub_instance, add_or_mod)
+                converted_sub_instance = add_or_mod_class.create_add_or_mod_from_parent(sub_instance, add_or_mod, keep_ids=keep_ids)
             converted_sub_instances.append(converted_sub_instance)
         if converted_sub_instances:
             setattr(self, attr, converted_sub_instances)
@@ -959,10 +959,19 @@ class CreateAddOrModFromParentMixin:
     def create_add_or_mod_from_parent(cls, parent, add_or_mod, keep_ids=True):
         """add_or_mod can be 'add' or 'mod' """
         assert add_or_mod in ['Add', 'Mod'], "add_or_mod must be 'add' or 'mod'"
+        if add_or_mod == 'Mod':
+            #You must have id's for Mod
+            keep_ids = True
+        else:
+            pass
+
         instance = cls()
         for attr, value in parent.__dict__.items():
             if value is None:
                 pass
+            elif attr[-6:] == '_lines':
+                attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
+                instance._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
             elif hasattr(instance, attr):
                 if isinstance(value, list):
                     instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
@@ -28194,13 +28203,13 @@ class JournalEntryAdd(QBAddRqMixin):
             "type": "Element",
         },
     )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
+    # def_macro: Optional[str] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "defMacro",
+    #         "type": "Attribute",
+    #     },
+    # )
 
 
 @dataclass
