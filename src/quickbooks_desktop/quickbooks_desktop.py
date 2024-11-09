@@ -418,18 +418,11 @@ class QuickbooksDesktop():
                            lxml.etree.Element, or a list of these types.
         :return: A properly structured lxml.etree.Element for sending to QuickBooks.
         """
-        # Step 1: Convert the input to lxml if needed (handles lists too)
         requestXML = self._convert_to_lxml(requestXML)
-
-        # Step 2: Ensure the QBXML structure
         QBXML, QBXMLMsgsRq = self._ensure_qbxml_structure(requestXML)
-
-        # Step 3: Handle both single request and a list of requests
         if isinstance(requestXML, list):
-            # Iterate through each request in the list
             i = 1
             for request in requestXML:
-                # Ensure each request is properly converted to lxml
                 request = self._convert_to_lxml(request)
                 if request.get('requestID') is None:
                     request.attrib['requestID'] = str(i)
@@ -672,14 +665,22 @@ class ToXmlMixin:
 
         return root
 
-    def to_xml_rq(self):
+    def to_xml_rq(self, request_id=None):
         root = self.to_xml()
         if self.Meta.name[-5:] == "Query":
             root.tag = str(self.Meta.name) + "Rq"
+            if request_id:
+                root.attrib['requestID'] = request_id
+            else:
+                pass
             return root
         elif self.Meta.name[-3:] == 'Add' or self.Meta.name[-3:] == 'Mod':
             rq = et.Element(str(self.Meta.name) + "Rq")
             rq.append(root)
+            if request_id:
+                rq.attrib['requestID'] = request_id
+            else:
+                pass
             return rq
         else:
             raise NotImplementedError(f"Must Be Query, Add, or Mod Class: Class is {self.__class__.__name__}")
@@ -1208,17 +1209,19 @@ class PluralMixin:
             xml_elements.append(xml_element)
         return xml_elements
 
-    def to_add_xml(self):
+    def to_add_xml(self, first_request_id=None):
         """
         Converts all items in the plural mixin into a list of add lxml elements
         by calling each child's `to_xml` method.
         """
         xml_elements = []
+        next_request_id = first_request_id
         for item in self._items:
             add_cls = getattr(item, 'Add', None)
             add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=False)
-            xml_element = add_instance.to_xml_rq()
+            xml_element = add_instance.to_xml_rq(next_request_id)
             xml_elements.append(xml_element)
+            next_request_id += 1 if next_request_id else None
         return xml_elements
 
     def _create_data_ext_mod(self, add_response):
