@@ -442,7 +442,7 @@ class TestCopyFromParent(unittest.TestCase):
         jounal_entry_mod_wo_ids = JournalEntry.Mod.create_add_or_mod_from_parent(journal_entry, add_or_mod='Mod', keep_ids=False)
         self.assertTrue(hasattr(jounal_entry_mod_wo_ids, 'txn_id'))
         self.assertIsNotNone(jounal_entry_mod_wo_ids.currency_ref.list_id)
-        self.assertIsNotNone(jounal_entry_mod_wo_ids.journal_credit_lines[0].txn_line_id)
+        self.assertIsNotNone(jounal_entry_mod_wo_ids.journal_line_mod[0].txn_line_id)
         jounal_entry_add_wo_ids_xml = jounal_entry_mod_wo_ids.to_xml()
         print(et.tostring(jounal_entry_add_wo_ids_xml))
 

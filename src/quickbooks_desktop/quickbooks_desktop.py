@@ -969,9 +969,11 @@ class CreateAddOrModFromParentMixin:
         for attr, value in parent.__dict__.items():
             if value is None:
                 pass
-            elif attr[-6:] == '_lines':
+            elif attr[-6:] == '_lines' and attr not in ['journal_debit_lines', 'journal_credit_lines']:
                 attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
                 instance._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
+            elif attr in ['journal_debit_lines', 'journal_credit_lines'] and add_or_mod == 'Mod':
+                instance._handle_list_sub_instance('journal_line_mod', value, add_or_mod, keep_ids)
             elif hasattr(instance, attr):
                 if isinstance(value, list):
                     instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
