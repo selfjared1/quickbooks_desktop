@@ -5,7 +5,7 @@ from dataclasses import field
 from collections import defaultdict
 
 from .qb_special_fields import *
-from .utilities import to_lower_camel_case
+from .utilities import to_lower_camel_case, clean_text
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -860,6 +860,7 @@ class FromXmlMixin:
     @classmethod
     def from_xml(cls, element: et.Element) -> Any:
         element = cls._ensure_lxml_type(element)
+        element = clean_text(element)
 
         field_names = {field.metadata.get("name", field.name): field for field in cls.__dataclass_fields__.values()}
         init_args = cls._get_init_args(element, field_names)
@@ -889,6 +890,10 @@ class FromXmlMixin:
         for field_name, field_value in extra_fields.items():
             setattr(instance, field_name, field_value)
 
+        if getattr(instance, 'validate', False):
+            instance.validate()
+        else:
+            pass
         return instance
 
 
@@ -1222,7 +1227,7 @@ class PluralMixin:
         for item in self._items:
             request_id = start_request_id/100
             data_ext = getattr(item, 'Add', None)
-            add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=False)
+            add_instance = data_ext.create_add_or_mod_from_parent(item, 'Add', keep_ids=False)
             xml_element = add_instance.to_xml_rq()
             xml_elements.append(xml_element)
         return xml_elements
@@ -1316,9 +1321,9 @@ class PluralTrxnSaveMixin:
 
     # def _index_data_ext(self):
     #     data_ext_dict = {}
-    #     for trxn in self:
-    #         if hasattr(trxn, 'data_ext') and len(trxn.data_ext):
-    #             data_ext_dict[trxn] = {index: ext for index, ext in enumerate(trxn.data_ext, start=1)}
+    #     for txn in self:
+    #         if hasattr(txn, 'data_ext') and len(txn.data_ext):
+    #             data_ext_dict[txn] = {index: ext for index, ext in enumerate(txn.data_ext, start=1)}
     #     return data_ext_dict
     #
     # def _create_data_ext_mod_requests(self, response):
@@ -1331,20 +1336,20 @@ class PluralTrxnSaveMixin:
 
     def save_all(self, qb, raw_response=False):
         xml_requests = []
-        for trxn in self:
-            if trxn.trxn_id is not None:
-                mod_xml = trxn._get_mod_rq_xml()
+        for txn in self:
+            if txn.txn_id is not None:
+                mod_xml = txn._get_mod_rq_xml()
                 xml_requests.append(mod_xml)
             else:
-                add_xml = trxn._get_add_rq_xml()
+                add_xml = txn._get_add_rq_xml()
                 xml_requests.append(add_xml)
         response = qb.send_xml(xml_requests, response_type=raw_response)
         return response
 
     def add_all(self, qb, raw_response=False):
         xml_requests = []
-        for trxn in self:
-            add_xml = trxn._get_add_rq_xml()
+        for txn in self:
+            add_xml = txn._get_add_rq_xml()
             xml_requests.append(add_xml)
 
         response = qb.send_xml(xml_requests, response_type='')
@@ -5671,13 +5676,17 @@ class EstimateLineAdd(QBAddMixin):
             "max_length": 29,
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
+
+    def validate(self):
+        super().validate()
+        self.rate_percent = None if self.rate is not None else self.rate_percent
+        self.rate = None if self.quantity is not None else self.rate
+        # todo: remove this because it's client specific:
+        if self.item_ref is not None and self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
+            self.amount = None
+        else:
+            pass
+
 
 @dataclass
 class EstimateLineMod(QBModMixin):
@@ -6616,6 +6625,16 @@ class InvoiceLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
+
+    def validate(self):
+        super().validate()
+        self.rate_percent = None if self.rate is not None else self.rate_percent
+        self.rate = None if self.quantity is not None else self.rate
+        # todo: remove this because it's client specific:
+        if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
+            self.amount = None
+        else:
+            pass
 
 
 @dataclass
@@ -8232,6 +8251,16 @@ class SalesOrderLineAdd(QBAddMixin):
         },
     )
 
+    def validate(self):
+        super().validate()
+        self.rate_percent = None if self.rate is not None else self.rate_percent
+        self.rate = None if self.quantity is not None else self.rate
+        # todo: remove this because it's client specific:
+        if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
+            self.amount = None
+        else:
+            pass
+
 
 @dataclass
 class SalesOrderLineMod(QBModMixin):
@@ -8958,6 +8987,16 @@ class SalesReceiptLineAdd(QBAddMixin):
             "type": "Attribute",
         },
     )
+
+    def validate(self):
+        super().validate()
+        self.rate_percent = None if self.rate is not None else self.rate_percent
+        self.rate = None if self.quantity is not None else self.rate
+        # todo: remove this because it's client specific:
+        if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
+            self.amount = None
+        else:
+            pass
 
 
 @dataclass
@@ -22210,7 +22249,7 @@ class BuildAssembly(QBMixinWithSave):
             "required": True,
         },
     )
-    quantity_can_build: Optional[int] = field(
+    quantity_can_build: Optional[float] = field(
         default=None,
         metadata={
             "name": "QuantityCanBuild",
@@ -22226,7 +22265,7 @@ class BuildAssembly(QBMixinWithSave):
             "required": True,
         },
     )
-    quantity_on_sales_order: Optional[int] = field(
+    quantity_on_sales_order: Optional[float] = field(
         default=None,
         metadata={
             "name": "QuantityOnSalesOrder",

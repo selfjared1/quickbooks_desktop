@@ -483,8 +483,8 @@ class TestCopyFromParent(unittest.TestCase):
         self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].item_ref.list_id)
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].item_ref.full_name, 'Y1002892')
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].quantity, 2)
-        self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].rate, Decimal('891'))
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].amount, Decimal('1782.00'))
+        self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].rate)
         self.assertIsNone(getattr(estimate_add_wo_ids, "data_ext", None))
 
     def test_copy_add_or_mod_from_parent_estimate_just_active(self):
@@ -643,6 +643,26 @@ class TestCopyFromParent(unittest.TestCase):
         self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].item_ref.list_id)
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].item_ref.full_name, 'Y1002892')
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].quantity, 2)
-        self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].rate, Decimal('891'))
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].amount, Decimal('1782.00'))
+        self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].rate)
         self.assertIsNone(getattr(estimate_add_wo_ids, "data_ext", None))
+
+    def test_copy_add_or_mod_from_parent_subtotal(self):
+        estimate_xml_just_active = """
+                <EstimateRet>
+                    <EstimateLineRet>
+                    <TxnLineID>DE02C-1675796632</TxnLineID>
+                    <ItemRef>
+                    <ListID>80002EAA-1628095182</ListID>
+                    <FullName>Amount Subtotal</FullName>
+                    </ItemRef>
+                    <Desc>Subtotal</Desc>
+                    <Amount>1782.00</Amount>
+                    </EstimateLineRet>
+                    
+                </EstimateRet>
+                """
+        estimate = Estimate.from_xml(estimate_xml_just_active)
+        estimate_add_wo_ids = Estimate.Add.create_add_or_mod_from_parent(estimate, add_or_mod='Add', keep_ids=False)
+        self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].amount)
+
