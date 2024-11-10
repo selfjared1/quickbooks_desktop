@@ -1215,7 +1215,7 @@ class PluralMixin:
             xml_elements.append(xml_element)
         return xml_elements
 
-    def to_add_xml(self, first_request_id=None):
+    def to_add_xml(self, first_request_id=None, keep_ids=False):
         """
         Converts all items in the plural mixin into a list of add lxml elements
         by calling each child's `to_xml` method.
@@ -1224,7 +1224,7 @@ class PluralMixin:
         next_request_id = first_request_id
         for item in self._items:
             add_cls = getattr(item, 'Add', None)
-            add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=False)
+            add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=keep_ids)
             xml_element = add_instance.to_xml_rq(next_request_id)
             xml_elements.append(xml_element)
             next_request_id += 1 if next_request_id else None
