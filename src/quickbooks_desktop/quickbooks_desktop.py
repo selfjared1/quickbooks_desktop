@@ -678,7 +678,7 @@ class ToXmlMixin:
             rq = et.Element(str(self.Meta.name) + "Rq")
             rq.append(root)
             if request_id:
-                rq.attrib['requestID'] = request_id
+                rq.attrib['requestID'] = str(request_id)
             else:
                 pass
             return rq
@@ -811,7 +811,7 @@ class FromXmlMixin:
 
     @staticmethod
     def _parse_list_field_type(init_args, field, field_type, an_xml_list_element):
-        instance = field_type.__args__[0].create_from_xml(an_xml_list_element)
+        instance = field_type.__args__[0].from_xml(an_xml_list_element)
         if field.name in init_args.keys():
             if isinstance(init_args[field.name], list):
                 init_args[field.name].append(instance)
@@ -827,7 +827,7 @@ class FromXmlMixin:
     def _parse_field_according_to_type(cls, init_args, field, field_type, xml_element):
         # Check if the field type is a dataclass
         if is_dataclass(field_type):
-            init_args[field.name] = field_type.create_from_xml(xml_element)
+            init_args[field.name] = field_type.from_xml(xml_element)
         elif hasattr(field_type, '_name') and field_type._name == 'List':
             init_args = cls._parse_list_field_type(init_args, field, field_type, xml_element)
         elif field.name in cls.IS_YES_NO_FIELD_LIST:
@@ -1106,7 +1106,7 @@ class PluralMixin:
         self._items.append(item)
 
     @classmethod
-    def create_from_list(cls, items):
+    def from_list(cls, items):
         instance = cls()
         for item in items:
             instance.add_item(item)
@@ -1148,7 +1148,7 @@ class PluralMixin:
         return self._items
 
     @classmethod
-    def create_from_xml(cls, list_of_ret):
+    def from_xml(cls, list_of_ret):
         """A Ret should be passed in but it's sometimes not."""
         if not isinstance(list_of_ret, list):
             logger.debug(f'from_xml expects a list. Ret must be an instance of lxml.etree._Element. Your Ret is type {type(list_of_ret)}')
@@ -1181,7 +1181,7 @@ class PluralMixin:
 
     def get_by_id(self, id_value):
         for item in self._items:
-            if getattr(item, 'trx_id', None) == id_value or getattr(item, 'list_id', None) == id_value:
+            if getattr(item, 'txn_id', None) == id_value or getattr(item, 'list_id', None) == id_value:
                 return item
         return None
 
@@ -3613,20 +3613,6 @@ class ExpenseLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
 
 
 @dataclass
@@ -3928,13 +3914,6 @@ class ItemLineAdd(QBAddMixin):
         default=None,
         metadata={
             "name": "SalesRepRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
             "type": "Element",
         },
     )
@@ -4283,13 +4262,6 @@ class ItemGroupLineAdd(QBAddMixin):
         default=None,
         metadata={
             "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
             "type": "Element",
         },
     )
@@ -4676,13 +4648,6 @@ class CreditMemoLineAdd(QBAddMixin):
         default=None,
         metadata={
             "name": "CreditCardTxnInfo",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
             "type": "Element",
         },
     )
@@ -5084,13 +5049,6 @@ class CreditMemoLineGroupAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
 
 
 @dataclass
@@ -5341,13 +5299,6 @@ class DepositLineAdd(QBAddMixin):
         },
     )
     amount: Optional[Decimal] = amount
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
 
 
 @dataclass
@@ -6049,13 +6000,6 @@ class EstimateLineGroupAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
 
 
 @dataclass
@@ -6627,13 +6571,6 @@ class InvoiceLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
 
     def validate(self):
         super().validate()
@@ -7033,13 +6970,6 @@ class InvoiceLineGroupAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    # data_ext: List[DataExt] = field(
-    #     default_factory=list,
-    #     metadata={
-    #         "name": "DataExt",
-    #         "type": "Element",
-    #     },
-    # )
 
 
 @dataclass
@@ -7552,20 +7482,6 @@ class PurchaseOrderLineAdd(QBAddMixin):
             "max_length": 29,
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
 
 
 @dataclass
@@ -7940,13 +7856,6 @@ class PurchaseOrderLineGroupAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
 
 
 @dataclass
@@ -8250,13 +8159,6 @@ class SalesOrderLineAdd(QBAddMixin):
             "name": "Other2",
             "type": "Element",
             "max_length": 29,
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
         },
     )
 
@@ -8655,13 +8557,6 @@ class SalesOrderLineGroupAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
 
 
 @dataclass
@@ -8980,20 +8875,6 @@ class SalesReceiptLineAdd(QBAddMixin):
         metadata={
             "name": "CreditCardTxnInfo",
             "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
-            "type": "Element",
-        },
-    )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
         },
     )
 
@@ -9404,13 +9285,6 @@ class SalesReceiptLineGroupAdd(QBAddMixin):
         default=None,
         metadata={
             "name": "InventorySiteLocationRef",
-            "type": "Element",
-        },
-    )
-    data_ext: List[DataExt] = field(
-        default_factory=list,
-        metadata={
-            "name": "DataExt",
             "type": "Element",
         },
     )
@@ -28800,13 +28674,15 @@ class PurchaseOrderAdd(QBAddRqMixin):
             "type": "Element",
         },
     )
-    def_macro: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "defMacro",
-            "type": "Attribute",
-        },
-    )
+
+
+    def validate(self):
+        super().validate()
+        if self.inventory_site_ref is None:
+            pass
+        else:
+            pass
+            self.ship_to_entity_ref = None if self.inventory_site_ref is not None else self.ship_to_entity_ref
 
 
 @dataclass
