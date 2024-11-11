@@ -630,7 +630,8 @@ class MaxLengthMixin:
         if field_info:
             max_length = field_info.metadata.get('max_length')
             if max_length and isinstance(value, str) and len(value) > max_length:
-                raise ValueError(f"Value for {field_info.name} field '{key}' exceeds the maximum allowed length of {max_length}")
+                value = value[:max_length-1]
+                # raise ValueError(f"Value for {field_info.name} field '{key}' exceeds the maximum allowed length of {max_length}")
         super().__setattr__(key, value)
 
 
@@ -685,15 +686,25 @@ class ToXmlMixin:
         else:
             raise NotImplementedError(f"Must Be Query, Add, or Mod Class: Class is {self.__class__.__name__}")
 
-    def _get_sorted_fields(self, field_order):
+    def _get_sorted_fields(self, field_order_list):
         """
         Return the fields sorted by the given field order.
         If no field order is provided, return them in natural order.
         """
         fields = list(self.__dataclass_fields__.values())
-        if field_order:
-            fields.sort(key=lambda f: field_order.index(f.name) if f.name in field_order else len(field_order))
-        return fields
+
+        if len(field_order_list):
+            fields_in_new_order = []
+            for field_name in field_order_list:
+                for field in fields:
+                    if field.metadata['name'] == field_name:
+                        fields_in_new_order.append(field)
+                        continue
+                    else:
+                        pass
+            return fields_in_new_order
+        else:
+            return fields
 
     def _create_xml_element(self, root, field, value):
         """
@@ -1225,9 +1236,13 @@ class PluralMixin:
         for item in self._items:
             add_cls = getattr(item, 'Add', None)
             add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=keep_ids)
-            xml_element = add_instance.to_xml_rq(next_request_id)
-            xml_elements.append(xml_element)
-            next_request_id += 1 if next_request_id else None
+            if first_request_id:
+                xml_element = add_instance.to_xml_rq(next_request_id)
+                xml_elements.append(xml_element)
+                next_request_id += 1
+            else:
+                xml_element = add_instance.to_xml_rq()
+                xml_elements.append(xml_element)
         return xml_elements
 
     def _create_data_ext_mod(self, add_response):
@@ -2595,7 +2610,7 @@ class CreditCardInfo(QBMixin):
         metadata={
             "name": "ExpirationMonth",
             "type": "Element",
-            "valid_values": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+            "valid_values": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
         },
     )
     expiration_year: Optional[str] = field(
@@ -2940,7 +2955,7 @@ class CreditCardTxnInputInfo(QBMixin):
             "name": "ExpirationMonth",
             "type": "Element",
             "required": True,
-            "valid_values": ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+            "valid_values": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
         },
     )
     expiration_year: Optional[str] = field(
@@ -13354,7 +13369,7 @@ class SalesAndPurchase(QBMixin):
             "max_length": 4095,
         },
     )
-    sales_price: Optional[QBPriceType] = field(
+    sales_price: Optional[Decimal] = field(
         default=None,
         metadata={
             "name": "SalesPrice",
@@ -13376,7 +13391,7 @@ class SalesAndPurchase(QBMixin):
             "max_length": 4095,
         },
     )
-    purchase_cost: Optional[QBPriceType] = field(
+    purchase_cost: Optional[Decimal] = field(
         default=None,
         metadata={
             "name": "PurchaseCost",
@@ -13420,14 +13435,14 @@ class SalesOrPurchase(QBMixin):
             "max_length": 4095,
         },
     )
-    price: Optional[QBPriceType] = field(
+    price: Optional[Decimal] = field(
         default=None,
         metadata={
             "name": "Price",
             "type": "Element",
         },
     )
-    price_percent: Optional[QBPriceType] = field(
+    price_percent: Optional[Decimal] = field(
         default=None,
         metadata={
             "name": "PricePercent",
@@ -18397,7 +18412,7 @@ class RelatedUnit(QBMixin):
             "max_length": 31,
         },
     )
-    conversion_ratio: Optional[QBPriceType] = field(
+    conversion_ratio: Optional[Decimal] = field(
         default=None,
         metadata={
             "name": "ConversionRatio",
@@ -29212,7 +29227,7 @@ class CreditCardTxnInputInfoMod(QBMixin):
         metadata={
             "name": "ExpirationMonth",
             "type": "Element",
-            "valid_values": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
+            "valid_values": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
         },
     )
     expiration_year: Optional[str] = field(
