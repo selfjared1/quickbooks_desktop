@@ -459,6 +459,10 @@ class QuickbooksDesktop():
         elif response_type == 'none':
             return None
         else:
+            if '<?xml' in responseXML and 'encoding' in responseXML:
+                responseXML = responseXML.encode('utf-8')
+            else:
+                pass
             QBXML = et.fromstring(responseXML)
             QBXMLMsgsRs = QBXML.find('QBXMLMsgsRs')
             if QBXMLMsgsRs is not None:
@@ -651,6 +655,10 @@ class ToXmlMixin:
             if field.name in ["Query", "Add", "Mod", "SpecialAccountAdd"]:
                 pass
             else:
+                if field.name == 'cogsaccount_ref':
+                    pass
+                else:
+                    pass
                 value = getattr(self, field.name)
                 if value is not None and not isinstance(value, type):
                     element = self._create_xml_element(root, field, value)
@@ -693,9 +701,10 @@ class ToXmlMixin:
         """
         fields = list(self.__dataclass_fields__.values())
 
-        if len(field_order_list):
+        if field_order_list:
             fields_in_new_order = []
             for field_name in field_order_list:
+                pass
                 for field in fields:
                     if field.metadata['name'] == field_name:
                         fields_in_new_order.append(field)
@@ -872,8 +881,6 @@ class FromXmlMixin:
     @classmethod
     def from_xml(cls, element: et.Element) -> Any:
         element = cls._ensure_lxml_type(element)
-        element = clean_text(element)
-
         field_names = {field.metadata.get("name", field.name): field for field in cls.__dataclass_fields__.values()}
         init_args = cls._get_init_args(element, field_names)
 
@@ -1521,9 +1528,9 @@ class RefundFromAccountRef(QBRefMixin):
 
 
 @dataclass
-class CogsaccountRef(QBRefMixin):
+class COGSAccountRef(QBRefMixin):
     class Meta:
-        name = "CogsaccountRef"
+        name = "COGSAccountRef"
 
 @dataclass
 class AssetAccountRef(QBRefMixin):
@@ -13914,7 +13921,7 @@ class ItemInventoryAddMixin(ItemAddWithClassAndTaxMixin):
             "type": "Element",
         },
     )
-    cogsaccount_ref: Optional[CogsaccountRef] = field(
+    cogsaccount_ref: Optional[COGSAccountRef] = field(
         default=None,
         metadata={
             "name": "COGSAccountRef",
@@ -14592,7 +14599,7 @@ class ItemInventoryModMixin(ItemModWithClassAndTaxMixin):
             "type": "Element",
         },
     )
-    cogsaccount_ref: Optional[CogsaccountRef] = field(
+    cogsaccount_ref: Optional[COGSAccountRef] = field(
         default=None,
         metadata={
             "name": "COGSAccountRef",
@@ -15283,7 +15290,7 @@ class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    cogsaccount_ref: Optional[CogsaccountRef] = field(
+    cogsaccount_ref: Optional[COGSAccountRef] = field(
         default=None,
         metadata={
             "name": "COGSAccountRef",
@@ -15463,7 +15470,7 @@ class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
             "type": "Element",
         },
     )
-    cogsaccount_ref: Optional[CogsaccountRef] = field(
+    cogsaccount_ref: Optional[COGSAccountRef] = field(
         default=None,
         metadata={
             "name": "COGSAccountRef",

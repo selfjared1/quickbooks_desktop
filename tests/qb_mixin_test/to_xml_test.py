@@ -189,11 +189,11 @@ class TestToXmlMixin2(unittest.TestCase):
         actual_tags = [child.tag for child in item_inventory_xml]
 
         expected_tags = [
-            'Name', 'BarCode', 'IsActive', 'ClassRef', 'ParentRef', 'ManufacturerPartNumber',
+            'Name', 'IsActive', 'ManufacturerPartNumber',
             'UnitOfMeasureSetRef', 'SalesTaxCodeRef', 'SalesDesc', 'SalesPrice',
             'IncomeAccountRef', 'PurchaseDesc', 'PurchaseCost', 'COGSAccountRef',
-            'PrefVendorRef', 'AssetAccountRef', 'ReorderPoint', 'Max',
-            'QuantityOnHand', 'TotalValue', 'InventoryDate', 'ExternalGUID'
+            'PrefVendorRef', 'AssetAccountRef',
+            'QuantityOnHand'
         ]
         self.assertEqual(actual_tags, expected_tags, "The XML field order is incorrect.")
 

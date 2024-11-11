@@ -100,6 +100,16 @@ def clean_text(input_element):
     }
     for key, value in replacement_dict.items():
         cleaned_str = cleaned_str.replace(key, value)
-    cleaned_str = ''.join(c for c in unicodedata.normalize('NFKD', cleaned_str) if not unicodedata.combining(c))
-    output_element = et.fromstring(cleaned_str)
+
+
+    # cleaned_str = ''.join(c for c in unicodedata.normalize('NFKD', cleaned_str) if not unicodedata.combining(c))
+    # output_element = et.fromstring(cleaned_str)
+
+    normalized_str = unicodedata.normalize('NFKD', cleaned_str)
+    cleaned_str = ''.join(c for c in normalized_str if not unicodedata.combining(c))
+
+    try:
+        output_element = et.fromstring(cleaned_str)
+    except et.XMLSyntaxError:
+        output_element = et.HTML(cleaned_str)
     return output_element
