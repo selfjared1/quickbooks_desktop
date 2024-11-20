@@ -1,8 +1,10 @@
-import json
-from datetime import datetime
-import unicodedata
-import html
 import re
+import os
+import html
+import json
+import unicodedata
+import pathlib
+from datetime import datetime
 from lxml import etree as et
 
 
@@ -65,51 +67,202 @@ def convert_integer(value):
             return str(value)
     return value
 
+
 def clean_text(input_element):
+    # Convert the input XML element to an HTML string
     input_str = et.tostring(input_element, encoding='unicode', method='html')
+
+    # Remove undesired strings
     strings_to_remove = ['&lt;', '&gt;']
     pattern = re.compile('|'.join(re.escape(s) for s in strings_to_remove))
-
-    # Remove all specified strings
     cleaned_str = re.sub(pattern, '', input_str)
-    cleaned_str = html.unescape(cleaned_str)
+
+    # Unescape HTML entities
+    cleaned_str = html.escape(cleaned_str, quote=False)
+
+
+    # replacement_dict = {
+    #     'ñ': 'n', 'Ñ': 'N', '’': '', 'é': 'e', 'É': 'E', '®': '', '…': '...',
+    #     '“': '"', '”': '"', '–': '-', '™': '', 'Ü': 'U', 'ü': 'u', '×': 'x',
+    #     'À': 'A', 'Á': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A', 'Å': 'A', 'Æ': 'AE', 'Ç': 'C',
+    #     'È': 'E', 'Ê': 'E', 'Ë': 'E', 'Ì': 'I', 'Í': 'I', 'Î': 'I', 'Ï': 'I', 'Ð': 'D',
+    #     'Ò': 'O', 'Ó': 'O', 'Ô': 'O', 'Õ': 'O', 'Ö': 'O', 'Ø': 'dia', 'Ù': 'U', 'Ú': 'U',
+    #     'Û': 'U', 'Ý': 'Y', 'Þ': 'Th', 'ß': 'ss', 'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a',
+    #     'ä': 'a', 'å': 'a', 'æ': 'ae', 'ç': 'c', 'è': 'e', 'ê': 'e', 'ë': 'e', 'ì': 'i',
+    #     'í': 'i', 'î': 'i', 'ï': 'i', 'ð': 'd', 'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o',
+    #     'ö': 'o', 'ø': 'dia', 'ù': 'u', 'ú': 'u', 'û': 'u', 'ý': 'y', 'þ': 'th', 'ÿ': 'y',
+    #     'Œ': 'OE', 'œ': 'oe', 'Š': 'S', 'š': 's', 'Ÿ': 'Y', 'ƒ': 'f', 'ˆ': '^', '˜': '~',
+    #     'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε': 'epsilon', 'ζ': 'zeta',
+    #     'η': 'eta', 'θ': 'theta', 'ι': 'iota', 'κ': 'kappa', 'λ': 'lambda', 'μ': 'mu',
+    #     'ν': 'nu', 'ξ': 'xi', 'ο': 'omicron', 'π': 'pi', 'ρ': 'rho', 'ς': 'sigma', 'σ': 'sigma',
+    #     'τ': 'tau', 'υ': 'upsilon', 'φ': 'phi', 'χ': 'chi', 'ψ': 'psi', 'ω': 'omega',
+    #     'Α': 'Alpha', 'Β': 'Beta', 'Γ': 'Gamma', 'Δ': 'Delta', 'Ε': 'Epsilon', 'Ζ': 'Zeta',
+    #     'Η': 'Eta', 'Θ': 'Theta', 'Ι': 'Iota', 'Κ': 'Kappa', 'Λ': 'Lambda', 'Μ': 'Mu',
+    #     'Ν': 'Nu', 'Ξ': 'Xi', 'Ο': 'Omicron', 'Π': 'Pi', 'Ρ': 'Rho', 'Σ': 'Sigma', 'Τ': 'Tau',
+    #     'Υ': 'Upsilon', 'Φ': 'Phi', 'Χ': 'Chi', 'Ψ': 'Psi', 'Ω': 'Omega', ' ': 'NBSP', 'µm': 'micron',
+    #     '±': '+/-', '°': 'deg', '€': 'EUR', 'ƒ': 'f', '„': '"', '†': '+', '‡': '++', '‰': 'per_mille',
+    #     '‹': '<', '›': '>', '¡': '!', '¢': 'cent', '£': 'GBP', '¤': 'currency', '¥': 'JPY',
+    #     '¦': '|', '§': 'S', '¨': '', '©': '(c)', 'ª': 'a', '«': '<<', '»': '>>',
+    #     '¯': '-', '²': '2', '³': '3', '´': "'", 'µ': 'micro', '¶': 'P', '·': '.', '¹': '1',
+    #     'º': 'o', '¼': '1/4', '½': '1/2', '¾': '3/4', '¿': '?', '×': 'x', '÷': '/', 'Þ': 'TH', 'þ': 'th'
+    # }
+
+    # Attempting to encode for something that works with QuickBooks.
     replacement_dict = {
-        'ñ': 'n', 'Ñ': 'N', '&': 'and', '’': '', 'é': 'e', 'É': 'E', '®': '', '…': '...',
-        '“': '"', '”': '"', '–': '-', '™': '', 'Ü': 'U', 'ü': 'u', '×': 'x',
-        'À': 'A', 'Á': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A', 'Å': 'A', 'Æ': 'AE', 'Ç': 'C',
-        'È': 'E', 'Ê': 'E', 'Ë': 'E', 'Ì': 'I', 'Í': 'I', 'Î': 'I', 'Ï': 'I', 'Ð': 'D',
-        'Ò': 'O', 'Ó': 'O', 'Ô': 'O', 'Õ': 'O', 'Ö': 'O', 'Ø': 'dia', 'Ù': 'U', 'Ú': 'U',
-        'Û': 'U', 'Ý': 'Y', 'Þ': 'Th', 'ß': 'ss', 'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a',
-        'ä': 'a', 'å': 'a', 'æ': 'ae', 'ç': 'c', 'è': 'e', 'ê': 'e', 'ë': 'e', 'ì': 'i',
-        'í': 'i', 'î': 'i', 'ï': 'i', 'ð': 'd', 'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o',
-        'ö': 'o', 'ø': 'dia', 'ù': 'u', 'ú': 'u', 'û': 'u', 'ý': 'y', 'þ': 'th', 'ÿ': 'y',
-        'Œ': 'OE', 'œ': 'oe', 'Š': 'S', 'š': 's', 'Ÿ': 'Y', 'ƒ': 'f', 'ˆ': '^', '˜': '~',
-        'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε': 'epsilon', 'ζ': 'zeta',
-        'η': 'eta', 'θ': 'theta', 'ι': 'iota', 'κ': 'kappa', 'λ': 'lambda', 'μ': 'mu',
-        'ν': 'nu', 'ξ': 'xi', 'ο': 'omicron', 'π': 'pi', 'ρ': 'rho', 'ς': 'sigma', 'σ': 'sigma',
-        'τ': 'tau', 'υ': 'upsilon', 'φ': 'phi', 'χ': 'chi', 'ψ': 'psi', 'ω': 'omega',
-        'Α': 'Alpha', 'Β': 'Beta', 'Γ': 'Gamma', 'Δ': 'Delta', 'Ε': 'Epsilon', 'Ζ': 'Zeta',
-        'Η': 'Eta', 'Θ': 'Theta', 'Ι': 'Iota', 'Κ': 'Kappa', 'Λ': 'Lambda', 'Μ': 'Mu',
-        'Ν': 'Nu', 'Ξ': 'Xi', 'Ο': 'Omicron', 'Π': 'Pi', 'Ρ': 'Rho', 'Σ': 'Sigma', 'Τ': 'Tau',
-        'Υ': 'Upsilon', 'Φ': 'Phi', 'Χ': 'Chi', 'Ψ': 'Psi', 'Ω': 'Omega', ' ': 'NBSP', 'µm': 'micron',
-        '±': '+/-', '°': 'deg', '€': 'EUR', 'ƒ': 'f', '„': '"', '†': '+', '‡': '++', '‰': 'per_mille',
-        '‹': '<', '›': '>', '¡': '!', '¢': 'cent', '£': 'GBP', '¤': 'currency', '¥': 'JPY',
-        '¦': '|', '§': 'S', '¨': '', '©': '(c)', 'ª': 'a', '«': '<<', '»': '>>',
-        '¯': '-', '²': '2', '³': '3', '´': "'", 'µ': 'micro', '¶': 'P', '·': '.', '¹': '1',
-        'º': 'o', '¼': '1/4', '½': '1/2', '¾': '3/4', '¿': '?', '×': 'x', '÷': '/', 'Þ': 'TH', 'þ': 'th'
+        # XML predefined entities
+        '&': '&amp;',
+        # '<': '&lt;',
+        # '>': '&gt;',
+        '"': '&quot;',
+        "'": '&apos;',
+
+        # Common special characters encoded as numeric references
+        'ñ': '&#241;', 'Ñ': '&#209;', '’': '&#8217;', 'é': '&#233;', 'É': '&#201;',
+        '®': '&#174;', '…': '&#8230;', '“': '&#8220;', '”': '&#8221;', '–': '&#8211;',
+        '™': '&#8482;', 'Ü': '&#220;', 'ü': '&#252;', '×': '&#215;',
+
+        # Extended Latin characters
+        'À': '&#192;', 'Á': '&#193;', 'Â': '&#194;', 'Ã': '&#195;', 'Ä': '&#196;',
+        'Å': '&#197;', 'Æ': '&#198;', 'Ç': '&#199;', 'È': '&#200;', 'Ê': '&#202;',
+        'Ë': '&#203;', 'Ì': '&#204;', 'Í': '&#205;', 'Î': '&#206;', 'Ï': '&#207;',
+        'Ð': '&#208;', 'Ò': '&#210;', 'Ó': '&#211;', 'Ô': '&#212;', 'Õ': '&#213;',
+        'Ö': '&#214;', 'Ø': '&#216;', 'Ù': '&#217;', 'Ú': '&#218;', 'Û': '&#219;',
+        'Ý': '&#221;', 'Þ': '&#222;', 'ß': '&#223;', 'à': '&#224;', 'á': '&#225;',
+        'â': '&#226;', 'ã': '&#227;', 'ä': '&#228;', 'å': '&#229;', 'æ': '&#230;',
+        'ç': '&#231;', 'è': '&#232;', 'ê': '&#234;', 'ë': '&#235;', 'ì': '&#236;',
+        'í': '&#237;', 'î': '&#238;', 'ï': '&#239;', 'ð': '&#240;', 'ò': '&#242;',
+        'ó': '&#243;', 'ô': '&#244;', 'õ': '&#245;', 'ö': '&#246;', 'ø': '&#248;',
+        'ù': '&#249;', 'ú': '&#250;', 'û': '&#251;', 'ý': '&#253;', 'þ': '&#254;',
+        'ÿ': '&#255;',
+
+        # Additional special characters
+        'Œ': '&#338;', 'œ': '&#339;', 'Š': '&#352;', 'š': '&#353;', 'Ÿ': '&#376;',
+        'ƒ': '&#402;', 'ˆ': '&#710;', '˜': '&#732;', 'α': '&#945;', 'β': '&#946;',
+        'γ': '&#947;', 'δ': '&#948;', 'ε': '&#949;', 'ζ': '&#950;', 'η': '&#951;',
+        'θ': '&#952;', 'ι': '&#953;', 'κ': '&#954;', 'λ': '&#955;', 'μ': '&#956;',
+        'ν': '&#957;', 'ξ': '&#958;', 'ο': '&#959;', 'π': '&#960;', 'ρ': '&#961;',
+        'ς': '&#962;', 'σ': '&#963;', 'τ': '&#964;', 'υ': '&#965;', 'φ': '&#966;',
+        'χ': '&#967;', 'ψ': '&#968;', 'ω': '&#969;', 'Α': '&#913;', 'Β': '&#914;',
+        'Γ': '&#915;', 'Δ': '&#916;', 'Ε': '&#917;', 'Ζ': '&#918;', 'Η': '&#919;',
+        'Θ': '&#920;', 'Ι': '&#921;', 'Κ': '&#922;', 'Λ': '&#923;', 'Μ': '&#924;',
+        'Ν': '&#925;', 'Ξ': '&#926;', 'Ο': '&#927;', 'Π': '&#928;', 'Ρ': '&#929;',
+        'Σ': '&#931;', 'Τ': '&#932;', 'Υ': '&#933;', 'Φ': '&#934;', 'Χ': '&#935;',
+        'Ψ': '&#936;', 'Ω': '&#937;', ' ': '&#160;', 'µm': '&#181;', '±': '&#177;',
+        '°': '&#176;', '€': '&#8364;', '„': '&#8222;', '†': '&#8224;', '‡': '&#8225;',
+        '‰': '&#8240;', '‹': '&#8249;', '›': '&#8250;', '¡': '&#161;', '¢': '&#162;',
+        '£': '&#163;', '¤': '&#164;', '¥': '&#165;', '¦': '&#166;', '§': '&#167;',
+        '¨': '&#168;', '©': '&#169;', 'ª': '&#170;', '«': '&#171;', '»': '&#187;',
+        '¯': '&#175;', '²': '&#178;', '³': '&#179;', '´': '&#180;', 'µ': '&#181;',
+        '¶': '&#182;', '·': '&#183;', '¹': '&#185;', 'º': '&#186;', '¼': '&#188;',
+        '½': '&#189;', '¾': '&#190;', '¿': '&#191;', '×': '&#215;', '÷': '&#247;',
+        'Þ': '&#222;', 'þ': '&#254;'
     }
+
+    # Replace characters based on the dictionary
     for key, value in replacement_dict.items():
         cleaned_str = cleaned_str.replace(key, value)
 
-
-    # cleaned_str = ''.join(c for c in unicodedata.normalize('NFKD', cleaned_str) if not unicodedata.combining(c))
-    # output_element = et.fromstring(cleaned_str)
-
+    # Normalize and remove combining characters
     normalized_str = unicodedata.normalize('NFKD', cleaned_str)
     cleaned_str = ''.join(c for c in normalized_str if not unicodedata.combining(c))
+    cleaned_str = cleaned_str.replace('&amp;', '&') # Because & works with QuickBooks.
+    fixed_str = html.unescape(cleaned_str)
+
+    # Parse back to XML, ensuring the proper XML structure is maintained
+    try:
+        output_element = et.fromstring(fixed_str, parser=et.XMLParser(recover=True))
+    except et.XMLSyntaxError:
+        raise ValueError("Failed to parse the cleaned string back to XML.")
+
+    return output_element
+
+
+def validate_qbxml(full_request, sdk_version):
+    """
+    Validate a QBXML string against the schema file for the given SDK version.
+
+    Args:
+        full_request (str): The QBXML content as a string.
+        sdk_version (str): The QuickBooks SDK version (e.g., "13.0").
+
+    Raises:
+        ValueError: If the QBXML is invalid.
+    """
+    schema_filename = f"qbxml{sdk_version.replace('.', '')}.xsd"
+    schema_path = os.path.join(os.path.dirname(__file__), "xsd_files", schema_filename)
+
+    if not os.path.exists(schema_path):
+        raise FileNotFoundError(f"Schema file for SDK version {sdk_version} not found at {schema_path}")
+
+    with open(schema_path, "r", encoding="ISO-8859-1") as schema_file:
+        schema_tree = et.parse(schema_file)
+
+    schema = et.XMLSchema(schema_tree)
 
     try:
-        output_element = et.fromstring(cleaned_str)
-    except et.XMLSyntaxError:
-        output_element = et.HTML(cleaned_str)
-    return output_element
+        doc = et.fromstring(full_request.encode("ISO-8859-1"))
+        schema.assertValid(doc)
+    except et.XMLSyntaxError as e:
+        raise ValueError(f"Syntax Error in QBXML: {e}")
+    except et.DocumentInvalid as e:
+        raise ValueError(f"Validation Error in QBXML: {e}")
+
+
+
+# def validate_special_characters(xml_string):
+#     """
+#     Validate special characters in the provided XML string.
+#     Ensures no invalid characters are present based on XML's allowed Unicode range.
+#     If invalid characters are found, locates and reports the problem.
+#
+#     Args:
+#         xml_string (str): The XML content as a string.
+#
+#     Raises:
+#         ValueError: If invalid characters are found, with the location in the XML.
+#     """
+#     # Define the regex pattern for valid XML characters
+#     valid_char_pattern = re.compile(r"^[\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u10000-\u10FFFF]*$")
+#
+#     # Quickly check the overall string for invalid characters
+#     if not valid_char_pattern.match(xml_string):
+#         # If invalid characters are detected, locate the issue
+#         try:
+#             # Parse the XML string into an element tree
+#             root = et.fromstring(xml_string)
+#         except et.XMLSyntaxError as e:
+#             raise ValueError(f"XML parsing failed: {e}")
+#
+#         # Helper to validate text or tail for invalid characters
+#         def has_invalid_characters(text):
+#             return text and not valid_char_pattern.match(text)
+#
+#         # Recursively check elements to locate invalid characters
+#         def find_invalid_element(element, path=""):
+#             current_path = f"{path}/{element.tag}"
+#
+#             # Check element text
+#             if has_invalid_characters(element.text):
+#                 raise ValueError(
+#                     f"Invalid characters in text of element '{current_path}': {repr(element.text)}"
+#                 )
+#
+#             # Check element tail
+#             if has_invalid_characters(element.tail):
+#                 raise ValueError(
+#                     f"Invalid characters in tail of element '{current_path}': {repr(element.tail)}"
+#                 )
+#
+#             # Recursively check child elements
+#             for child in element:
+#                 find_invalid_element(child, current_path)
+#
+#         # Start detailed validation from the root element
+#         find_invalid_element(root)
+#     else:
+#         pass
+#
+#     # Escape the entire XML string for QuickBooks SDK compatibility
+#     escaped_string = html.escape(xml_string, quote=True)
+#
+#     return escaped_string

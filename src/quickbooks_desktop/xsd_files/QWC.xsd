@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2006 U (http://www.altova.com) by Peter Vogel (Intuit, Inc) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="QBWCXML">
+		<xs:annotation>
+			<xs:documentation>QuickBooks Web Connector Service Descriptor</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="AppName" type="xs:string" nillable="false"/>
+				<xs:element name="AppID" type="xs:string" minOccurs="0"/>
+				<xs:element name="AppURL" type="xs:anyURI"/>
+				<xs:element name="AppDescription" type="xs:string"/>
+				<xs:element name="AppSupport" type="xs:anyURI"/>
+				<xs:element name="UserName" type="xs:string"/>
+				<xs:element name="OwnerID" type="xs:string"/>
+				<xs:element name="FileID" type="xs:string"/>
+				<xs:element name="QBType" type="QBTypeType"/>
+				<xs:element name="Style" type="StyleType" default="Document" minOccurs="0"/>
+				<xs:element name="Scheduler" minOccurs="0">
+					<xs:complexType>
+						<xs:choice>
+							<xs:element name="RunEveryNMinutes" type="MinutesType"/>
+						</xs:choice>
+					</xs:complexType>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="StyleType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Document"/>
+			<xs:enumeration value="RPC"/>
+			<xs:enumeration value="DocWrapped"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="QBTypeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="QBFS"/>
+			<xs:enumeration value="QBPOS"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="MinutesType">
+		<xs:restriction base="xs:int">
+			<xs:minInclusive value="1"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

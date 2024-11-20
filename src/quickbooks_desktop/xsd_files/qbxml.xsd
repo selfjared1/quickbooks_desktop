@@ -1,0 +1,5336 @@
+
+<!-- ============================================================================= -->
+<!-- qbXML version 1.0                                                             -->
+<!--                                                                               -->
+<!--                                                                               -->
+<!-- qbxml.xsd                                                                     -->
+<!--                                                                               -->
+<!-- Copyright 2001-2002 Intuit Inc. All rights reserved.                          -->
+<!-- Use is subject to the qbXML Developer Agreement available at:                 -->
+<!--          http://developer.intuit.com/rd/qbXML_agreement                       -->
+<!--                                                                               -->
+<!-- ============================================================================= -->
+
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+<!-- ============================================================================= -->
+<!--     Elements                                                                  -->
+<!-- ============================================================================= -->
+
+<xsd:element name="UserLogin" type="STRTYPE"/>
+<xsd:element name="UserPass" type="STRTYPE"/>
+<xsd:element name="Ticket" type="STRTYPE"/>
+<xsd:element name="AuthID" type="IDTYPE"/>
+<xsd:element name="AuthPass" type="STRTYPE"/>
+<xsd:element name="AgencyLogin" type="STRTYPE"/>
+<xsd:element name="AgencyPass" type="STRTYPE"/>
+<xsd:element name="AgencyParentID" type="IDTYPE"/>
+<xsd:element name="ParentID" type="IDTYPE"/>
+<xsd:element name="TargetLogin" type="STRTYPE"/>
+<xsd:element name="TargetParentID" type="IDTYPE"/>
+<xsd:element name="InstallationID" type="IDTYPE"/>
+<xsd:element name="AppID" type="STRTYPE"/>
+<xsd:element name="AppVer" type="STRTYPE"/>
+<xsd:element name="Language" type="STRTYPE"/>
+<xsd:element name="ClientDateTime" type="DATETIMETYPE"/>
+<xsd:element name="ServerDateTime" type="DATETIMETYPE"/>
+<xsd:element name="ProductName" type="STRTYPE"/>
+<xsd:element name="MajorVersion" type="STRTYPE"/>
+<xsd:element name="MinorVersion" type="STRTYPE"/>
+<xsd:element name="SupportedQBXMLVersion" type="STRTYPE"/>
+<xsd:element name="CompanyID" type="IDTYPE"/>
+<xsd:element name="ListID" type="IDTYPE"/>
+<xsd:element name="TxnID" type="IDTYPE"/>
+<xsd:element name="TxnType">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="Invoice"/>
+			<xsd:enumeration value="CreditMemo"/>
+			<xsd:enumeration value="JournalEntry"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="TxnLineID" type="IDTYPE"/>
+<xsd:element name="TxnNumber" type="INTTYPE"/>
+<xsd:element name="TimeCreated" type="DATETIMETYPE"/>
+<xsd:element name="TimeModified" type="DATETIMETYPE"/>
+<xsd:element name="EditSequence" type="STRTYPE"/>
+<xsd:element name="Name" type="STRTYPE"/>
+<xsd:element name="FullName" type="STRTYPE"/>
+<xsd:element name="IsActive" type="BOOLTYPE"/>
+<xsd:element name="CompanyName" type="STRTYPE"/>
+<xsd:element name="LegalCompanyName" type="STRTYPE"/>
+<xsd:element name="CompanyEmailForCustomer" type="STRTYPE"/>
+<xsd:element name="FirstMonthFiscalYear">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="January"/>
+			<xsd:enumeration value="February"/>
+			<xsd:enumeration value="March"/>
+			<xsd:enumeration value="April"/>
+			<xsd:enumeration value="May"/>
+			<xsd:enumeration value="June"/>
+			<xsd:enumeration value="July"/>
+			<xsd:enumeration value="August"/>
+			<xsd:enumeration value="September"/>
+			<xsd:enumeration value="October"/>
+			<xsd:enumeration value="November"/>
+			<xsd:enumeration value="December"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="FirstMonthIncomeTaxYear">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="January"/>
+			<xsd:enumeration value="February"/>
+			<xsd:enumeration value="March"/>
+			<xsd:enumeration value="April"/>
+			<xsd:enumeration value="May"/>
+			<xsd:enumeration value="June"/>
+			<xsd:enumeration value="July"/>
+			<xsd:enumeration value="August"/>
+			<xsd:enumeration value="September"/>
+			<xsd:enumeration value="October"/>
+			<xsd:enumeration value="November"/>
+			<xsd:enumeration value="December"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="CompanyWebSite" type="STRTYPE"/>
+<xsd:element name="CompanyType" type="STRTYPE"/>
+<xsd:element name="Addr1" type="STRTYPE"/>
+<xsd:element name="Addr2" type="STRTYPE"/>
+<xsd:element name="Addr3" type="STRTYPE"/>
+<xsd:element name="City" type="STRTYPE"/>
+<xsd:element name="State" type="STRTYPE"/>
+<xsd:element name="PostalCode" type="STRTYPE"/>
+<xsd:element name="Country" type="STRTYPE"/>
+<xsd:element name="FirstName" type="STRTYPE"/>
+<xsd:element name="MiddleName" type="STRTYPE"/>
+<xsd:element name="LastName" type="STRTYPE"/>
+<xsd:element name="Salutation" type="STRTYPE"/>
+<xsd:element name="Suffix" type="STRTYPE"/>
+<xsd:element name="Fax" type="STRTYPE"/>
+<xsd:element name="Phone" type="STRTYPE"/>
+<xsd:element name="AltPhone" type="STRTYPE"/>
+<xsd:element name="Email" type="STRTYPE"/>
+<xsd:element name="Mobile" type="STRTYPE"/>
+<xsd:element name="Pager" type="STRTYPE"/>
+<xsd:element name="IsStatementWithParent" type="BOOLTYPE"/>
+<xsd:element name="JobDesc" type="STRTYPE"/>
+<xsd:element name="JobStartDate" type="DATETYPE"/>
+<xsd:element name="JobProjectedEndDate" type="DATETYPE"/>
+<xsd:element name="JobEndDate" type="DATETYPE"/>
+<xsd:element name="CreditCardNumber" type="STRTYPE"/>
+<xsd:element name="ExpirationDate" type="DATETYPE"/>
+<xsd:element name="IsDone" type="BOOLTYPE"/>
+<xsd:element name="ReminderDate" type="DATETYPE"/>
+<xsd:element name="AccountNumber" type="STRTYPE"/>
+<xsd:element name="InventoryDate" type="DATETYPE"/>
+<xsd:element name="TotalAmount" type="AMTTYPE"/>
+<xsd:element name="OpenAmount" type="AMTTYPE"/>
+<xsd:element name="OriginalAmount" type="AMTTYPE"/>
+<xsd:element name="DueDate" type="DATETYPE"/>
+<xsd:element name="ExpectedDate" type="DATETYPE"/>
+<xsd:element name="ShipDate" type="DATETYPE"/>
+<xsd:element name="PONumber" type="STRTYPE"/>
+<xsd:element name="FOB" type="STRTYPE"/>
+<xsd:element name="IsPending" type="BOOLTYPE"/>
+<xsd:element name="IsFinanceCharge" type="BOOLTYPE"/>
+<xsd:element name="DiscountAmount" type="AMTTYPE"/>
+<xsd:element name="DiscountRate" type="PRICETYPE"/>
+<xsd:element name="DiscountRatePercent" type="PERCENTTYPE"/>
+<xsd:element name="SuggestedDiscountAmount" type="AMTTYPE"/>
+<xsd:element name="SuggestedDiscountDate" type="DATETYPE"/>
+<xsd:element name="ItemDesc" type="STRTYPE"/>
+<xsd:element name="IsTaxable" type="BOOLTYPE"/>
+<xsd:element name="Rate" type="PRICETYPE"/>
+<xsd:element name="RatePercent" type="PERCENTTYPE"/>
+<xsd:element name="TaxRate" type="PERCENTTYPE"/>
+<xsd:element name="Desc" type="STRTYPE"/>
+<xsd:element name="Price" type="PRICETYPE"/>
+<xsd:element name="PricePercent" type="PERCENTTYPE"/>
+<xsd:element name="SalesTaxTotal" type="AMTTYPE"/>
+<xsd:element name="SalesTaxPercentage" type="PERCENTTYPE"/>
+<xsd:element name="Quantity" type="QUANTYPE"/>
+<xsd:element name="Amount" type="AMTTYPE"/>
+<xsd:element name="ServiceDate" type="DATETYPE"/>
+<xsd:element name="AppliedAmount" type="AMTTYPE"/>
+<xsd:element name="BalanceRemaining" type="AMTTYPE"/>
+<xsd:element name="OpenBalance" type="AMTTYPE"/>
+<xsd:element name="OpenBalanceDate" type="DATETYPE"/>
+<xsd:element name="Subtotal" type="AMTTYPE"/>
+<xsd:element name="AmountDue" type="AMTTYPE"/>
+<xsd:element name="VendorMsg" type="STRTYPE"/>
+<xsd:element name="Sublevel">
+	<xsd:simpleType>
+		<xsd:restriction base="INTTYPE">
+			<xsd:maxInclusive value="4"/>
+			<xsd:minInclusive value="0"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="BankNumber" type="STRTYPE"/>
+<xsd:element name="ResaleNumber" type="STRTYPE"/>
+<xsd:element name="SalesDesc" type="STRTYPE"/>
+<xsd:element name="PurchaseDesc" type="STRTYPE"/>
+<xsd:element name="QuantityOnHand" type="QUANTYPE"/>
+<xsd:element name="QuantityOnOrder" type="QUANTYPE"/>
+<xsd:element name="AverageCost" type="PRICETYPE"/>
+<xsd:element name="ReorderPoint" type="QUANTYPE"/>
+<xsd:element name="IsToBePrinted" type="BOOLTYPE"/>
+<xsd:element name="Contact" type="STRTYPE"/>
+<xsd:element name="AltContact" type="STRTYPE"/>
+<xsd:element name="Notes" type="STRTYPE"/>
+<xsd:element name="AppendNotes" type="STRTYPE"/>
+<xsd:element name="SSN" type="STRTYPE"/>
+<xsd:element name="IsVendorEligibleFor1099" type="BOOLTYPE"/>
+<xsd:element name="HiredDate" type="DATETYPE"/>
+<xsd:element name="ReleasedDate" type="DATETYPE"/>
+<xsd:element name="Balance" type="AMTTYPE"/>
+<xsd:element name="TotalBalance" type="AMTTYPE"/>
+<xsd:element name="PaymentAmount" type="AMTTYPE"/>
+<xsd:element name="CreditLimit" type="AMTTYPE"/>
+<xsd:element name="NameOnCheck" type="STRTYPE"/>
+<xsd:element name="PrintAs" type="STRTYPE"/>
+<xsd:element name="VendorTaxIdent" type="STRTYPE"/>
+<xsd:element name="StdDueDays" type="INTTYPE"/>
+<xsd:element name="StdDiscountDays" type="INTTYPE"/>
+<xsd:element name="DayOfMonthDue" type="INTTYPE"/>
+<xsd:element name="DueNextMonthDays" type="INTTYPE"/>
+<xsd:element name="DiscountDayOfMonth" type="INTTYPE"/>
+<xsd:element name="SalesPrice" type="PRICETYPE"/>
+<xsd:element name="TotalValue" type="AMTTYPE"/>
+<xsd:element name="Cost" type="PRICETYPE"/>
+<xsd:element name="PurchaseCost" type="PRICETYPE"/>
+<xsd:element name="DiscountPct" type="PERCENTTYPE"/>
+<xsd:element name="CheckNumber" type="STRTYPE"/>
+<xsd:element name="LastCheckNumber" type="STRTYPE"/>
+<xsd:element name="IsPrintItemsInGroup" type="BOOLTYPE"/>
+<xsd:element name="Memo" type="STRTYPE"/>
+<xsd:element name="RefNumber" type="STRTYPE"/>
+<xsd:element name="IsBillable" type="BOOLTYPE"/>
+<xsd:element name="IsBilled" type="BOOLTYPE"/>
+<xsd:element name="Duration" type="TIMEINTERVALTYPE"/>
+<xsd:element name="Initial" type="STRTYPE"/>
+<xsd:element name="TxnDate" type="DATETYPE"/>
+<xsd:element name="MarkupRate" type="PRICETYPE"/>
+<xsd:element name="MarkupRatePercent" type="PERCENTTYPE"/>
+<xsd:element name="CreditAmount" type="AMTTYPE"/>
+<xsd:element name="AccountType">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="AccountsPayable"/>
+			<xsd:enumeration value="AccountsReceivable"/>
+			<xsd:enumeration value="Bank"/>
+			<xsd:enumeration value="CostOfGoodsSold"/>
+			<xsd:enumeration value="CreditCard"/>
+			<xsd:enumeration value="Equity"/>
+			<xsd:enumeration value="Expense"/>
+			<xsd:enumeration value="FixedAsset"/>
+			<xsd:enumeration value="Income"/>
+			<xsd:enumeration value="LongTermLiability"/>
+			<xsd:enumeration value="OtherAsset"/>
+			<xsd:enumeration value="OtherCurrentAsset"/>
+			<xsd:enumeration value="OtherCurrentLiability"/>
+			<xsd:enumeration value="OtherExpense"/>
+			<xsd:enumeration value="OtherIncome"/>
+			<xsd:enumeration value="NonPosting"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="DetailAccountType">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="ToBeDetermined"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="EmployeeType" default="Regular">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="Regular"/>
+			<xsd:enumeration value="Officer"/>
+			<xsd:enumeration value="Statutory"/>
+			<xsd:enumeration value="Owner"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="Gender">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="Male"/>
+			<xsd:enumeration value="Female"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="JobStatus" default="None">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="None"/>
+			<xsd:enumeration value="Pending"/>
+			<xsd:enumeration value="Awarded"/>
+			<xsd:enumeration value="InProgress"/>
+			<xsd:enumeration value="Closed"/>
+			<xsd:enumeration value="NotAwarded"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="DeliveryMethod" default="Print">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="Print"/>
+			<xsd:enumeration value="Fax"/>
+			<xsd:enumeration value="Email"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="FromModifiedDate" type="DATETYPE"/>
+<xsd:element name="ToModifiedDate" type="DATETYPE"/>
+<xsd:element name="FromTxnDate" type="DATETYPE"/>
+<xsd:element name="ToTxnDate" type="DATETYPE"/>
+<xsd:element name="FromRefNumber" type="STRTYPE"/>
+<xsd:element name="ToRefNumber" type="STRTYPE"/>
+<xsd:element name="FromName" type="STRTYPE"/>
+<xsd:element name="ToName" type="STRTYPE"/>
+<xsd:element name="MaxReturned">
+	<xsd:simpleType>
+		<xsd:restriction base="INTTYPE">
+			<xsd:maxInclusive value="99999999"/>
+			<xsd:minInclusive value="1"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="IncludeLineItems" type="BOOLTYPE"/>
+<xsd:element name="DateMacro">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="ThisWeekToDate"/>
+			<xsd:enumeration value="ThisMonthToDate"/>
+			<xsd:enumeration value="ThisFiscalQuarterToDate"/>
+			<xsd:enumeration value="ThisFiscalYearToDate"/>
+			<xsd:enumeration value="LastWeek"/>
+			<xsd:enumeration value="LastMonth"/>
+			<xsd:enumeration value="LastFiscalQuarter"/>
+			<xsd:enumeration value="LastFiscalYear"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="FullNameWithChildren" type="STRTYPE"/>
+<xsd:element name="ActiveStatus" default="ActiveOnly">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="ActiveOnly"/>
+			<xsd:enumeration value="InactiveOnly"/>
+			<xsd:enumeration value="All"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="DoneStatus" default="NotDoneOnly">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="NotDoneOnly"/>
+			<xsd:enumeration value="DoneOnly"/>
+			<xsd:enumeration value="All"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="PaidStatus" default="All">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="All"/>
+			<xsd:enumeration value="PaidOnly"/>
+			<xsd:enumeration value="NotPaidOnly"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="Operator">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="LessThan"/>
+			<xsd:enumeration value="LessThanEqual"/>
+			<xsd:enumeration value="Equal"/>
+			<xsd:enumeration value="GreaterThan"/>
+			<xsd:enumeration value="GreaterThanEqual"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="MatchCriterion">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="StartsWith"/>
+			<xsd:enumeration value="Contains"/>
+			<xsd:enumeration value="EndsWith"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+<xsd:element name="StatementID" type="IDTYPE"/>
+<xsd:element name="StatementDate" type="DATETYPE"/>
+<xsd:element name="StatementNumber" type="STRTYPE"/>
+<xsd:element name="ChargeNumber" type="STRTYPE"/>
+<xsd:element name="WageType">
+	<xsd:simpleType>
+		<xsd:restriction base="ENUMTYPE">
+			<xsd:enumeration value="Hourly"/>
+			<xsd:enumeration value="Salary"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+</xsd:element>
+
+
+<!-- ============================================================================= -->
+<!--      Macros                                                                   -->
+<!-- ============================================================================= -->
+
+<xsd:group name="GenericListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element ref="FullName" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="159"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="SimpleListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="31"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="CustomerListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="209"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="VendorListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="41"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ShipMethodListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="15"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="SalesRepListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="5"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="CustomerMsgListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="101"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="SalesTaxCodeListRef">
+	<xsd:sequence>
+		<xsd:element ref="ListID" minOccurs="0"/>
+		<xsd:element name="FullName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="3"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ListCore">
+	<xsd:sequence>
+		<xsd:element ref="ListID"/>
+		<xsd:element ref="TimeCreated"/>
+		<xsd:element ref="TimeModified"/>
+		<xsd:element name="EditSequence">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="16"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ListCoreMod">
+	<xsd:sequence>
+		<xsd:element ref="ListID"/>
+		<xsd:element name="EditSequence">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="16"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="AddressData">
+	<xsd:sequence>
+		<xsd:element name="Addr1" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="41"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Addr2" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="41"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Addr3" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="41"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="City" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="31"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="State" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="21"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="PostalCode" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="13"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Country" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="31"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="PersonName">
+	<xsd:sequence>
+		<xsd:element name="Salutation" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="15"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="FirstName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="25"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="MiddleName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="5"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="LastName" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="25"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element ref="Suffix" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="CommInfo">
+	<xsd:sequence>
+		<xsd:element name="Phone" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="21"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Mobile" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="21"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Pager" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="21"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="AltPhone" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="21"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Fax" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="21"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Email" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="99"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="Contact" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="41"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element name="AltContact" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="41"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ListFilter">
+	<xsd:sequence>
+		<xsd:element ref="MaxReturned" minOccurs="0"/>
+		<xsd:element ref="ActiveStatus" minOccurs="0"/>
+		<xsd:element ref="FromModifiedDate" minOccurs="0"/>
+		<xsd:element ref="ToModifiedDate" minOccurs="0"/>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="NameFilter"/>
+			<xsd:element ref="NameRangeFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ListQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ListID" maxOccurs="unbounded"/>
+			<xsd:element ref="FullName" maxOccurs="unbounded"/>
+			<xsd:group ref="ListFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="AccountListFilter">
+	<xsd:sequence>
+		<xsd:group ref="ListFilter"/>
+		<xsd:element ref="AccountType" minOccurs="0" maxOccurs="unbounded"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="AccountListQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ListID" maxOccurs="unbounded"/>
+			<xsd:element ref="FullName" maxOccurs="unbounded"/>
+			<xsd:group ref="AccountListFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="CustomerListFilter">
+	<xsd:sequence>
+		<xsd:group ref="ListFilter"/>
+		<xsd:element ref="TotalBalanceFilter" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="CustomerListQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ListID" maxOccurs="unbounded"/>
+			<xsd:element ref="FullName" maxOccurs="unbounded"/>
+			<xsd:group ref="CustomerListFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="VendorListFilter">
+	<xsd:sequence>
+		<xsd:group ref="ListFilter"/>
+		<xsd:element ref="TotalBalanceFilter" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="VendorListQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ListID" maxOccurs="unbounded"/>
+			<xsd:element ref="FullName" maxOccurs="unbounded"/>
+			<xsd:group ref="VendorListFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ToDoListFilter">
+	<xsd:sequence>
+		<xsd:group ref="ListFilter"/>
+		<xsd:element ref="DoneStatus" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="ToDoListQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ListID" maxOccurs="unbounded"/>
+			<xsd:group ref="ToDoListFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnFilter">
+	<xsd:sequence>
+		<xsd:element ref="MaxReturned" minOccurs="0"/>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ModifiedDateRangeFilter"/>
+			<xsd:element ref="TxnDateRangeFilter"/>
+		</xsd:choice>
+		<xsd:element ref="EntityFilter" minOccurs="0"/>
+		<xsd:element ref="AccountFilter" minOccurs="0"/>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="RefNumberFilter"/>
+			<xsd:element ref="RefNumberRangeFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="TxnID" maxOccurs="unbounded"/>
+			<xsd:element ref="RefNumber" maxOccurs="unbounded"/>
+			<xsd:group ref="TxnFilter"/>
+		</xsd:choice>
+		<xsd:element ref="IncludeLineItems" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="InvoiceFilter">
+	<xsd:sequence>
+		<xsd:group ref="TxnFilter"/>
+		<xsd:element ref="PaidStatus" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="InvoiceQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="TxnID" maxOccurs="unbounded"/>
+			<xsd:element ref="RefNumber" maxOccurs="unbounded"/>
+			<xsd:group ref="InvoiceFilter"/>
+		</xsd:choice>
+		<xsd:element ref="IncludeLineItems" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="BillFilter">
+	<xsd:sequence>
+		<xsd:group ref="TxnFilter"/>
+		<xsd:element ref="PaidStatus" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="BillQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="TxnID" maxOccurs="unbounded"/>
+			<xsd:element ref="RefNumber" maxOccurs="unbounded"/>
+			<xsd:group ref="BillFilter"/>
+		</xsd:choice>
+		<xsd:element ref="IncludeLineItems" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TimeTrackingTxnFilter">
+	<xsd:sequence>
+		<xsd:element ref="MaxReturned" minOccurs="0"/>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="ModifiedDateRangeFilter"/>
+			<xsd:element ref="TxnDateRangeFilter"/>
+		</xsd:choice>
+		<xsd:element ref="TimeTrackingEntityFilter" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TimeTrackingTxnQuery">
+	<xsd:sequence>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="TxnID" maxOccurs="unbounded"/>
+			<xsd:group ref="TimeTrackingTxnFilter"/>
+		</xsd:choice>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnDateFilter">
+	<xsd:sequence>
+		<xsd:element ref="FromTxnDate" minOccurs="0"/>
+		<xsd:element ref="ToTxnDate" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnCore">
+	<xsd:sequence>
+		<xsd:element ref="TxnID"/>
+		<xsd:element ref="TimeCreated"/>
+		<xsd:element ref="TimeModified"/>
+		<xsd:element name="EditSequence">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="16"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element ref="TxnNumber"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnFieldsCore">
+	<xsd:sequence>
+		<xsd:element name="PONumber" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="25"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element ref="TermsRef" minOccurs="0"/>
+		<xsd:element ref="DueDate" minOccurs="0"/>
+		<xsd:element ref="SalesRepRef" minOccurs="0"/>
+		<xsd:element name="FOB" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="13"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnLineCore">
+	<xsd:sequence>
+		<xsd:element ref="ItemRef" minOccurs="0"/>
+		<xsd:element name="Desc" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="4095"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element ref="Quantity" minOccurs="0"/>
+		<xsd:choice minOccurs="0">
+			<xsd:element ref="Rate"/>
+			<xsd:element ref="RatePercent"/>
+		</xsd:choice>
+		<xsd:element ref="ClassRef" minOccurs="0"/>
+		<xsd:element ref="Amount" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="TxnLineGroupCore">
+	<xsd:sequence>
+		<xsd:element ref="ItemGroupRef"/>
+		<xsd:element name="Desc" minOccurs="0">
+			<xsd:simpleType>
+				<xsd:restriction base="STRTYPE">
+					<xsd:maxLength value="4095"/>
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:element>
+		<xsd:element ref="Quantity" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+<xsd:group name="SalesTaxData">
+	<xsd:sequence>
+		<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+		<xsd:element ref="SalesTaxPercentage" minOccurs="0"/>
+		<xsd:element ref="SalesTaxTotal" minOccurs="0"/>
+	</xsd:sequence>
+</xsd:group>
+
+
+
+<!-- ============================================================================= -->
+<!--     Aggregates                                                                -->
+<!-- ============================================================================= -->
+
+<xsd:element name="ListObjRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SimpleListObjRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerListObjRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EntityListObjRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorListObjRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="VendorListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ParentRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="GenericListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="VendorListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ClassRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TermsRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesRepRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SalesRepListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerMsgRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerMsgListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ARAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ExpenseAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PrefVendorRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="VendorListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="IncomeAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="COGSAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AssetAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="DiscountAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="DepositToAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="RefundFromAccountRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TaxVendorRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="VendorListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EntityRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EmployeeRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ShipToEntityRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PayeeEntityRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="CustomerListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesRepEntityRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemServiceRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PaymentMethodRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ShipMethodRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ShipMethodListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerTypeRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorTypeRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JobTypeRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesTaxCodeRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SalesTaxCodeListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerSalesTaxCodeRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SalesTaxCodeListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PayrollItemWageRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="SimpleListRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="Address">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ShipAddress">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="LegalAddress">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="BillAddress">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorAddress">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="OtherNameAddress">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CompanyAddressForCustomer">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EmployeeAddress">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="AddressData"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TotalBalanceFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="Operator"/>
+			<xsd:element ref="Amount"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="NameFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="MatchCriterion"/>
+			<xsd:element ref="Name"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="NameRangeFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="FromName" minOccurs="0"/>
+			<xsd:element ref="ToName" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ModifiedDateRangeFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="FromModifiedDate" minOccurs="0"/>
+			<xsd:element ref="ToModifiedDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TxnDateRangeFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:choice>
+				<xsd:group ref="TxnDateFilter"/>
+				<xsd:element ref="DateMacro"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EntityFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:choice>
+				<xsd:element ref="FullName" maxOccurs="unbounded"/>
+				<xsd:element ref="FullNameWithChildren"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TimeTrackingEntityFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:choice>
+				<xsd:element ref="FullName" maxOccurs="unbounded"/>
+				<xsd:element ref="ListID" maxOccurs="unbounded"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AccountFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:choice>
+				<xsd:element name="FullName" maxOccurs="unbounded">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="159"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+				<xsd:element name="FullNameWithChildren">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="159"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="RefNumberFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="MatchCriterion"/>
+			<xsd:element ref="RefNumber"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="RefNumberRangeFilter">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="FromRefNumber" minOccurs="0"/>
+			<xsd:element ref="ToRefNumber" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="HostRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="ProductName"/>
+			<xsd:element ref="MajorVersion"/>
+			<xsd:element ref="MinorVersion"/>
+			<xsd:element ref="SupportedQBXMLVersion" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CompanyRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="59"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="LegalCompanyName" minOccurs="0"/>
+			<xsd:element ref="Address" minOccurs="0"/>
+			<xsd:element ref="LegalAddress" minOccurs="0"/>
+			<xsd:element ref="CompanyAddressForCustomer" minOccurs="0"/>
+			<xsd:element ref="Phone" minOccurs="0"/>
+			<xsd:element ref="Fax" minOccurs="0"/>
+			<xsd:element ref="Email" minOccurs="0"/>
+			<xsd:element ref="CompanyEmailForCustomer" minOccurs="0"/>
+			<xsd:element ref="CompanyWebSite" minOccurs="0"/>
+			<xsd:element ref="FirstMonthFiscalYear" minOccurs="0"/>
+			<xsd:element ref="FirstMonthIncomeTaxYear" minOccurs="0"/>
+			<xsd:element ref="CompanyType" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AccountRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element ref="AccountType"/>
+			<xsd:element ref="DetailAccountType" minOccurs="0"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="7"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="LastCheckNumber" minOccurs="0"/>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="29"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Balance" minOccurs="0"/>
+			<xsd:element ref="TotalBalance" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AccountAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="AccountType"/>
+			<xsd:element ref="DetailAccountType" minOccurs="0"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="7"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="BankNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="25"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="29"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="OpenBalance" minOccurs="0"/>
+			<xsd:element ref="OpenBalanceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AccountMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="DetailAccountType" minOccurs="0"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="7"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="BankNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="25"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="29"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="209"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element name="PrintAs" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element ref="CustomerTypeRef" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="SalesRepRef" minOccurs="0"/>
+			<xsd:element ref="Balance" minOccurs="0"/>
+			<xsd:element ref="TotalBalance" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="ResaleNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CreditLimit" minOccurs="0"/>
+			<xsd:element ref="JobStatus" minOccurs="0"/>
+			<xsd:element ref="JobStartDate" minOccurs="0"/>
+			<xsd:element ref="JobProjectedEndDate" minOccurs="0"/>
+			<xsd:element ref="JobEndDate" minOccurs="0"/>
+			<xsd:element name="JobDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="JobTypeRef" minOccurs="0"/>
+			<xsd:element name="Notes" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsStatementWithParent" minOccurs="0"/>
+			<xsd:element ref="DeliveryMethod" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element name="PrintAs" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element ref="CustomerTypeRef" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="SalesRepRef" minOccurs="0"/>
+			<xsd:element ref="OpenBalance" minOccurs="0"/>
+			<xsd:element ref="OpenBalanceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="ResaleNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CreditLimit" minOccurs="0"/>
+			<xsd:element ref="JobStatus" minOccurs="0"/>
+			<xsd:element ref="JobStartDate" minOccurs="0"/>
+			<xsd:element ref="JobProjectedEndDate" minOccurs="0"/>
+			<xsd:element ref="JobEndDate" minOccurs="0"/>
+			<xsd:element name="JobDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="JobTypeRef" minOccurs="0"/>
+			<xsd:element name="Notes" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsStatementWithParent" minOccurs="0"/>
+			<xsd:element ref="DeliveryMethod" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element name="PrintAs" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element ref="CustomerTypeRef" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="SalesRepRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="ResaleNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CreditLimit" minOccurs="0"/>
+			<xsd:element ref="JobStatus" minOccurs="0"/>
+			<xsd:element ref="JobStartDate" minOccurs="0"/>
+			<xsd:element ref="JobProjectedEndDate" minOccurs="0"/>
+			<xsd:element ref="JobEndDate" minOccurs="0"/>
+			<xsd:element name="JobDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="JobTypeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element name="Notes">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="4095"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+				<xsd:element name="AppendNotes">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="4095"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+			</xsd:choice>
+			<xsd:element ref="IsStatementWithParent" minOccurs="0"/>
+			<xsd:element ref="DeliveryMethod" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EmployeeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="EmployeeAddress" minOccurs="0"/>
+			<xsd:element name="PrintAs" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Phone" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="21"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AltPhone" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="21"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Email" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="EmployeeType"/>
+			<xsd:element ref="Gender" minOccurs="0"/>
+			<xsd:element ref="HiredDate" minOccurs="0"/>
+			<xsd:element ref="ReleasedDate" minOccurs="0"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EmployeeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="EmployeeAddress" minOccurs="0"/>
+			<xsd:element name="PrintAs" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Phone" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="21"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AltPhone" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="21"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="SSN" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Email" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="EmployeeType" minOccurs="0"/>
+			<xsd:element ref="Gender" minOccurs="0"/>
+			<xsd:element ref="HiredDate" minOccurs="0"/>
+			<xsd:element ref="ReleasedDate" minOccurs="0"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EmployeeMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="EmployeeAddress" minOccurs="0"/>
+			<xsd:element name="PrintAs" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Phone" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="21"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AltPhone" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="21"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="SSN" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Email" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="EmployeeType" minOccurs="0"/>
+			<xsd:element ref="Gender" minOccurs="0"/>
+			<xsd:element ref="HiredDate" minOccurs="0"/>
+			<xsd:element ref="ReleasedDate" minOccurs="0"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="OtherNameRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="OtherNameAddress" minOccurs="0"/>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="OtherNameAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="OtherNameAddress" minOccurs="0"/>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="OtherNameMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="OtherNameAddress" minOccurs="0"/>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="VendorAddress" minOccurs="0"/>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element name="NameOnCheck" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Notes" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="VendorTypeRef" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="CreditLimit" minOccurs="0"/>
+			<xsd:element name="VendorTaxIdent" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsVendorEligibleFor1099" minOccurs="0"/>
+			<xsd:element ref="Balance" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="VendorAddress" minOccurs="0"/>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element name="NameOnCheck" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Notes" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="VendorTypeRef" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="CreditLimit" minOccurs="0"/>
+			<xsd:element name="VendorTaxIdent" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsVendorEligibleFor1099" minOccurs="0"/>
+			<xsd:element ref="OpenBalance" minOccurs="0"/>
+			<xsd:element ref="OpenBalanceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="CompanyName" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:group ref="PersonName"/>
+			<xsd:element ref="VendorAddress" minOccurs="0"/>
+			<xsd:group ref="CommInfo"/>
+			<xsd:element name="NameOnCheck" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="41"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:choice minOccurs="0">
+				<xsd:element name="Notes">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="4095"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+				<xsd:element name="AppendNotes">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="4095"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+			</xsd:choice>
+			<xsd:element name="AccountNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="VendorTypeRef" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="CreditLimit" minOccurs="0"/>
+			<xsd:element name="VendorTaxIdent" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsVendorEligibleFor1099" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="StandardTermsRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="StdDueDays" minOccurs="0"/>
+			<xsd:element ref="StdDiscountDays" minOccurs="0"/>
+			<xsd:element ref="DiscountPct" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="StandardTermsAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="StdDueDays" minOccurs="0"/>
+			<xsd:element ref="StdDiscountDays" minOccurs="0"/>
+			<xsd:element ref="DiscountPct" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="StandardTermsMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="StdDueDays" minOccurs="0"/>
+			<xsd:element ref="StdDiscountDays" minOccurs="0"/>
+			<xsd:element ref="DiscountPct" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="DateDrivenTermsRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="DayOfMonthDue"/>
+			<xsd:element ref="DueNextMonthDays" minOccurs="0"/>
+			<xsd:element ref="DiscountDayOfMonth" minOccurs="0"/>
+			<xsd:element ref="DiscountPct" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="DateDrivenTermsAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="DayOfMonthDue"/>
+			<xsd:element ref="DueNextMonthDays" minOccurs="0"/>
+			<xsd:element ref="DiscountDayOfMonth" minOccurs="0"/>
+			<xsd:element ref="DiscountPct" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="DateDrivenTermsMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="DayOfMonthDue" minOccurs="0"/>
+			<xsd:element ref="DueNextMonthDays" minOccurs="0"/>
+			<xsd:element ref="DiscountDayOfMonth" minOccurs="0"/>
+			<xsd:element ref="DiscountPct" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ClassRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ClassAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ClassMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesRepRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Initial">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="5"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="SalesRepEntityRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesRepAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Initial">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="5"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="SalesRepEntityRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesRepMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Initial" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="5"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="SalesRepEntityRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerTypeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerTypeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerTypeMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorTypeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorTypeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorTypeMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JobTypeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JobTypeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JobTypeMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerMsgRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="101"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerMsgAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="101"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CustomerMsgMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="101"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PaymentMethodRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PaymentMethodAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PaymentMethodMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ShipMethodRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ShipMethodAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ShipMethodMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="15"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesTaxCodeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="3"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="IsTaxable"/>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesTaxCodeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="3"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="IsTaxable"/>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesTaxCodeMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="3"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="IsTaxable" minOccurs="0"/>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ToDoRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Notes">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="IsDone"/>
+			<xsd:element ref="ReminderDate"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ToDoAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Notes">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="IsDone" minOccurs="0"/>
+			<xsd:element ref="ReminderDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ToDoMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element name="Notes">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="4095"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+				<xsd:element name="AppendNotes">
+					<xsd:simpleType>
+						<xsd:restriction base="STRTYPE">
+							<xsd:maxLength value="4095"/>
+						</xsd:restriction>
+					</xsd:simpleType>
+				</xsd:element>
+			</xsd:choice>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="IsDone" minOccurs="0"/>
+			<xsd:element ref="ReminderDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesOrPurchase">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="Price"/>
+				<xsd:element ref="PricePercent"/>
+			</xsd:choice>
+			<xsd:element ref="AccountRef"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesAndPurchase">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="SalesDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesPrice" minOccurs="0"/>
+			<xsd:element ref="IncomeAccountRef"/>
+			<xsd:element name="PurchaseDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PurchaseCost" minOccurs="0"/>
+			<xsd:element ref="ExpenseAccountRef"/>
+			<xsd:element ref="PrefVendorRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesOrPurchaseMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="Price"/>
+				<xsd:element ref="PricePercent"/>
+			</xsd:choice>
+			<xsd:element ref="AccountRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesAndPurchaseMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="SalesDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesPrice" minOccurs="0"/>
+			<xsd:element ref="IncomeAccountRef" minOccurs="0"/>
+			<xsd:element name="PurchaseDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PurchaseCost" minOccurs="0"/>
+			<xsd:element ref="ExpenseAccountRef" minOccurs="0"/>
+			<xsd:element ref="PrefVendorRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemServiceRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice>
+				<xsd:element ref="SalesOrPurchase"/>
+				<xsd:element ref="SalesAndPurchase"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemServiceAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice>
+				<xsd:element ref="SalesOrPurchase"/>
+				<xsd:element ref="SalesAndPurchase"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemServiceMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="SalesOrPurchaseMod"/>
+				<xsd:element ref="SalesAndPurchaseMod"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemNonInventoryRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice>
+				<xsd:element ref="SalesOrPurchase"/>
+				<xsd:element ref="SalesAndPurchase"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemNonInventoryAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice>
+				<xsd:element ref="SalesOrPurchase"/>
+				<xsd:element ref="SalesAndPurchase"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemNonInventoryMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="SalesOrPurchaseMod"/>
+				<xsd:element ref="SalesAndPurchaseMod"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemOtherChargeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice>
+				<xsd:element ref="SalesOrPurchase"/>
+				<xsd:element ref="SalesAndPurchase"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemOtherChargeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice>
+				<xsd:element ref="SalesOrPurchase"/>
+				<xsd:element ref="SalesAndPurchase"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemOtherChargeMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="SalesOrPurchaseMod"/>
+				<xsd:element ref="SalesAndPurchaseMod"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemInventoryRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element name="SalesDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesPrice" minOccurs="0"/>
+			<xsd:element ref="IncomeAccountRef"/>
+			<xsd:element name="PurchaseDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PurchaseCost" minOccurs="0"/>
+			<xsd:element ref="COGSAccountRef"/>
+			<xsd:element ref="PrefVendorRef" minOccurs="0"/>
+			<xsd:element ref="AssetAccountRef"/>
+			<xsd:element ref="ReorderPoint" minOccurs="0"/>
+			<xsd:element ref="QuantityOnHand" minOccurs="0"/>
+			<xsd:element ref="AverageCost" minOccurs="0"/>
+			<xsd:element ref="QuantityOnOrder" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemInventoryAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element name="SalesDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesPrice" minOccurs="0"/>
+			<xsd:element ref="IncomeAccountRef"/>
+			<xsd:element name="PurchaseDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PurchaseCost" minOccurs="0"/>
+			<xsd:element ref="COGSAccountRef"/>
+			<xsd:element ref="PrefVendorRef" minOccurs="0"/>
+			<xsd:element ref="AssetAccountRef"/>
+			<xsd:element ref="ReorderPoint" minOccurs="0"/>
+			<xsd:element ref="QuantityOnHand" minOccurs="0"/>
+			<xsd:element ref="TotalValue" minOccurs="0"/>
+			<xsd:element ref="InventoryDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemInventoryMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element name="SalesDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesPrice" minOccurs="0"/>
+			<xsd:element ref="IncomeAccountRef" minOccurs="0"/>
+			<xsd:element name="PurchaseDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PurchaseCost" minOccurs="0"/>
+			<xsd:element ref="COGSAccountRef" minOccurs="0"/>
+			<xsd:element ref="PrefVendorRef" minOccurs="0"/>
+			<xsd:element ref="AssetAccountRef" minOccurs="0"/>
+			<xsd:element ref="ReorderPoint" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSubtotalRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element ref="Name"/>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ItemDesc" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSubtotalAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSubtotalMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemDiscountRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="FullName">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="159"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element ref="Sublevel"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="DiscountRate"/>
+				<xsd:element ref="DiscountRatePercent"/>
+			</xsd:choice>
+			<xsd:element ref="AccountRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemDiscountAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="DiscountRate"/>
+				<xsd:element ref="DiscountRatePercent"/>
+			</xsd:choice>
+			<xsd:element ref="AccountRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemDiscountMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element ref="ParentRef" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="DiscountRate"/>
+				<xsd:element ref="DiscountRatePercent"/>
+			</xsd:choice>
+			<xsd:element ref="AccountRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemPaymentRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemPaymentAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemPaymentMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TaxRate" minOccurs="0"/>
+			<xsd:element ref="TaxVendorRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TaxRate" minOccurs="0"/>
+			<xsd:element ref="TaxVendorRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TaxRate" minOccurs="0"/>
+			<xsd:element ref="TaxVendorRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemSalesTaxGroupMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupLine">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="ItemRef" minOccurs="0"/>
+			<xsd:element ref="Quantity" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsPrintItemsInGroup" minOccurs="0"/>
+			<xsd:element ref="ItemGroupLine" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsPrintItemsInGroup" minOccurs="0"/>
+			<xsd:element ref="ItemGroupLine" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupMod">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCoreMod"/>
+			<xsd:element name="Name" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive" minOccurs="0"/>
+			<xsd:element name="ItemDesc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsPrintItemsInGroup" minOccurs="0"/>
+			<xsd:element ref="ItemGroupLine" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PayrollItemWageRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="ListCore"/>
+			<xsd:element name="Name">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="31"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsActive"/>
+			<xsd:element ref="WageType"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ExpenseLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:element ref="AccountRef" minOccurs="0"/>
+			<xsd:element ref="Amount" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ExpenseLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="AccountRef" minOccurs="0"/>
+			<xsd:element ref="Amount" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ExpenseLineRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="TxnLineID"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:element ref="ItemRef" minOccurs="0"/>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Quantity" minOccurs="0"/>
+			<xsd:element ref="Cost" minOccurs="0"/>
+			<xsd:element ref="Amount" minOccurs="0"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="ItemRef" minOccurs="0"/>
+			<xsd:element name="Desc" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Quantity" minOccurs="0"/>
+			<xsd:element ref="Cost" minOccurs="0"/>
+			<xsd:element ref="Amount" minOccurs="0"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="ItemLineRet" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemGroupLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ItemLineRef">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="TxnLineID"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PaymentLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="TxnType"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element ref="RefNumber" minOccurs="0"/>
+			<xsd:element ref="TotalAmount" minOccurs="0"/>
+			<xsd:element ref="AppliedAmount" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="InvoiceLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="InvoiceLineGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="InvoiceLineGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="IsPrintItemsInGroup"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="InvoiceLineRet" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="InvoiceLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="InvoiceRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="ARAccountRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="IsPending" minOccurs="0"/>
+			<xsd:element ref="IsFinanceCharge" minOccurs="0"/>
+			<xsd:group ref="TxnFieldsCore"/>
+			<xsd:element ref="ShipDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element ref="Subtotal" minOccurs="0"/>
+			<xsd:group ref="SalesTaxData"/>
+			<xsd:element ref="AppliedAmount" minOccurs="0"/>
+			<xsd:element ref="BalanceRemaining" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element ref="SuggestedDiscountAmount" minOccurs="0"/>
+			<xsd:element ref="SuggestedDiscountDate" minOccurs="0"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="InvoiceLineRet"/>
+				<xsd:element ref="InvoiceLineGroupRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="InvoiceAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="ARAccountRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="IsPending" minOccurs="0"/>
+			<xsd:group ref="TxnFieldsCore"/>
+			<xsd:element ref="ShipDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="InvoiceLineAdd"/>
+				<xsd:element ref="InvoiceLineGroupAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EstimateLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="MarkupRate"/>
+				<xsd:element ref="MarkupRatePercent"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EstimateLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0">
+				<xsd:element ref="MarkupRate"/>
+				<xsd:element ref="MarkupRatePercent"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EstimateLineGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="IsPrintItemsInGroup"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="EstimateLineRet" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EstimateLineGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EstimateRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:group ref="TxnFieldsCore"/>
+			<xsd:element ref="Subtotal" minOccurs="0"/>
+			<xsd:group ref="SalesTaxData"/>
+			<xsd:element ref="TotalAmount" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="EstimateLineRet"/>
+				<xsd:element ref="EstimateLineGroupRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="EstimateAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:group ref="TxnFieldsCore"/>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="EstimateLineAdd"/>
+				<xsd:element ref="EstimateLineGroupAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesReceiptLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesReceiptLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesReceiptLineGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="IsPrintItemsInGroup"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesReceiptLineRet" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesReceiptLineGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesReceiptRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="IsPending" minOccurs="0"/>
+			<xsd:element name="CheckNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="25"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element ref="SalesRepRef" minOccurs="0"/>
+			<xsd:element ref="ShipDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element name="FOB" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="13"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Subtotal" minOccurs="0"/>
+			<xsd:group ref="SalesTaxData"/>
+			<xsd:element ref="TotalAmount" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="SalesReceiptLineRet"/>
+				<xsd:element ref="SalesReceiptLineGroupRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="SalesReceiptAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="IsPending" minOccurs="0"/>
+			<xsd:element name="CheckNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="25"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element ref="SalesRepRef" minOccurs="0"/>
+			<xsd:element ref="ShipDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element name="FOB" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="13"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="SalesReceiptLineAdd"/>
+				<xsd:element ref="SalesReceiptLineGroupAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditMemoLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditMemoLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="SalesTaxCodeRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditMemoLineGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="IsPrintItemsInGroup"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="CreditMemoLineRet" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditMemoLineGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditMemoRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="ARAccountRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="IsPending" minOccurs="0"/>
+			<xsd:group ref="TxnFieldsCore"/>
+			<xsd:element ref="ShipDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element ref="Subtotal" minOccurs="0"/>
+			<xsd:group ref="SalesTaxData"/>
+			<xsd:element ref="TotalAmount" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="CreditMemoLineRet"/>
+				<xsd:element ref="CreditMemoLineGroupRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditMemoAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="ARAccountRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="BillAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="IsPending" minOccurs="0"/>
+			<xsd:group ref="TxnFieldsCore"/>
+			<xsd:element ref="ShipDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element ref="ItemSalesTaxRef" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="CustomerMsgRef" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="CustomerSalesTaxCodeRef" minOccurs="0"/>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="CreditMemoLineAdd"/>
+				<xsd:element ref="CreditMemoLineGroupAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TxnLineDetail">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:element ref="PaymentAmount"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ReceivePaymentLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="TxnType"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="OriginalAmount"/>
+			<xsd:element ref="OpenAmount"/>
+			<xsd:element ref="PaymentAmount"/>
+			<xsd:element ref="StatementID" minOccurs="0"/>
+			<xsd:element ref="StatementDate" minOccurs="0"/>
+			<xsd:element ref="StatementNumber" minOccurs="0"/>
+			<xsd:element ref="TxnLineDetail" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element ref="DiscountAmount" minOccurs="0"/>
+			<xsd:element ref="DiscountAccountRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AppliedCreditLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="TxnType"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="OriginalAmount"/>
+			<xsd:element ref="OpenAmount"/>
+			<xsd:element ref="AppliedAmount"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ReceivePaymentLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="PaymentAmount"/>
+			<xsd:element ref="TxnLineDetail" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element ref="DiscountAmount" minOccurs="0"/>
+			<xsd:element ref="DiscountAccountRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="AppliedCreditLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnID"/>
+			<xsd:element ref="AppliedAmount"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ReceivePaymentRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+			<xsd:element ref="CheckNumber" minOccurs="0"/>
+			<xsd:element ref="Memo" minOccurs="0"/>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:element ref="AppliedCreditLineRet" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element ref="ReceivePaymentLineRet" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ReceivePaymentAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="PaymentMethodRef" minOccurs="0"/>
+			<xsd:element ref="CreditCardNumber" minOccurs="0"/>
+			<xsd:element ref="ExpirationDate" minOccurs="0"/>
+			<xsd:element ref="CheckNumber" minOccurs="0"/>
+			<xsd:element ref="Memo" minOccurs="0"/>
+			<xsd:element ref="DepositToAccountRef" minOccurs="0"/>
+			<xsd:element ref="AppliedCreditLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element ref="ReceivePaymentLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ChargeLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:element ref="ItemRef"/>
+			<xsd:element ref="Desc" minOccurs="0"/>
+			<xsd:element ref="Quantity" minOccurs="0"/>
+			<xsd:element ref="Rate" minOccurs="0"/>
+			<xsd:element ref="Amount" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ChargeLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="ItemRef"/>
+			<xsd:element ref="Desc" minOccurs="0"/>
+			<xsd:element ref="Quantity" minOccurs="0"/>
+			<xsd:element ref="Rate" minOccurs="0"/>
+			<xsd:element ref="Amount" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PaymentReceivedAtTimeOfCharge">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="DepositToAccountRef"/>
+			<xsd:element ref="CheckNumber" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ChargeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="ChargeNumber" minOccurs="0"/>
+			<xsd:element ref="PaymentReceivedAtTimeOfCharge" minOccurs="0"/>
+			<xsd:element ref="ChargeLineRet" maxOccurs="unbounded"/>
+			<xsd:element ref="Memo" minOccurs="0"/>
+			<xsd:element ref="StatementID" minOccurs="0"/>
+			<xsd:element ref="StatementDate" minOccurs="0"/>
+			<xsd:element ref="StatementNumber" minOccurs="0"/>
+			<xsd:element ref="OpenAmount" minOccurs="0"/>
+			<xsd:element ref="PaymentLineRet" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ChargeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element ref="ChargeNumber" minOccurs="0"/>
+			<xsd:element ref="PaymentReceivedAtTimeOfCharge" minOccurs="0"/>
+			<xsd:element ref="ChargeLineAdd" maxOccurs="unbounded"/>
+			<xsd:element ref="Memo" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="RefundPaidAtTimeOfCredit">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="RefundFromAccountRef"/>
+			<xsd:element ref="CheckNumber" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ChargeCreditRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="RefNumber" minOccurs="0"/>
+			<xsd:element ref="RefundPaidAtTimeOfCredit" minOccurs="0"/>
+			<xsd:element ref="ChargeLineRet" maxOccurs="unbounded"/>
+			<xsd:element ref="Memo" minOccurs="0"/>
+			<xsd:element ref="StatementID" minOccurs="0"/>
+			<xsd:element ref="StatementDate" minOccurs="0"/>
+			<xsd:element ref="StatementNumber" minOccurs="0"/>
+			<xsd:element ref="OpenAmount" minOccurs="0"/>
+			<xsd:element ref="PaymentLineRet" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="ChargeCreditAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="CustomerRef"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element ref="RefNumber" minOccurs="0"/>
+			<xsd:element ref="RefundPaidAtTimeOfCredit" minOccurs="0"/>
+			<xsd:element ref="ChargeLineAdd" maxOccurs="unbounded"/>
+			<xsd:element ref="Memo" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PurchaseOrderLineRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnLineID"/>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PurchaseOrderLineAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineCore"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PurchaseOrderLineGroupRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="IsPrintItemsInGroup"/>
+			<xsd:element ref="TotalAmount"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+			<xsd:element ref="PurchaseOrderLineRet" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PurchaseOrderLineGroupAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnLineGroupCore"/>
+			<xsd:element ref="ServiceDate" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PurchaseOrderRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="VendorRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="ShipToEntityRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="VendorAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element ref="ExpectedDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element name="FOB" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="13"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TotalAmount" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="VendorMsg" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="PurchaseOrderLineRet"/>
+				<xsd:element ref="PurchaseOrderLineGroupRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="PurchaseOrderAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="VendorRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="ShipToEntityRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="VendorAddress" minOccurs="0"/>
+			<xsd:element ref="ShipAddress" minOccurs="0"/>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element ref="ExpectedDate" minOccurs="0"/>
+			<xsd:element ref="ShipMethodRef" minOccurs="0"/>
+			<xsd:element name="FOB" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="13"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="VendorMsg" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="99"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="PurchaseOrderLineAdd"/>
+				<xsd:element ref="PurchaseOrderLineGroupAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="BillRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="VendorRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element ref="AmountDue"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="20"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineRet" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineRet"/>
+				<xsd:element ref="ItemGroupLineRet"/>
+			</xsd:choice>
+			<xsd:element ref="OpenAmount" minOccurs="0"/>
+			<xsd:element ref="PaymentLineRet" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="BillAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="VendorRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="DueDate" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="20"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TermsRef" minOccurs="0"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineAdd"/>
+				<xsd:element ref="ItemGroupLineAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorCreditRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="VendorRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="CreditAmount"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="20"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineRet" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineRet"/>
+				<xsd:element ref="ItemGroupLineRet"/>
+			</xsd:choice>
+			<xsd:element ref="OpenAmount" minOccurs="0"/>
+			<xsd:element ref="PaymentLineRet" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="VendorCreditAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="VendorRef"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="20"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineAdd"/>
+				<xsd:element ref="ItemGroupLineAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TimeTrackingRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="EntityRef"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ItemServiceRef" minOccurs="0"/>
+			<xsd:element ref="Rate" minOccurs="0"/>
+			<xsd:element ref="Duration"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="PayrollItemWageRef" minOccurs="0"/>
+			<xsd:element name="Notes" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsBillable" minOccurs="0"/>
+			<xsd:element ref="IsBilled" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="TimeTrackingAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="EntityRef"/>
+			<xsd:element ref="CustomerRef" minOccurs="0"/>
+			<xsd:element ref="ItemServiceRef" minOccurs="0"/>
+			<xsd:element ref="Rate" minOccurs="0"/>
+			<xsd:element ref="Duration"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+			<xsd:element ref="PayrollItemWageRef" minOccurs="0"/>
+			<xsd:element name="Notes" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="IsBillable" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CheckRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="PayeeEntityRef" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="Amount"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Address" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="ExpenseLineRet" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineRet"/>
+				<xsd:element ref="ItemGroupLineRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CheckAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="PayeeEntityRef" minOccurs="0"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Address" minOccurs="0"/>
+			<xsd:element ref="IsToBePrinted" minOccurs="0"/>
+			<xsd:element ref="ExpenseLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineAdd"/>
+				<xsd:element ref="ItemGroupLineAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditCardChargeRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="PayeeEntityRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="Amount"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineRet" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineRet"/>
+				<xsd:element ref="ItemGroupLineRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditCardChargeAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="PayeeEntityRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineAdd"/>
+				<xsd:element ref="ItemGroupLineAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditCardCreditRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="PayeeEntityRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element ref="Amount"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineRet" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineRet"/>
+				<xsd:element ref="ItemGroupLineRet"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="CreditCardCreditAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="PayeeEntityRef" minOccurs="0"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="ExpenseLineAdd" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="ItemLineAdd"/>
+				<xsd:element ref="ItemGroupLineAdd"/>
+			</xsd:choice>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JournalDebitLine">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="Amount"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="EntityRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JournalCreditLine">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="AccountRef"/>
+			<xsd:element ref="Amount"/>
+			<xsd:element name="Memo" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="4095"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="EntityRef" minOccurs="0"/>
+			<xsd:element ref="ClassRef" minOccurs="0"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JournalEntryRet">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:group ref="TxnCore"/>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Memo" minOccurs="0"/>
+			<xsd:element ref="JournalDebitLine" minOccurs="0" maxOccurs="unbounded"/>
+			<xsd:element ref="JournalCreditLine" minOccurs="0" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+<xsd:element name="JournalEntryAdd">
+	<xsd:complexType>
+		<xsd:sequence>
+			<xsd:element ref="TxnDate"/>
+			<xsd:element name="RefNumber" minOccurs="0">
+				<xsd:simpleType>
+					<xsd:restriction base="STRTYPE">
+						<xsd:maxLength value="11"/>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+			<xsd:element ref="Memo" minOccurs="0"/>
+			<xsd:element ref="JournalDebitLine" maxOccurs="unbounded"/>
+			<xsd:element ref="JournalCreditLine" maxOccurs="unbounded"/>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:element>
+
+
+
+
+</xsd:schema>

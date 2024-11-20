@@ -1,11 +1,15 @@
-import win32com.client, threading, time, logging, easygui
-import xml.etree.ElementTree as ETree
-from lxml import etree as et
+import win32com.client
+import threading
+import time
+import logging
+import easygui
 from dataclasses import field
 from collections import defaultdict
-
+import xml.etree.ElementTree as ETree
+from xml.sax.saxutils import unescape, escape
+from lxml import etree as et
 from .qb_special_fields import *
-from .utilities import to_lower_camel_case, clean_text
+# from .utilities import validate_special_characters, validate_qbxml
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -382,6 +386,7 @@ class QuickbooksDesktop():
         return instances
 
     def _break_response_into_single_instances(self, responses):
+        print('Begun _break_response_into_single_instances')
         instances = {}
         for response in responses:
             class_name = self._get_class_name_from_response_tag(response.tag)
@@ -389,28 +394,41 @@ class QuickbooksDesktop():
                 cls = globals().get(class_name)
                 elements = response.getchildren()
                 instance_list = []
+                i = 0
                 for element in elements:
+                    if i == 1376:
+                        pass
                     single_instance = cls.from_xml(element)
                     instance_list.append(single_instance)
+                    i += 1
+                    print(i)
                 instances[class_name] = instance_list
             except (ModuleNotFoundError, AttributeError) as e:
                 print(f"Error loading class for {class_name}: {e}")
+        print('Finished _break_response_into_single_instances')
         return instances
 
     def _break_response_into_plural_instances(self, responses):
+        print('begin _break_response_into_plural_instances')
         instances = self._break_response_into_single_instances(responses)
         plural_instances = []
         for class_name, list_of_instances in instances.items():
             try:
                 cls = globals().get(class_name)
                 plural_cls = globals().get(cls.Meta.plural_class_name)
+                print(f'creating plural_instance {class_name}')
                 plural_instance = plural_cls.from_list(list_of_instances)
-                plural_instances.append(plural_instance)
-            except (ModuleNotFoundError, AttributeError) as e:
+                print(f'Finished creating plural_instance {class_name}')
+                if len(plural_instance):
+                    plural_instances.append(plural_instance)
+                else:
+                    pass
+            except Exception as e:
                 print(f"Error loading class for {class_name}: {e}")
+        print('end _break_response_into_plural_instances')
         return plural_instances
 
-    def _create_full_request(self, requestXML, encoding="utf-8"):
+    def _create_full_request(self, requestXML, encoding="ISO-8859-1"):
         """
         Combines converting the request to lxml and ensuring the proper structure for the XML request.
 
@@ -434,8 +452,19 @@ class QuickbooksDesktop():
                 requestXML.attrib['requestID'] = "1"
             QBXMLMsgsRq.append(requestXML)
 
-        declaration = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="{self.SDK_version}"?>"""
-        full_request = declaration + et.tostring(QBXML, encoding=encoding).decode(encoding)
+        xml_content = et.tostring(QBXML, encoding=encoding, pretty_print=False).decode(encoding)
+        if xml_content.startswith(f"<?xml version='1.0' encoding='{encoding}'?>"):
+            full_request = xml_content.replace(
+                f"<?xml version='1.0' encoding='{encoding}'?>",
+                f"<?xml version='1.0' encoding='{encoding}'?><?qbxml version='13.0'?>",
+                1
+            )
+        else:
+            full_request = f"<?xml version='1.0' encoding='{encoding}'?><?qbxml version='13.0'?>" + xml_content
+
+        #todo:
+        # validate_qbxml(full_request, self.SDK_version)
+
         logger.debug(f'full_request to go to qb: {full_request}')
         return full_request
 
@@ -465,6 +494,7 @@ class QuickbooksDesktop():
                 pass
             QBXML = et.fromstring(responseXML)
             QBXMLMsgsRs = QBXML.find('QBXMLMsgsRs')
+            print('QBXMLMsgsRs found')
             if QBXMLMsgsRs is not None:
                 responses = QBXMLMsgsRs.getchildren()
                 if response_type == 'response_list':
@@ -641,6 +671,69 @@ class MaxLengthMixin:
 
 class ToXmlMixin:
     IS_YES_NO_FIELD_LIST = []
+    REPLACEMENT_DICT = {
+        # XML predefined entities
+        '&': '&amp;',
+        '"': '&quot;',
+        "'": '&apos;',
+
+        # Common special characters encoded as numeric references
+        'ñ': '&#241;', 'Ñ': '&#209;', '’': '&#8217;', 'é': '&#233;', 'É': '&#201;',
+        '®': '&#174;', '…': '&#8230;', '“': '&#8220;', '”': '&#8221;', '–': '&#8211;',
+        '™': '&#8482;', 'Ü': '&#220;', 'ü': '&#252;', '×': '&#215;',
+
+        # Extended Latin characters
+        'À': '&#192;', 'Á': '&#193;', 'Â': '&#194;', 'Ã': '&#195;', 'Ä': '&#196;',
+        'Å': '&#197;', 'Æ': '&#198;', 'Ç': '&#199;', 'È': '&#200;', 'Ê': '&#202;',
+        'Ë': '&#203;', 'Ì': '&#204;', 'Í': '&#205;', 'Î': '&#206;', 'Ï': '&#207;',
+        'Ð': '&#208;', 'Ò': '&#210;', 'Ó': '&#211;', 'Ô': '&#212;', 'Õ': '&#213;',
+        'Ö': '&#214;', 'Ø': '&#216;', 'Ù': '&#217;', 'Ú': '&#218;', 'Û': '&#219;',
+        'Ý': '&#221;', 'Þ': '&#222;', 'ß': '&#223;', 'à': '&#224;', 'á': '&#225;',
+        'â': '&#226;', 'ã': '&#227;', 'ä': '&#228;', 'å': '&#229;', 'æ': '&#230;',
+        'ç': '&#231;', 'è': '&#232;', 'ê': '&#234;', 'ë': '&#235;', 'ì': '&#236;',
+        'í': '&#237;', 'î': '&#238;', 'ï': '&#239;', 'ð': '&#240;', 'ò': '&#242;',
+        'ó': '&#243;', 'ô': '&#244;', 'õ': '&#245;', 'ö': '&#246;', 'ø': '&#248;',
+        'ù': '&#249;', 'ú': '&#250;', 'û': '&#251;', 'ý': '&#253;', 'þ': '&#254;',
+        'ÿ': '&#255;',
+
+        # Additional special characters
+        'Œ': '&#338;', 'œ': '&#339;', 'Š': '&#352;', 'š': '&#353;', 'Ÿ': '&#376;',
+        'ƒ': '&#402;', 'ˆ': '&#710;', '˜': '&#732;', 'α': '&#945;', 'β': '&#946;',
+        'γ': '&#947;', 'δ': '&#948;', 'ε': '&#949;', 'ζ': '&#950;', 'η': '&#951;',
+        'θ': '&#952;', 'ι': '&#953;', 'κ': '&#954;', 'λ': '&#955;', 'μ': '&#956;',
+        'ν': '&#957;', 'ξ': '&#958;', 'ο': '&#959;', 'π': '&#960;', 'ρ': '&#961;',
+        'ς': '&#962;', 'σ': '&#963;', 'τ': '&#964;', 'υ': '&#965;', 'φ': '&#966;',
+        'χ': '&#967;', 'ψ': '&#968;', 'ω': '&#969;', 'Α': '&#913;', 'Β': '&#914;',
+        'Γ': '&#915;', 'Δ': '&#916;', 'Ε': '&#917;', 'Ζ': '&#918;', 'Η': '&#919;',
+        'Θ': '&#920;', 'Ι': '&#921;', 'Κ': '&#922;', 'Λ': '&#923;', 'Μ': '&#924;',
+        'Ν': '&#925;', 'Ξ': '&#926;', 'Ο': '&#927;', 'Π': '&#928;', 'Ρ': '&#929;',
+        'Σ': '&#931;', 'Τ': '&#932;', 'Υ': '&#933;', 'Φ': '&#934;', 'Χ': '&#935;',
+        'Ψ': '&#936;', 'Ω': '&#937;', ' ': '&#160;', 'µm': '&#181;', '±': '&#177;',
+        '°': '&#176;', '€': '&#8364;', '„': '&#8222;', '†': '&#8224;', '‡': '&#8225;',
+        '‰': '&#8240;', '‹': '&#8249;', '›': '&#8250;', '¡': '&#161;', '¢': '&#162;',
+        '£': '&#163;', '¤': '&#164;', '¥': '&#165;', '¦': '&#166;', '§': '&#167;',
+        '¨': '&#168;', '©': '&#169;', 'ª': '&#170;', '«': '&#171;', '»': '&#187;',
+        '¯': '&#175;', '²': '&#178;', '³': '&#179;', '´': '&#180;', 'µ': '&#181;',
+        '¶': '&#182;', '·': '&#183;', '¹': '&#185;', 'º': '&#186;', '¼': '&#188;',
+        '½': '&#189;', '¾': '&#190;', '¿': '&#191;', '÷': '&#247;', 'Þ': '&#222;',
+        'þ': '&#254;',
+
+        # Additional Currency Symbols
+        '₹': '&#8377;', '₽': '&#8381;', '₩': '&#8361;',
+
+        # Mathematical Symbols
+        '∞': '&#8734;', '∆': '&#8710;',
+
+        # Fractions
+        '⅓': '&#8531;', '⅔': '&#8532;',
+
+        # Arrows
+        '→': '&#8594;', '←': '&#8592;',
+
+        # Additional Punctuation
+        '—': '&#8212;', '℗': '&#8471;', '℃': '&#8451;',
+    }
+    REPLACEMENT_PATTERN = re.compile('|'.join(re.escape(key) for key in REPLACEMENT_DICT.keys()))
 
     def to_xml(self):
         root = et.Element(self.Meta.name)
@@ -655,10 +748,6 @@ class ToXmlMixin:
             if field.name in ["Query", "Add", "Mod", "SpecialAccountAdd"]:
                 pass
             else:
-                if field.name == 'cogsaccount_ref':
-                    pass
-                else:
-                    pass
                 value = getattr(self, field.name)
                 if value is not None and not isinstance(value, type):
                     element = self._create_xml_element(root, field, value)
@@ -675,7 +764,10 @@ class ToXmlMixin:
         return root
 
     def to_xml_rq(self, request_id=None):
-        root = self.to_xml()
+        try:
+            root = self.to_xml()
+        except Exception as e:
+            logger.debug(e)
         if self.Meta.name[-5:] == "Query":
             root.tag = str(self.Meta.name) + "Rq"
             if request_id:
@@ -705,12 +797,19 @@ class ToXmlMixin:
             fields_in_new_order = []
             for field_name in field_order_list:
                 pass
-                for field in fields:
-                    if field.metadata['name'] == field_name:
-                        fields_in_new_order.append(field)
-                        continue
-                    else:
-                        pass
+                try:
+                    for field in fields:
+                        if hasattr(field, 'name') and field.name in ['Add', 'Mod', 'SpecialAccountAdd']:
+                            pass
+                        elif hasattr(field, 'metadata') and field.metadata['name'] == field_name:
+                            fields_in_new_order.append(field)
+                            continue
+                        elif not hasattr(field, 'metadata'):
+                            pass
+                        else:
+                            pass
+                except Exception as e:
+                    print(e)
             return fields_in_new_order
         else:
             return fields
@@ -760,12 +859,30 @@ class ToXmlMixin:
             element.text = "true" if value else "false"
         return element
 
+    def _sanitize_text(self, value):
+        """
+        Replace unsupported or problematic characters with simpler alternatives.
+        """
+
+        def replacer(match):
+            return self.REPLACEMENT_DICT[match.group(0)]
+
+        value = self.REPLACEMENT_PATTERN.sub(replacer, value)
+        # Remove characters outside ISO-8859-1 range
+        value = value.encode("ISO-8859-1", errors="ignore").decode("ISO-8859-1")
+        return value
+
     def _handle_simple_value(self, field, value):
         """
         Handle simple values, such as strings and numbers, converting them to text.
         """
         element = et.Element(field.metadata.get("name", field.name))
-        element.text = str(value)
+        if isinstance(value, str):
+            # Sanitize the value (escaping is handled here)
+            sanitized_value = self._sanitize_text(value)
+            element.text = sanitized_value
+        else:
+            element.text = str(value)
         return element
 
 
@@ -903,7 +1020,7 @@ class FromXmlMixin:
 
         instance = cls(**{k: v for k, v in init_args.items() if k in cls.__dataclass_fields__})
 
-        all_xml_fields = {child.tag: child.text for child in element}
+        all_xml_fields = {child.tag: unescape(child.text) if child.text else None for child in element}
         extra_fields = {k: v for k, v in all_xml_fields.items() if k not in field_names}
 
         for field_name, field_value in extra_fields.items():
@@ -1240,16 +1357,23 @@ class PluralMixin:
         """
         xml_elements = []
         next_request_id = first_request_id
-        for item in self._items:
-            add_cls = getattr(item, 'Add', None)
-            add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=keep_ids)
-            if first_request_id:
-                xml_element = add_instance.to_xml_rq(next_request_id)
-                xml_elements.append(xml_element)
-                next_request_id += 1
-            else:
-                xml_element = add_instance.to_xml_rq()
-                xml_elements.append(xml_element)
+        logger.debug(f'items = {len(self._items)}')
+        item_qty = len(self._items)
+        try:
+            for i in range(item_qty):
+                logger.debug(f'i = {i}')
+                item = self._items[i]
+                add_cls = getattr(item, 'Add', None)
+                add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=keep_ids)
+                if first_request_id:
+                    xml_element = add_instance.to_xml_rq(next_request_id)
+                    xml_elements.append(xml_element)
+                    next_request_id += 1
+                else:
+                    xml_element = add_instance.to_xml_rq()
+                    xml_elements.append(xml_element)
+        except Exception as e:
+            logger.debug(e)
         return xml_elements
 
     def _create_data_ext_mod(self, add_response):
@@ -5666,6 +5790,7 @@ class EstimateLineAdd(QBAddMixin):
         # todo: remove this because it's client specific:
         if self.item_ref is not None and self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+            self.class_ref = None
         else:
             pass
 
