@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field, fields, is_dataclass, MISSING
 from typing import Optional, Union, Dict, Type, Any, get_origin, get_args, List, TypeVar
 from decimal import Decimal
+import re
 
 
 TempVar = TypeVar('T')

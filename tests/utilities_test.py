@@ -1,68 +1,46 @@
 import unittest
 from lxml import etree as et
-from src.quickbooks_desktop.utilities import clean_text
+from src.quickbooks_desktop.utilities import encode_special_characters
 
 
-class TestCleanTextFunction(unittest.TestCase):
-    def setUp(self):
-        # This is the input XML element used for testing
-        self.input_element = et.fromstring("""
-            <Desc>ARTCO Screw Mandrel - 1/4&quot; Screw &#215; 1/4&quot; &#216; Shank</Desc>
-        """)
+class TestEncodeSpecialCharacters(unittest.TestCase):
+    def test_basic_replacement(self):
+        # Test replacing common special characters
+        input_str = "Hello & World"
+        expected_output = "Hello &amp; World"
+        actual_output = encode_special_characters(input_str)
+        self.assertEqual(actual_output, expected_output)
 
-    def test_clean_text_basic(self):
-        # Run the clean_text function on the sample input element
-        cleaned_element = clean_text(self.input_element)
-        cleaned_text = et.tostring(cleaned_element, encoding='unicode', method='html')
+        input_str = "Quotes: \" and '"
+        expected_output = "Quotes: &quot; and &apos;"
+        self.assertEqual(encode_special_characters(input_str), expected_output)
 
-        # Check if certain replacements are correctly made
-        self.assertIn("ARTCO Screw Mandrel - 1/4\" Screw x 1/4\" dia Shank", cleaned_text)
+        input_str = "Special: ñ Ñ"
+        expected_output = "Special: &#241; &#209;"
+        self.assertEqual(encode_special_characters(input_str), expected_output)
 
-    def test_special_characters_removed(self):
-        # Ensure specific entities like &#215; and &#216; are replaced correctly
-        cleaned_element = clean_text(self.input_element)
-        cleaned_text = et.tostring(cleaned_element, encoding='unicode', method='html')
+    def test_preserve_valid_entities(self):
+        # Test that valid numeric and named entities are preserved
+        input_str = "Valid entity: &#241; &amp; &quot;"
+        expected_output = "Valid entity: &#241; &amp; &quot;"
+        self.assertEqual(encode_special_characters(input_str), expected_output)
 
-        # Check for replacements of &#215; (×) with "x" and &#216; (Ø) with "dia"
-        self.assertNotIn("&#215;", cleaned_text)
-        self.assertNotIn("&#216;", cleaned_text)
-        self.assertIn("x", cleaned_text)
-        self.assertIn("dia", cleaned_text)
+    def test_mixed_input(self):
+        # Test a mix of replaceable and valid entities
+        input_str = "Mix: & Hello &#241; ñ &amp; &"
+        expected_output = "Mix: &amp; Hello &#241; &#241; &amp; &amp;"
+        actual_output = encode_special_characters(input_str)
+        self.assertEqual(actual_output, expected_output)
 
-    def test_unwanted_strings_removed(self):
-        # Test if unwanted strings like '&lt;' and '&gt;' are removed
-        input_element = et.fromstring("<Desc>&lt;Some text&gt;</Desc>")
-        cleaned_element = clean_text(input_element)
-        cleaned_text = et.tostring(cleaned_element, encoding='unicode', method='html')
+    def test_no_special_characters(self):
+        # Test strings without special characters
+        input_str = "Plain text"
+        expected_output = "Plain text"
+        self.assertEqual(encode_special_characters(input_str), expected_output)
 
-        self.assertNotIn("&lt;", cleaned_text)
-        self.assertNotIn("&gt;", cleaned_text)
-        self.assertIn("Some text", cleaned_text)
+    def test_empty_string(self):
+        # Test empty input
+        input_str = ""
+        expected_output = ""
+        self.assertEqual(encode_special_characters(input_str), expected_output)
 
-    def test_html_unescape(self):
-        # Ensure HTML-escaped entities are correctly converted
-        input_element = et.fromstring("<Desc>ARTCO &quot;Mandrel&quot;</Desc>")
-        cleaned_element = clean_text(input_element)
-        cleaned_text = et.tostring(cleaned_element, encoding='unicode', method='html')
-
-        # Check if HTML entity &quot; is unescaped to "
-        self.assertIn('"Mandrel"', cleaned_text)
-
-    def test_handling_unicode_normalization_01(self):
-        # Test that characters are decomposed and normalized as expected
-        input_element = et.fromstring("<Desc>Text with Ångström and Crème brûlée</Desc>")
-        cleaned_element = clean_text(input_element)
-        cleaned_text = et.tostring(cleaned_element, encoding='unicode', method='html')
-
-        # Check if accented characters are replaced with non-accented versions
-        self.assertIn("Angstrom", cleaned_text)
-        self.assertIn("Creme brulee", cleaned_text)
-
-    def test_handling_unicode_normalization_02(self):
-        # Test that characters are decomposed and normalized as expected
-        input_element = et.fromstring("<FullName>Electric Motors &amp; Spindles:NR-3060S-C</FullName>")
-        cleaned_element = clean_text(input_element)
-        cleaned_text = et.tostring(cleaned_element, encoding='unicode', method='html')
-
-        # Check if accented characters are replaced with non-accented versions
-        self.assertIn("Electric Motors &amp; Spindles", cleaned_text)

@@ -68,51 +68,11 @@ def convert_integer(value):
     return value
 
 
-def clean_text(input_element):
-    # Convert the input XML element to an HTML string
-    input_str = et.tostring(input_element, encoding='unicode', method='html')
+def encode_special_characters(input_string):
 
-    # Remove undesired strings
-    strings_to_remove = ['&lt;', '&gt;']
-    pattern = re.compile('|'.join(re.escape(s) for s in strings_to_remove))
-    cleaned_str = re.sub(pattern, '', input_str)
-
-    # Unescape HTML entities
-    cleaned_str = html.escape(cleaned_str, quote=False)
-
-
-    # replacement_dict = {
-    #     'ñ': 'n', 'Ñ': 'N', '’': '', 'é': 'e', 'É': 'E', '®': '', '…': '...',
-    #     '“': '"', '”': '"', '–': '-', '™': '', 'Ü': 'U', 'ü': 'u', '×': 'x',
-    #     'À': 'A', 'Á': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A', 'Å': 'A', 'Æ': 'AE', 'Ç': 'C',
-    #     'È': 'E', 'Ê': 'E', 'Ë': 'E', 'Ì': 'I', 'Í': 'I', 'Î': 'I', 'Ï': 'I', 'Ð': 'D',
-    #     'Ò': 'O', 'Ó': 'O', 'Ô': 'O', 'Õ': 'O', 'Ö': 'O', 'Ø': 'dia', 'Ù': 'U', 'Ú': 'U',
-    #     'Û': 'U', 'Ý': 'Y', 'Þ': 'Th', 'ß': 'ss', 'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a',
-    #     'ä': 'a', 'å': 'a', 'æ': 'ae', 'ç': 'c', 'è': 'e', 'ê': 'e', 'ë': 'e', 'ì': 'i',
-    #     'í': 'i', 'î': 'i', 'ï': 'i', 'ð': 'd', 'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o',
-    #     'ö': 'o', 'ø': 'dia', 'ù': 'u', 'ú': 'u', 'û': 'u', 'ý': 'y', 'þ': 'th', 'ÿ': 'y',
-    #     'Œ': 'OE', 'œ': 'oe', 'Š': 'S', 'š': 's', 'Ÿ': 'Y', 'ƒ': 'f', 'ˆ': '^', '˜': '~',
-    #     'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε': 'epsilon', 'ζ': 'zeta',
-    #     'η': 'eta', 'θ': 'theta', 'ι': 'iota', 'κ': 'kappa', 'λ': 'lambda', 'μ': 'mu',
-    #     'ν': 'nu', 'ξ': 'xi', 'ο': 'omicron', 'π': 'pi', 'ρ': 'rho', 'ς': 'sigma', 'σ': 'sigma',
-    #     'τ': 'tau', 'υ': 'upsilon', 'φ': 'phi', 'χ': 'chi', 'ψ': 'psi', 'ω': 'omega',
-    #     'Α': 'Alpha', 'Β': 'Beta', 'Γ': 'Gamma', 'Δ': 'Delta', 'Ε': 'Epsilon', 'Ζ': 'Zeta',
-    #     'Η': 'Eta', 'Θ': 'Theta', 'Ι': 'Iota', 'Κ': 'Kappa', 'Λ': 'Lambda', 'Μ': 'Mu',
-    #     'Ν': 'Nu', 'Ξ': 'Xi', 'Ο': 'Omicron', 'Π': 'Pi', 'Ρ': 'Rho', 'Σ': 'Sigma', 'Τ': 'Tau',
-    #     'Υ': 'Upsilon', 'Φ': 'Phi', 'Χ': 'Chi', 'Ψ': 'Psi', 'Ω': 'Omega', ' ': 'NBSP', 'µm': 'micron',
-    #     '±': '+/-', '°': 'deg', '€': 'EUR', 'ƒ': 'f', '„': '"', '†': '+', '‡': '++', '‰': 'per_mille',
-    #     '‹': '<', '›': '>', '¡': '!', '¢': 'cent', '£': 'GBP', '¤': 'currency', '¥': 'JPY',
-    #     '¦': '|', '§': 'S', '¨': '', '©': '(c)', 'ª': 'a', '«': '<<', '»': '>>',
-    #     '¯': '-', '²': '2', '³': '3', '´': "'", 'µ': 'micro', '¶': 'P', '·': '.', '¹': '1',
-    #     'º': 'o', '¼': '1/4', '½': '1/2', '¾': '3/4', '¿': '?', '×': 'x', '÷': '/', 'Þ': 'TH', 'þ': 'th'
-    # }
-
-    # Attempting to encode for something that works with QuickBooks.
-    replacement_dict = {
+    REPLACEMENT_DICT = {
         # XML predefined entities
         '&': '&amp;',
-        # '<': '&lt;',
-        # '>': '&gt;',
         '"': '&quot;',
         "'": '&apos;',
 
@@ -154,27 +114,40 @@ def clean_text(input_element):
         '¨': '&#168;', '©': '&#169;', 'ª': '&#170;', '«': '&#171;', '»': '&#187;',
         '¯': '&#175;', '²': '&#178;', '³': '&#179;', '´': '&#180;', 'µ': '&#181;',
         '¶': '&#182;', '·': '&#183;', '¹': '&#185;', 'º': '&#186;', '¼': '&#188;',
-        '½': '&#189;', '¾': '&#190;', '¿': '&#191;', '×': '&#215;', '÷': '&#247;',
-        'Þ': '&#222;', 'þ': '&#254;'
+        '½': '&#189;', '¾': '&#190;', '¿': '&#191;', '÷': '&#247;', 'Þ': '&#222;',
+        'þ': '&#254;',
+
+        # Additional Currency Symbols
+        '₹': '&#8377;', '₽': '&#8381;', '₩': '&#8361;',
+
+        # Mathematical Symbols
+        '∞': '&#8734;', '∆': '&#8710;',
+
+        # Fractions
+        '⅓': '&#8531;', '⅔': '&#8532;',
+
+        # Arrows
+        '→': '&#8594;', '←': '&#8592;',
+
+        # Additional Punctuation
+        '—': '&#8212;', '℗': '&#8471;', '℃': '&#8451;',
     }
+    VALID_ENTITY_PATTERN = re.compile(r'&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);')
 
-    # Replace characters based on the dictionary
-    for key, value in replacement_dict.items():
-        cleaned_str = cleaned_str.replace(key, value)
+    def replacer(part):
+        """
+        Replace all characters using REPLACEMENT_DICT, except valid entities.
+        """
+        if VALID_ENTITY_PATTERN.fullmatch(part):
+            return part  # Preserve valid entities
+        return ''.join(REPLACEMENT_DICT.get(char, char) for char in part)
 
-    # Normalize and remove combining characters
-    normalized_str = unicodedata.normalize('NFKD', cleaned_str)
-    cleaned_str = ''.join(c for c in normalized_str if not unicodedata.combining(c))
-    cleaned_str = cleaned_str.replace('&amp;', '&') # Because & works with QuickBooks.
-    fixed_str = html.unescape(cleaned_str)
+    # Split input string into parts based on valid entities
+    parts = re.split(r'(&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);)', input_string)
+    replaced_parts = [replacer(part) if not VALID_ENTITY_PATTERN.fullmatch(part) else part for part in parts]
+    return_str = ''.join(replaced_parts)
+    return return_str
 
-    # Parse back to XML, ensuring the proper XML structure is maintained
-    try:
-        output_element = et.fromstring(fixed_str, parser=et.XMLParser(recover=True))
-    except et.XMLSyntaxError:
-        raise ValueError("Failed to parse the cleaned string back to XML.")
-
-    return output_element
 
 
 def validate_qbxml(full_request, sdk_version):

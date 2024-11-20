@@ -3,13 +3,14 @@ import threading
 import time
 import logging
 import easygui
+import html
 from dataclasses import field
 from collections import defaultdict
 import xml.etree.ElementTree as ETree
 from xml.sax.saxutils import unescape, escape
 from lxml import etree as et
 from .qb_special_fields import *
-# from .utilities import validate_special_characters, validate_qbxml
+from .utilities import encode_special_characters
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -455,8 +456,8 @@ class QuickbooksDesktop():
         xml_content = et.tostring(QBXML, encoding=encoding, pretty_print=False).decode(encoding)
         if xml_content.startswith(f"<?xml version='1.0' encoding='{encoding}'?>"):
             full_request = xml_content.replace(
-                f"<?xml version='1.0' encoding='{encoding}'?>",
-                f"<?xml version='1.0' encoding='{encoding}'?><?qbxml version='13.0'?>",
+                f'<?xml version="1.0" encoding="{encoding}"?>',
+                f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>',
                 1
             )
         else:
@@ -663,77 +664,24 @@ class MaxLengthMixin:
         field_info = next((field for field in fields(self) if field.name == key), None)
         if field_info:
             max_length = field_info.metadata.get('max_length')
-            if max_length and isinstance(value, str) and len(value) > max_length:
-                value = value[:max_length-1]
-                # raise ValueError(f"Value for {field_info.name} field '{key}' exceeds the maximum allowed length of {max_length}")
+            if max_length and isinstance(value, str):
+                # Decode special characters like &#216; to their Unicode equivalent
+                decoded_value = html.unescape(value)
+                if len(decoded_value) > max_length:
+                    truncated_value = decoded_value[:max_length]
+                    value = html.escape(truncated_value, quote=True)
+                else:
+                    pass
+            else:
+                pass
+        else:
+            pass
+
         super().__setattr__(key, value)
 
 
 class ToXmlMixin:
     IS_YES_NO_FIELD_LIST = []
-    REPLACEMENT_DICT = {
-        # XML predefined entities
-        '&': '&amp;',
-        '"': '&quot;',
-        "'": '&apos;',
-
-        # Common special characters encoded as numeric references
-        'ñ': '&#241;', 'Ñ': '&#209;', '’': '&#8217;', 'é': '&#233;', 'É': '&#201;',
-        '®': '&#174;', '…': '&#8230;', '“': '&#8220;', '”': '&#8221;', '–': '&#8211;',
-        '™': '&#8482;', 'Ü': '&#220;', 'ü': '&#252;', '×': '&#215;',
-
-        # Extended Latin characters
-        'À': '&#192;', 'Á': '&#193;', 'Â': '&#194;', 'Ã': '&#195;', 'Ä': '&#196;',
-        'Å': '&#197;', 'Æ': '&#198;', 'Ç': '&#199;', 'È': '&#200;', 'Ê': '&#202;',
-        'Ë': '&#203;', 'Ì': '&#204;', 'Í': '&#205;', 'Î': '&#206;', 'Ï': '&#207;',
-        'Ð': '&#208;', 'Ò': '&#210;', 'Ó': '&#211;', 'Ô': '&#212;', 'Õ': '&#213;',
-        'Ö': '&#214;', 'Ø': '&#216;', 'Ù': '&#217;', 'Ú': '&#218;', 'Û': '&#219;',
-        'Ý': '&#221;', 'Þ': '&#222;', 'ß': '&#223;', 'à': '&#224;', 'á': '&#225;',
-        'â': '&#226;', 'ã': '&#227;', 'ä': '&#228;', 'å': '&#229;', 'æ': '&#230;',
-        'ç': '&#231;', 'è': '&#232;', 'ê': '&#234;', 'ë': '&#235;', 'ì': '&#236;',
-        'í': '&#237;', 'î': '&#238;', 'ï': '&#239;', 'ð': '&#240;', 'ò': '&#242;',
-        'ó': '&#243;', 'ô': '&#244;', 'õ': '&#245;', 'ö': '&#246;', 'ø': '&#248;',
-        'ù': '&#249;', 'ú': '&#250;', 'û': '&#251;', 'ý': '&#253;', 'þ': '&#254;',
-        'ÿ': '&#255;',
-
-        # Additional special characters
-        'Œ': '&#338;', 'œ': '&#339;', 'Š': '&#352;', 'š': '&#353;', 'Ÿ': '&#376;',
-        'ƒ': '&#402;', 'ˆ': '&#710;', '˜': '&#732;', 'α': '&#945;', 'β': '&#946;',
-        'γ': '&#947;', 'δ': '&#948;', 'ε': '&#949;', 'ζ': '&#950;', 'η': '&#951;',
-        'θ': '&#952;', 'ι': '&#953;', 'κ': '&#954;', 'λ': '&#955;', 'μ': '&#956;',
-        'ν': '&#957;', 'ξ': '&#958;', 'ο': '&#959;', 'π': '&#960;', 'ρ': '&#961;',
-        'ς': '&#962;', 'σ': '&#963;', 'τ': '&#964;', 'υ': '&#965;', 'φ': '&#966;',
-        'χ': '&#967;', 'ψ': '&#968;', 'ω': '&#969;', 'Α': '&#913;', 'Β': '&#914;',
-        'Γ': '&#915;', 'Δ': '&#916;', 'Ε': '&#917;', 'Ζ': '&#918;', 'Η': '&#919;',
-        'Θ': '&#920;', 'Ι': '&#921;', 'Κ': '&#922;', 'Λ': '&#923;', 'Μ': '&#924;',
-        'Ν': '&#925;', 'Ξ': '&#926;', 'Ο': '&#927;', 'Π': '&#928;', 'Ρ': '&#929;',
-        'Σ': '&#931;', 'Τ': '&#932;', 'Υ': '&#933;', 'Φ': '&#934;', 'Χ': '&#935;',
-        'Ψ': '&#936;', 'Ω': '&#937;', ' ': '&#160;', 'µm': '&#181;', '±': '&#177;',
-        '°': '&#176;', '€': '&#8364;', '„': '&#8222;', '†': '&#8224;', '‡': '&#8225;',
-        '‰': '&#8240;', '‹': '&#8249;', '›': '&#8250;', '¡': '&#161;', '¢': '&#162;',
-        '£': '&#163;', '¤': '&#164;', '¥': '&#165;', '¦': '&#166;', '§': '&#167;',
-        '¨': '&#168;', '©': '&#169;', 'ª': '&#170;', '«': '&#171;', '»': '&#187;',
-        '¯': '&#175;', '²': '&#178;', '³': '&#179;', '´': '&#180;', 'µ': '&#181;',
-        '¶': '&#182;', '·': '&#183;', '¹': '&#185;', 'º': '&#186;', '¼': '&#188;',
-        '½': '&#189;', '¾': '&#190;', '¿': '&#191;', '÷': '&#247;', 'Þ': '&#222;',
-        'þ': '&#254;',
-
-        # Additional Currency Symbols
-        '₹': '&#8377;', '₽': '&#8381;', '₩': '&#8361;',
-
-        # Mathematical Symbols
-        '∞': '&#8734;', '∆': '&#8710;',
-
-        # Fractions
-        '⅓': '&#8531;', '⅔': '&#8532;',
-
-        # Arrows
-        '→': '&#8594;', '←': '&#8592;',
-
-        # Additional Punctuation
-        '—': '&#8212;', '℗': '&#8471;', '℃': '&#8451;',
-    }
-    REPLACEMENT_PATTERN = re.compile('|'.join(re.escape(key) for key in REPLACEMENT_DICT.keys()))
 
     def to_xml(self):
         root = et.Element(self.Meta.name)
@@ -878,8 +826,7 @@ class ToXmlMixin:
         """
         element = et.Element(field.metadata.get("name", field.name))
         if isinstance(value, str):
-            # Sanitize the value (escaping is handled here)
-            sanitized_value = self._sanitize_text(value)
+            sanitized_value = encode_special_characters(value)
             element.text = sanitized_value
         else:
             element.text = str(value)
@@ -5791,6 +5738,10 @@ class EstimateLineAdd(QBAddMixin):
         if self.item_ref is not None and self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
             self.class_ref = None
+        elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
+            self.rate = None
+        elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
+            self.rate = None
         else:
             pass
 
@@ -6726,6 +6677,10 @@ class InvoiceLineAdd(QBAddMixin):
         # todo: remove this because it's client specific:
         if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+        elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
+            self.rate = None
+        elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
+            self.rate = None
         else:
             pass
 
@@ -8316,6 +8271,10 @@ class SalesOrderLineAdd(QBAddMixin):
         # todo: remove this because it's client specific:
         if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+        elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
+            self.rate = None
+        elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
+            self.rate = None
         else:
             pass
 
@@ -9032,6 +8991,10 @@ class SalesReceiptLineAdd(QBAddMixin):
         # todo: remove this because it's client specific:
         if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+        elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
+            self.rate = None
+        elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
+            self.rate = None
         else:
             pass
 
@@ -28274,13 +28237,6 @@ class JournalEntryAdd(QBAddRqMixin):
             "type": "Element",
         },
     )
-    # def_macro: Optional[str] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "defMacro",
-    #         "type": "Attribute",
-    #     },
-    # )
 
 
 @dataclass

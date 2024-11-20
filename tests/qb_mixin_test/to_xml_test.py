@@ -2,9 +2,13 @@ import unittest
 from decimal import Decimal
 from src.quickbooks_desktop.quickbooks_desktop import (
     ToXmlMixin, LinkedTxn, QBDates, JournalEntryAdd,
-    CurrencyRef, JournalDebitLine, JournalLineMod, AccountRef, JournalCreditLine, JournalEntries, QBDates
+    CurrencyRef, JournalDebitLine, JournalLineMod, AccountRef, JournalCreditLine, JournalEntries, QBDates,
+    EstimateLineAdd, ItemRef, SalesTaxCodeRef
 )
+from lxml import etree as et
 import datetime
+from dataclasses import field
+from typing import Optional
 
 
 # # Sample dataclass to use with ToXmlMixin
@@ -194,47 +198,69 @@ class TestToXmlMixin2(unittest.TestCase):
     #     ]
     #     self.assertEqual(actual_tags, expected_tags, "The XML field order is incorrect.")
 
-    def test_get_sorted_fields(self):
-        journal_add = JournalEntryAdd(
-            txn_date=QBDates(date=datetime.datetime(2005, 10, 18, 0, 0)),
-            ref_number='1',
-            memo=None,
-            is_adjustment=False,
-            is_amounts_entered_in_home_currency=False,
-            currency_ref=CurrencyRef(list_id=None, full_name='US Dollar'),
-            exchange_rate=1.0, external_guid=None,
-            journal_debit_lines=[
-                JournalDebitLine(txn_line_id=None,
-                                 account_ref=AccountRef(list_id=None, full_name='Automobiles'),
-                                 amount=Decimal('4500.00'),
-                                 tax_amount=None, memo='original purchase', entity_ref=None,
-                                 class_ref=None, item_sales_tax_ref=None, billable_status=None, def_macro=None),
-                JournalDebitLine(txn_line_id=None,
-                                 account_ref=AccountRef(list_id=None, full_name='Furniture and Fixtures'),
-                                 amount=Decimal('2000.00'), tax_amount=None, memo='original purchase',
-                                 entity_ref=None, class_ref=None, item_sales_tax_ref=None,
-                                 billable_status=None, def_macro=None),
-                JournalDebitLine(txn_line_id=None, account_ref=AccountRef(list_id=None, full_name='Inventory'),
-                                 amount=Decimal('203500.00'), tax_amount=None, memo='original purchase',
-                                 entity_ref=None, class_ref=None, item_sales_tax_ref=None,
-                                 billable_status=None, def_macro=None)
-            ],
-            journal_credit_lines=[
-                JournalCreditLine(txn_line_id=None, account_ref=AccountRef(list_id=None, full_name='Notes - Artco, Inc.'),
-                                  amount=Decimal('210000.00'), tax_amount=None, memo='original purchase',
-                                  entity_ref=None, class_ref=None, item_sales_tax_ref=None,
-                                  billable_status=None, def_macro=None)
-            ])
-
-        j_xml = journal_add.to_xml()
-        print('i')
+    # def test_get_sorted_fields(self):
+    #     journal_add = JournalEntryAdd(
+    #         txn_date=QBDates(date=datetime.datetime(2005, 10, 18, 0, 0)),
+    #         ref_number='1',
+    #         memo=None,
+    #         is_adjustment=False,
+    #         is_amounts_entered_in_home_currency=False,
+    #         currency_ref=CurrencyRef(list_id=None, full_name='US Dollar'),
+    #         exchange_rate=1.0, external_guid=None,
+    #         journal_debit_lines=[
+    #             JournalDebitLine(txn_line_id=None,
+    #                              account_ref=AccountRef(list_id=None, full_name='Automobiles'),
+    #                              amount=Decimal('4500.00'),
+    #                              tax_amount=None, memo='original purchase', entity_ref=None,
+    #                              class_ref=None, item_sales_tax_ref=None, billable_status=None, def_macro=None),
+    #             JournalDebitLine(txn_line_id=None,
+    #                              account_ref=AccountRef(list_id=None, full_name='Furniture and Fixtures'),
+    #                              amount=Decimal('2000.00'), tax_amount=None, memo='original purchase',
+    #                              entity_ref=None, class_ref=None, item_sales_tax_ref=None,
+    #                              billable_status=None, def_macro=None),
+    #             JournalDebitLine(txn_line_id=None, account_ref=AccountRef(list_id=None, full_name='Inventory'),
+    #                              amount=Decimal('203500.00'), tax_amount=None, memo='original purchase',
+    #                              entity_ref=None, class_ref=None, item_sales_tax_ref=None,
+    #                              billable_status=None, def_macro=None)
+    #         ],
+    #         journal_credit_lines=[
+    #             JournalCreditLine(txn_line_id=None, account_ref=AccountRef(list_id=None, full_name='Notes - Artco, Inc.'),
+    #                               amount=Decimal('210000.00'), tax_amount=None, memo='original purchase',
+    #                               entity_ref=None, class_ref=None, item_sales_tax_ref=None,
+    #                               billable_status=None, def_macro=None)
+    #         ])
+    #
+    #     j_xml = journal_add.to_xml()
+    #     print('i')
 
     def test__create_xml_element(self):
-        root = '<EstimateLineAdd><ItemRef><FullName>DA3H218</FullName></ItemRef></EstimateLineAdd>'
-        field = Field(name='desc',type=typing.Optional[str],default=None,default_factory=<dataclasses._MISSING_TYPE object at 0x042110A0>,init=True,repr=True,hash=None,compare=True,metadata=mappingproxy({'name': 'Desc', 'type': 'Element', 'max_length': 4095}),kw_only=False,_field_type=_FIELD)
-        value = 'ARTCO 11A2 Diamond Grinding Wheel\n3.5" Ø × 1.3" × 20mm Ø ID\nD220  N100  B1/8"  W3/8"'
-        the_self = EstimateLineAdd(item_ref=ItemRef(list_id=None, full_name=\'DA3H218\'), desc=\'ARTCO 11A2 Diamond Grinding Wheel\\n3.5" Ø × 1.3" × 20mm Ø ID\\nD220  N100  B1/8"  W3/8"\', quantity=1.0, unit_of_measure=\'each\', rate=None, rate_percent=None, class_ref=None, amount=Decimal(\'225.00\'), tax_amount=None, option_for_price_rule_conflict=None, inventory_site_ref=None, inventory_site_location_ref=None, sales_tax_code_ref=SalesTaxCodeRef(list_id=None, full_name=\'TAX\'), markup_rate=None, markup_rate_percent=None, price_level_ref=None, override_item_account_ref=None, other1=None, other2=None)'
-        # todo finish this and make sure it's not escaping twice.
+        root = et.fromstring('<EstimateLineAdd><ItemRef><FullName>DA3H218</FullName></ItemRef></EstimateLineAdd>')
+        desc = field(
+        default=None,
+        metadata={
+            "name": "Desc",
+            "type": "Element",
+            "max_length": 4095,
+        },
+        )
+        value = """ARTCO 11A2 Diamond Grinding Wheel - 3.5&quot; &#216; &#215; 1.3&quot; &#215; 20mm Hole - D220, N100, B1/8&quot;, W3/8&quot;"""
+        estimate_line_add = EstimateLineAdd(
+            item_ref=ItemRef(list_id=None, full_name='DA3H218'),
+            desc="""ARTCO 11A2 Diamond Grinding Wheel - 3.5&quot; &#216; &#215; 1.3&quot; &#215; 20mm Hole - D220, N100, B1/8&quot;, W3/8&quot;""",
+            quantity=1.0,
+            unit_of_measure='each',
+            rate=None,
+            rate_percent=None,
+            class_ref=None,
+            amount=Decimal(225.00), tax_amount=None,
+            option_for_price_rule_conflict=None, inventory_site_ref=None, inventory_site_location_ref=None,
+            sales_tax_code_ref=SalesTaxCodeRef(list_id=None, full_name='TAX'),
+            markup_rate=None, markup_rate_percent=None, price_level_ref=None, override_item_account_ref=None, other1=None, other2=None)
+        element = estimate_line_add._create_xml_element(root, desc, value)
+        desc_str = et.tostring(element, pretty_print=True).decode("ISO-8859-1")
+        self.assertFalse('&amp;amp;' in desc_str, "Over-escaping detected in desc_str")
+        self.assertIn('&amp;', desc_str, "Ampersand is not escaped correctly as '&amp;'")
+
 
 
 

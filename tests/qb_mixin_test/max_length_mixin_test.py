@@ -19,10 +19,15 @@ class TestMaxLengthMixin(unittest.TestCase):
         self.assertEqual(obj.name, "Short")
 
     def test_set_exceeds_max_length(self):
-        obj = TestClass()
-        with self.assertRaises(ValueError) as context:
-            obj.name = "ThisNameIsTooLong"  # Length is 16, exceeds max_length=10
-        self.assertIn("exceeds the maximum allowed length of 10", str(context.exception))
+        obj = TestClass(name="ThisNameIsTooLong")
+        self.assertEqual(obj.name, "ThisNameIs")
+        obj = TestClass(name="NotTooLon&#216;")
+        self.assertEqual(obj.name, "NotTooLon&#216;")
+        obj = TestClass(name="NowIsTooLon&#216;")
+        self.assertEqual(obj.name, "NowIsTooLo")
+        obj = TestClass(name="IsTooLon&#216;Now")
+        self.assertEqual(obj.name, "IsTooLon&#216;N")
+
 
     def test_no_max_length_constraint(self):
         obj = TestClass()
