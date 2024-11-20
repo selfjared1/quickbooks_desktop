@@ -70,6 +70,12 @@ def convert_integer(value):
 
 def encode_special_characters(input_string):
 
+    #for testing:
+    if input_string.startswith('Electric Motors'):
+        pass
+    else:
+        pass
+
     REPLACEMENT_DICT = {
         # XML predefined entities
         '&': '&amp;',

@@ -456,7 +456,13 @@ class QuickbooksDesktop():
         xml_content = et.tostring(QBXML, encoding=encoding, pretty_print=False).decode(encoding)
         if xml_content.startswith(f"<?xml version='1.0' encoding='{encoding}'?>"):
             full_request = xml_content.replace(
-                f'<?xml version="1.0" encoding="{encoding}"?>',
+                f"<?xml version='1.0' encoding='{encoding}'?>",
+                f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>',
+                1
+            )
+        elif xml_content.startswith(f"""<?xml version="1.0" encoding="{encoding}"?>"""):
+            full_request = xml_content.replace(
+                f"""<?xml version="1.0" encoding="{encoding}"?>""",
                 f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>',
                 1
             )
@@ -6500,13 +6506,12 @@ class InventoryAdjustmentLine(QBMixin):
 
 @dataclass
 class InvoiceLineAdd(QBAddMixin):
-
     FIELD_ORDER = [
-        "item_ref", "desc", "quantity", "unit_of_measure", "rate", "rate_percent",
-        "price_level_ref", "class_ref", "amount", "option_for_price_rule_conflict",
-        "inventory_site_ref", "inventory_site_location_ref", "serial_number",
-        "lot_number", "service_date", "sales_tax_code_ref", "override_item_account_ref",
-        "other1", "other2", "link_to_txn", "data_ext"
+        "ItemRef", "Desc", "Quantity", "UnitOfMeasure", "Rate", "RatePercent",
+        "PriceLevelRef", "ClassRef", "Amount", "OptionForPriceRuleConflict",
+        "InventorySiteRef", "InventorySiteLocationRef", "SerialNumber",
+        "LotNumber", "ServiceDate", "SalesTaxCodeRef", "OverrideItemAccountRef",
+        "Other1", "Other2", "LinkToTxn", "DataExt"
     ]
 
     class Meta:
@@ -7012,10 +7017,9 @@ class InvoiceLine(QBMixin):
 
 @dataclass
 class InvoiceLineGroupAdd(QBAddMixin):
-
     FIELD_ORDER = [
-        "item_group_ref", "quantity", "unit_of_measure", "inventory_site_ref",
-        "inventory_site_location_ref", "data_ext"
+        "ItemGroupRef", "Quantity", "UnitOfMeasure", "InventorySiteRef",
+        "InventorySiteLocationRef", "DataExt"
     ]
 
     class Meta:
@@ -9665,10 +9669,10 @@ class AccountBase:
 @dataclass
 class AccountQuery(QBQueryMixin):
     FIELD_ORDER = [
-        "list_id", "full_name", "max_returned", "active_status",
-        "from_modified_date", "to_modified_date", "name_filter",
-        "name_range_filter", "account_type", "currency_filter",
-        "include_ret_element", "owner_id",
+        "ListId", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "AccountType", "CurrencyFilter",
+        "IncludeRetElement", "OwnerId",
     ]
 
     class Meta:
@@ -9746,9 +9750,9 @@ class AccountQuery(QBQueryMixin):
 @dataclass
 class AccountAdd(AccountBase, QBAddRqMixin):
     FIELD_ORDER = [
-        "name", "is_active", "parent_ref", "account_type", "account_number",
-        "bank_number", "desc", "open_balance", "open_balance_date",
-        "tax_line_id", "currency_ref", "include_ret_element"
+        "Name", "IsActive", "ParentRef", "AccountType", "AccountNumber",
+        "BankNumber", "Desc", "OpenBalance", "OpenBalanceDate",
+        "TaxLineId", "CurrencyRef", "IncludeRetElement"
     ]
 
     class Meta:
@@ -9801,10 +9805,10 @@ class SpecialAccountAdd(QBAddRqMixin):
 @dataclass
 class AccountMod(AccountBase, QBModRqMixin):
     FIELD_ORDER = [
-        "list_id", "edit_sequence", "name", "is_active", "parent_ref",
-        "account_type", "account_number", "bank_number", "desc",
-        "open_balance", "open_balance_date", "tax_line_id",
-        "currency_ref", "include_ret_element"
+        "ListId", "EditSequence", "Name", "IsActive", "ParentRef",
+        "AccountType", "AccountNumber", "BankNumber", "Desc",
+        "OpenBalance", "OpenBalanceDate", "TaxLineId",
+        "CurrencyRef", "IncludeRetElement"
     ]
 
     class Meta:
@@ -10901,12 +10905,11 @@ class CustomerMsgs(PluralMixin, PluralListSaveMixin):
 
 @dataclass
 class CustomerQuery(QBQueryMixin):
-
     FIELD_ORDER = [
-        "list_id", "full_name", "max_returned", "active_status",
-        "from_modified_date", "to_modified_date", "name_filter",
-        "name_range_filter", "total_balance_filter", "currency_filter",
-        "class_filter", "include_ret_element", "owner_id"
+        "ListId", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "TotalBalanceFilter", "CurrencyFilter",
+        "ClassFilter", "IncludeRetElement", "OwnerId"
     ]
 
     class Meta:
@@ -16330,11 +16333,10 @@ class JobTypes(PluralMixin, PluralListSaveMixin):
 
 @dataclass
 class OtherNameQuery(QBQueryMixin):
-
     FIELD_ORDER = [
-        "list_id", "full_name", "max_returned", "active_status",
-        "from_modified_date", "to_modified_date", "name_filter",
-        "name_range_filter", "include_ret_element", "owner_id"
+        "ListId", "FullName", "MaxReturned", "ActiveStatus",
+        "FromModifiedDate", "ToModifiedDate", "NameFilter",
+        "NameRangeFilter", "IncludeRetElement", "OwnerId"
     ]
 
     class Meta:
@@ -22952,7 +22954,7 @@ class ApplyCheckToTxnMod(ApplyCheckToTxnBase, QBAddRqMixin):
 @dataclass
 class CheckQuery(QBQueryMixin):
     FIELD_ORDER = [
-        "metaData", "iterator", "iteratorID", "TxnID", "RefNumber",
+        "TxnID", "RefNumber",
         "RefNumberCaseSensitive", "MaxReturned", "ModifiedDateRangeFilter",
         "TxnDateRangeFilter", "EntityFilter", "AccountFilter", "RefNumberFilter",
         "RefNumberRangeFilter", "CurrencyFilter", "IncludeLineItems",
@@ -23073,7 +23075,7 @@ class CheckQuery(QBQueryMixin):
 @dataclass
 class CheckAdd(QBAddRqMixin):
     FIELD_ORDER = [
-        "defMacro", "AccountRef", "PayeeEntityRef", "RefNumber", "TxnDate",
+        "AccountRef", "PayeeEntityRef", "RefNumber", "TxnDate",
         "Memo", "Address", "IsToBePrinted", "ExchangeRate", "ExternalGUID",
         "ApplyCheckToTxnAdd", "ExpenseLineAdd", "ItemLineAdd", "ItemGroupLineAdd"
     ]
@@ -25430,7 +25432,7 @@ class CashBackInfoMod(QBModRqMixin):
 @dataclass
 class CashBackInfo(QBMixin):
     FIELD_ORDER = [
-        "txn_line_id", "AccountRef", "Memo", "Amount"
+        "TxnLineId", "AccountRef", "Memo", "Amount"
     ]
 
     class Meta:
@@ -25844,7 +25846,7 @@ class Deposits(PluralMixin, PluralTrxnSaveMixin):
 @dataclass
 class EstimateQuery(QBQueryMixin):
     FIELD_ORDER = [
-        "metaData", "iterator", "iteratorID", "TxnID", "RefNumber", "RefNumberCaseSensitive",
+        "TxnID", "RefNumber", "RefNumberCaseSensitive",
         "MaxReturned", "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
         "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter", "CurrencyFilter",
         "IncludeLineItems", "IncludeLinkedTxns", "IncludeRetElement", "OwnerID"
@@ -26652,7 +26654,7 @@ class Estimates(PluralMixin, PluralTrxnSaveMixin):
 @dataclass
 class InventoryAdjustmentQuery(QBQueryMixin):
     FIELD_ORDER = [
-        "metaData", "iterator", "iteratorID", "TxnID", "RefNumber", "RefNumberCaseSensitive",
+        "TxnID", "RefNumber", "RefNumberCaseSensitive",
         "MaxReturned", "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
         "AccountFilter", "ItemFilter", "RefNumberFilter", "RefNumberRangeFilter",
         "IncludeLineItems", "IncludeRetElement", "OwnerID"
@@ -26765,7 +26767,7 @@ class InventoryAdjustmentQuery(QBQueryMixin):
 @dataclass
 class InventoryAdjustmentAdd(QBAddRqMixin):
     FIELD_ORDER = [
-        "defMacro", "AccountRef", "TxnDate", "RefNumber", "InventorySiteRef",
+        "AccountRef", "TxnDate", "RefNumber", "InventorySiteRef",
         "CustomerRef", "ClassRef", "Memo", "ExternalGUID", "InventoryAdjustmentLineAdd"
     ]
 
@@ -27067,13 +27069,12 @@ class InventoryAdjustments(PluralMixin, PluralTrxnSaveMixin):
 
 @dataclass
 class InvoiceQuery(QBQueryMixin):
-
     FIELD_ORDER = [
-        "txn_id", "ref_number", "ref_number_case_sensitive", "max_returned",
-        "modified_date_range_filter", "txn_date_range_filter", "entity_filter",
-        "account_filter", "ref_number_filter", "ref_number_range_filter",
-        "currency_filter", "paid_status", "include_line_items", "include_linked_txns",
-        "include_ret_element", "owner_id"
+        "TxnId", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "PaidStatus", "IncludeLineItems", "IncludeLinkedTxns",
+        "IncludeRetElement", "OwnerId"
     ]
 
     class Meta:
@@ -27197,15 +27198,14 @@ class InvoiceQuery(QBQueryMixin):
 
 @dataclass
 class InvoiceAdd(QBAddRqMixin):
-
     FIELD_ORDER = [
-        "customer_ref", "class_ref", "ar_account_ref", "template_ref", "txn_date",
-        "ref_number", "bill_address", "ship_address", "is_pending", "is_finance_charge",
-        "po_number", "terms_ref", "due_date", "sales_rep_ref", "fob", "ship_date",
-        "ship_method_ref", "item_sales_tax_ref", "memo", "customer_msg_ref",
-        "is_to_be_printed", "is_to_be_emailed", "customer_sales_tax_code_ref",
-        "other", "exchange_rate", "external_guid", "link_to_txn_id", "set_credit",
-        "invoice_line_add", "invoice_line_group_add", "include_ret_element"
+        "CustomerRef", "ClassRef", "ArAccountRef", "TemplateRef", "TxnDate",
+        "RefNumber", "BillAddress", "ShipAddress", "IsPending", "IsFinanceCharge",
+        "PoNumber", "TermsRef", "DueDate", "SalesRepRef", "Fob", "ShipDate",
+        "ShipMethodRef", "ItemSalesTaxRef", "Memo", "CustomerMsgRef",
+        "IsToBePrinted", "IsToBeEmailed", "CustomerSalesTaxCodeRef",
+        "Other", "ExchangeRate", "ExternalGuid", "LinkToTxnId", "SetCredit",
+        "InvoiceLineAdd", "InvoiceLineGroupAdd", "IncludeRetElement"
     ]
 
     class Meta:
