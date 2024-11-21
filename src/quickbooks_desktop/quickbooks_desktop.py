@@ -453,7 +453,12 @@ class QuickbooksDesktop():
                 requestXML.attrib['requestID'] = "1"
             QBXMLMsgsRq.append(requestXML)
 
-        xml_content = et.tostring(QBXML, encoding=encoding, pretty_print=False).decode(encoding)
+        xml_content = et.tostring(QBXML, encoding=encoding, pretty_print=False, method="xml").decode(encoding)
+        over_escaped_pattern = re.compile(r'&amp;(#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);')
+
+        # Replace '&amp;' with '&' for matched patterns
+        xml_content = over_escaped_pattern.sub(r'&\1;', xml_content)
+
         if xml_content.startswith(f"<?xml version='1.0' encoding='{encoding}'?>"):
             full_request = xml_content.replace(
                 f"<?xml version='1.0' encoding='{encoding}'?>",
@@ -467,7 +472,7 @@ class QuickbooksDesktop():
                 1
             )
         else:
-            full_request = f"<?xml version='1.0' encoding='{encoding}'?><?qbxml version='13.0'?>" + xml_content
+            full_request = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>""" + xml_content
 
         #todo:
         # validate_qbxml(full_request, self.SDK_version)

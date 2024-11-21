@@ -7,6 +7,7 @@ from src.quickbooks_desktop.quickbooks_desktop import (
     UnitOfMeasureSetRef, IncomeAccountRef, PrefVendorRef, AssetAccountRef
 )
 from lxml import etree as et
+import re
 import datetime
 from dataclasses import field, dataclass
 from typing import Optional, List
@@ -243,10 +244,10 @@ class TestToXmlMixin2(unittest.TestCase):
             "max_length": 4095,
         },
         )
-        value = """ARTCO 11A2 Diamond Grinding Wheel - 3.5&quot; &#216; &#215; 1.3&quot; &#215; 20mm Hole - D220, N100, B1/8&quot;, W3/8&quot;"""
+        value = """ARTCO 11A2 Diamond Grinding &amp; Wheel - 3.5&quot; &#216; &#215; 1.3&quot; &#215; 20mm Hole - D220, N100, B1/8&quot;, W3/8&quot;"""
         estimate_line_add = EstimateLineAdd(
             item_ref=ItemRef(list_id=None, full_name='DA3H218'),
-            desc="""ARTCO 11A2 Diamond Grinding Wheel - 3.5&quot; &#216; &#215; 1.3&quot; &#215; 20mm Hole - D220, N100, B1/8&quot;, W3/8&quot;""",
+            desc=value,
             quantity=1.0,
             unit_of_measure='each',
             rate=None,
@@ -257,6 +258,9 @@ class TestToXmlMixin2(unittest.TestCase):
             sales_tax_code_ref=SalesTaxCodeRef(list_id=None, full_name='TAX'),
             markup_rate=None, markup_rate_percent=None, price_level_ref=None, override_item_account_ref=None, other1=None, other2=None)
         element = estimate_line_add._create_xml_element(root, desc, value)
-        desc_str = et.tostring(element, pretty_print=True).decode("ISO-8859-1")
-        self.assertFalse('&amp;amp;' in desc_str, "Over-escaping detected in desc_str")
-        self.assertIn('&amp;', desc_str, "Ampersand is not escaped correctly as '&amp;'")
+        desc_str = et.tostring(element, encoding="ISO-8859-1", pretty_print=True, method="xml").decode("ISO-8859-1")
+        over_escaped_pattern = re.compile(r'&amp;(#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);')
+        xml_content = over_escaped_pattern.sub(r'&\1;', desc_str)
+        self.assertFalse('&amp;amp;' in xml_content, "Over-escaping detected in desc_str")
+        self.assertFalse('&amp;#216' in xml_content, "Over-escaping detected in desc_str")
+        self.assertIn('&amp;', xml_content, "Ampersand is not escaped correctly as '&amp;'")
