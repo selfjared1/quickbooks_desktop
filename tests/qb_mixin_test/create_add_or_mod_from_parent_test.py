@@ -499,7 +499,7 @@ class TestCopyFromParent(unittest.TestCase):
         estimate_add_wo_ids = Estimate.Add.create_add_or_mod_from_parent(estimate, add_or_mod='Add', keep_ids=False)
         self.assertEqual(estimate_add_wo_ids.is_active, True)
 
-    def test_copy_add_or_mod_from_parent_estimate_lines_only(self):
+    def test_copy_add_or_mod_from_parent_estimate_lines_only_01(self):
         estimate_xml_just_active = """
                 <EstimateRet>
                     <EstimateLineRet>
@@ -645,6 +645,113 @@ class TestCopyFromParent(unittest.TestCase):
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].quantity, 2)
         self.assertEqual(estimate_add_wo_ids.estimate_line_add[0].amount, Decimal('1782.00'))
         self.assertIsNone(estimate_add_wo_ids.estimate_line_add[0].rate)
+        self.assertIsNone(getattr(estimate_add_wo_ids, "data_ext", None))
+
+
+    def test_copy_add_or_mod_from_parent_estimate_line_group(self):
+        estimate_xml_just_active = """
+                <EstimateRet>
+                <EstimateLineGroupRet>
+                    <TxnLineID>A75F3-1657130681</TxnLineID>
+                    <ItemGroupRef>
+                        <ListID>80006EA0-1643228558</ListID>
+                        <FullName>FRL100</FullName>
+                    </ItemGroupRef>
+                    <Desc>NSK Nakanishi&#174; Air Filter, Regulator, Oiler Kit with Foot Control</Desc>
+                    <IsPrintItemsInGroup>false</IsPrintItemsInGroup>
+                    <TotalAmount>486.00</TotalAmount>
+                    <EstimateLineRet>
+                        <TxnLineID>A75F4-1657130681</TxnLineID>
+                        <ItemRef>
+                            <ListID>80002401-1623189621</ListID>
+                            <FullName>Pneumatic Hand Grinders:AL-H1207F</FullName>
+                        </ItemRef>
+                        <Desc>NSK Nakanishi&#174; Rotus Portable Air Line Kit - 5&#181;m Filter</Desc>
+                        <Quantity>1</Quantity>
+                        <UnitOfMeasure>each</UnitOfMeasure>
+                        <OverrideUOMSetRef>
+                            <ListID>80000001-1708465411</ListID>
+                            <FullName>Count in Each</FullName>
+                        </OverrideUOMSetRef>
+                        <Rate>330.00</Rate>
+                        <Amount>330.00</Amount>
+                        <SalesTaxCodeRef>
+                            <ListID>80000001-1622403872</ListID>
+                            <FullName>TAX</FullName>
+                        </SalesTaxCodeRef>
+                        <DataExtRet>
+                            <OwnerID>0</OwnerID>
+                            <DataExtName>Discount Code</DataExtName>
+                            <DataExtType>STR255TYPE</DataExtType>
+                            <DataExtValue>N</DataExtValue>
+                        </DataExtRet>
+                    </EstimateLineRet>
+                    <EstimateLineRet>
+                        <TxnLineID>A75F5-1657130681</TxnLineID>
+                        <ItemRef>
+                            <ListID>80002441-1623189694</ListID>
+                            <FullName>Pneumatic Hand Grinders:AFC-45</FullName>
+                        </ItemRef>
+                        <Desc>NSK Nakanishi&#174; AFC-45 Rotus - Airline Foot Control</Desc>
+                        <Quantity>1</Quantity>
+                        <UnitOfMeasure>each</UnitOfMeasure>
+                        <OverrideUOMSetRef>
+                            <ListID>80000001-1708465411</ListID>
+                            <FullName>Count in Each</FullName>
+                        </OverrideUOMSetRef>
+                        <Rate>141.00</Rate>
+                        <Amount>141.00</Amount>
+                        <SalesTaxCodeRef>
+                            <ListID>80000001-1622403872</ListID>
+                            <FullName>TAX</FullName>
+                        </SalesTaxCodeRef>
+                        <DataExtRet>
+                            <OwnerID>0</OwnerID>
+                            <DataExtName>Discount Code</DataExtName>
+                            <DataExtType>STR255TYPE</DataExtType>
+                            <DataExtValue>N</DataExtValue>
+                        </DataExtRet>
+                    </EstimateLineRet>
+                    <EstimateLineRet>
+                        <TxnLineID>A75F6-1657130681</TxnLineID>
+                        <ItemRef>
+                            <ListID>800062E7-1629853099</ListID>
+                            <FullName>Pneumatic Motors &amp; Spindles:K-242</FullName>
+                        </ItemRef>
+                        <Desc>NSK Nakanishi&#174; Metal Fitting - Connection Ring Coupling</Desc>
+                        <Quantity>1</Quantity>
+                        <UnitOfMeasure>each</UnitOfMeasure>
+                        <OverrideUOMSetRef>
+                            <ListID>80000001-1708465411</ListID>
+                            <FullName>Count in Each</FullName>
+                        </OverrideUOMSetRef>
+                        <Rate>15.00</Rate>
+                        <Amount>15.00</Amount>
+                        <SalesTaxCodeRef>
+                            <ListID>80000001-1622403872</ListID>
+                            <FullName>TAX</FullName>
+                        </SalesTaxCodeRef>
+                        <DataExtRet>
+                            <OwnerID>0</OwnerID>
+                            <DataExtName>Discount Code</DataExtName>
+                            <DataExtType>STR255TYPE</DataExtType>
+                            <DataExtValue>N</DataExtValue>
+                        </DataExtRet>
+                    </EstimateLineRet>
+                </EstimateLineGroupRet>
+                
+            </EstimateRet>
+                """
+        estimate = Estimate.from_xml(estimate_xml_just_active)
+        estimate_add_wo_ids = Estimate.Add.create_add_or_mod_from_parent(estimate, add_or_mod='Add', keep_ids=False)
+
+        self.assertEqual(len(estimate_add_wo_ids.estimate_line_group_add), 1)
+        self.assertIsNone(getattr(estimate_add_wo_ids, "txn_line_id", None))
+        self.assertIsNone(estimate_add_wo_ids.estimate_line_group_add[0].item_ref.list_id)
+        self.assertEqual(estimate_add_wo_ids.estimate_line_group_add[0].item_group_ref.full_name, 'FRL100')
+        self.assertEqual(estimate_add_wo_ids.estimate_line_group_add[0].quantity, 2)
+        self.assertEqual(estimate_add_wo_ids.estimate_line_group_add[0].amount, Decimal('1782.00'))
+        self.assertIsNone(estimate_add_wo_ids.estimate_line_group_add[0].rate)
         self.assertIsNone(getattr(estimate_add_wo_ids, "data_ext", None))
 
     def test_copy_add_or_mod_from_parent_subtotal(self):

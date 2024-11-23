@@ -205,7 +205,7 @@ class QuickbooksDesktop():
     The first time connecting you'll need to authorize the app inside of QuickBooks's UI.
     """
 
-    def __init__(self, application_name="accountingpy", company_file=None, SDK_version='13.0'):
+    def __init__(self, application_name="accountingpy", company_file=None, SDK_version='16.0'):
         self.application_name = application_name
         self.company_file = company_file
         self.session_begun = False
@@ -397,8 +397,8 @@ class QuickbooksDesktop():
                 instance_list = []
                 i = 0
                 for element in elements:
-                    if i == 1376:
-                        pass
+                    # if i == 1376:
+                    #     pass
                     single_instance = cls.from_xml(element)
                     instance_list.append(single_instance)
                     i += 1
@@ -458,6 +458,7 @@ class QuickbooksDesktop():
 
         # Replace '&amp;' with '&' for matched patterns
         xml_content = over_escaped_pattern.sub(r'&\1;', xml_content)
+        xml_content = xml_content.replace('–', '-') #Other characters
 
         if xml_content.startswith(f"<?xml version='1.0' encoding='{encoding}'?>"):
             full_request = xml_content.replace(
@@ -1273,10 +1274,22 @@ class PluralMixin:
         return plural_instance
 
     def get_by_id(self, id_value):
-        for item in self._items:
-            if getattr(item, 'txn_id', None) == id_value or getattr(item, 'list_id', None) == id_value:
-                return item
-        return None
+        if len(self._items):
+            def sub_get_by_id(id_name_str, id_value):
+                for item in self._items:
+                    if getattr(item, id_name_str, None) == id_value:
+                        return item
+                    else:
+                        continue
+                return None
+
+            if getattr(self._items[0], 'txn_id', None):
+                item = sub_get_by_id('txn_id', id_value)
+            else:
+                item = sub_get_by_id('list_id', id_value)
+            return item
+        else:
+            return None
 
     # @classmethod
     # def update_db(cls, qb, session):
@@ -1360,7 +1373,13 @@ class PluralMixin:
             root.append(xml_element)
         xml_str = et.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode()
         with open(file_path, "w") as file:
-            file.write(xml_str)
+            try:
+                file.write(xml_str)
+            except Exception as e:
+                problematic_chars = [char for char in xml_str if ord(char) > 127]  # Characters outside ASCII range
+                print(f'problematic_chars are: {problematic_chars}')
+                print(e)
+                print(xml_str)
         logger.debug('Finished to_xml_file')
 
 
@@ -1475,6 +1494,9 @@ class PluralTrxnSaveMixin:
 
 @dataclass
 class QBRefMixin(QBMixin):
+
+    Add: Type = 'self'
+    Mod: Type = 'self'
 
     list_id: Optional[str] = list_id
     full_name: Optional[str] = full_name
@@ -1930,8 +1952,13 @@ class TxnLineDetail(QBMixin):
 
 @dataclass
 class AddressBlock(QBMixin):
+    FIELD_ORDER = ["Addr1", "Addr2", "Addr3", "Addr4", "Addr5"]
+
     class Meta:
         name = "AddressBlock"
+
+    Add: Type = 'self'
+    Mod: Type = 'self'
 
     addr1: Optional[str] = field(
         default=None,
@@ -1996,6 +2023,8 @@ class ShipAddressBlock(AddressBlock):
 
 @dataclass
 class Address(AddressBlock):
+    FIELD_ORDER = ["Addr1", "Addr2", "Addr3", "Addr4", "Addr5", "City",
+                   "State", "PostalCode", "Country", "Note"]
     class Meta:
         name = "Address"
 
@@ -2101,6 +2130,11 @@ class VendorAddress(Address):
 
 @dataclass
 class ShipToAddress(Address):
+    FIELD_ORDER = [
+        "Name", "Addr1", "Addr2", "Addr3", "Addr4", "Addr5", "City",
+        "State", "PostalCode", "Country", "Note", "DefaultShipTo"
+    ]
+
     class Meta:
         name = "ShipToAddress"
 
@@ -5749,10 +5783,13 @@ class EstimateLineAdd(QBAddMixin):
         if self.item_ref is not None and self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
             self.class_ref = None
+            self.unit_of_measure = None
         elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
             self.rate = None
+            self.rate_percent = None
         elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
             self.rate = None
+            self.rate_percent = None
         else:
             pass
 
@@ -6687,10 +6724,13 @@ class InvoiceLineAdd(QBAddMixin):
         # todo: remove this because it's client specific:
         if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+            self.unit_of_measure = None
         elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
             self.rate = None
+            self.rate_percent = None
         elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
             self.rate = None
+            self.rate_percent = None
         else:
             pass
 
@@ -8249,13 +8289,6 @@ class SalesOrderLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
-    is_manually_closed: Optional[bool] = field(
-        default=None,
-        metadata={
-            "name": "IsManuallyClosed",
-            "type": "Element",
-        },
-    )
     other1: Optional[str] = field(
         default=None,
         metadata={
@@ -8278,12 +8311,15 @@ class SalesOrderLineAdd(QBAddMixin):
         self.rate_percent = None if self.rate is not None else self.rate_percent
         self.rate = None if self.quantity is not None else self.rate
         # todo: remove this because it's client specific:
-        if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
+        if self.item_ref is not None and self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+            self.unit_of_measure = None
         elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
             self.rate = None
+            self.rate_percent = None
         elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
             self.rate = None
+            self.rate_percent = None
         else:
             pass
 
@@ -8579,7 +8615,7 @@ class SalesOrderLine(QBMixin):
             "type": "Element",
         },
     )
-    invoiced: Optional[bool] = field(
+    invoiced: Optional[float] = field(
         default=None,
         metadata={
             "name": "Invoiced",
@@ -9000,10 +9036,13 @@ class SalesReceiptLineAdd(QBAddMixin):
         # todo: remove this because it's client specific:
         if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
             self.amount = None
+            self.unit_of_measure = None
         elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
             self.rate = None
+            self.rate_percent = None
         elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
             self.rate = None
+            self.rate_percent = None
         else:
             pass
 

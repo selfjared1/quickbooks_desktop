@@ -152,6 +152,10 @@ def encode_special_characters(input_string):
     parts = re.split(r'(&(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);)', input_string)
     replaced_parts = [replacer(part) if not VALID_ENTITY_PATTERN.fullmatch(part) else part for part in parts]
     return_str = ''.join(replaced_parts)
+    return_str.replace('', '&quot;')
+    return_str.replace('', '&quot;')
+
+
     return return_str
 
 
