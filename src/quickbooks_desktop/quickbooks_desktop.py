@@ -4056,6 +4056,18 @@ class ItemLineAdd(QBAddMixin):
         },
     )
 
+    def validate(self):
+        super().validate()
+        if self.serial_number is not None:
+            if self.inventory_site_ref is None:
+                inventory_site_ref = InventorySiteRef()
+                inventory_site_ref.full_name = 'Unspecified Site'
+                self.inventory_site_ref = inventory_site_ref
+            else:
+                pass
+        else:
+            pass
+
 
 @dataclass
 class ItemLineMod(QBModMixin):
@@ -4789,6 +4801,18 @@ class CreditMemoLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
+
+    def validate(self):
+        super().validate()
+        if self.serial_number is not None:
+            if self.inventory_site_ref is None:
+                inventory_site_ref = InventorySiteRef()
+                inventory_site_ref.full_name = 'Unspecified Site'
+                self.inventory_site_ref = inventory_site_ref
+            else:
+                pass
+        else:
+            pass
 
 
 @dataclass
@@ -6734,6 +6758,16 @@ class InvoiceLineAdd(QBAddMixin):
         else:
             pass
 
+        if self.serial_number is not None:
+            if self.inventory_site_ref is None:
+                inventory_site_ref = InventorySiteRef()
+                inventory_site_ref.full_name = 'Unspecified Site'
+                self.inventory_site_ref = inventory_site_ref
+            else:
+                pass
+        else:
+            pass
+
 
 @dataclass
 class InvoiceLineMod(QBModMixin):
@@ -8322,6 +8356,15 @@ class SalesOrderLineAdd(QBAddMixin):
             self.rate_percent = None
         else:
             pass
+        if self.serial_number is not None:
+            if self.inventory_site_ref is None:
+                inventory_site_ref = InventorySiteRef()
+                inventory_site_ref.full_name = 'Unspecified Site'
+                self.inventory_site_ref = inventory_site_ref
+            else:
+                pass
+        else:
+            pass
 
 
 @dataclass
@@ -9043,6 +9086,15 @@ class SalesReceiptLineAdd(QBAddMixin):
         elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
             self.rate = None
             self.rate_percent = None
+        else:
+            pass
+        if self.serial_number is not None:
+            if self.inventory_site_ref is None:
+                inventory_site_ref = InventorySiteRef()
+                inventory_site_ref.full_name = 'Unspecified Site'
+                self.inventory_site_ref = inventory_site_ref
+            else:
+                pass
         else:
             pass
 
