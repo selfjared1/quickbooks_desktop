@@ -502,7 +502,7 @@ class QuickbooksDesktop():
             return None
         else:
             if '<?xml' in responseXML and 'encoding' in responseXML:
-                responseXML = responseXML.encode('utf-8')
+                responseXML = responseXML.encode('ISO-8859-1')
             else:
                 pass
             QBXML = et.fromstring(responseXML)
@@ -1054,6 +1054,47 @@ class CreateAddOrModFromParentMixin:
         else:
             pass
 
+    def _create_inventory_adjustment_line_add(self, inventory_adjustment_line):
+        self.item_ref = ItemRef()
+        self.item_ref.full_name = inventory_adjustment_line.item_ref.full_name
+        if inventory_adjustment_line.value_difference is not None and inventory_adjustment_line.value_difference != Decimal('0.00'):
+            value_adjustment = ValueAdjustment()
+            quantity_difference = inventory_adjustment_line.quantity_difference
+            value_adjustment.quantity_difference = quantity_difference if quantity_difference is not None else 0.00
+            value_adjustment.value_difference = inventory_adjustment_line.value_difference
+            self.value_adjustment = value_adjustment
+        elif inventory_adjustment_line.quantity_difference is not None and inventory_adjustment_line.quantity_difference != 0.0:
+            quantity_adjustment = QuantityAdjustment()
+            quantity_adjustment.quantity_difference = inventory_adjustment_line.quantity_difference
+            quantity_adjustment.serial_number = inventory_adjustment_line.serial_number
+            quantity_adjustment.lot_number = inventory_adjustment_line.lot_number
+            if inventory_adjustment_line.inventory_site_location_ref is not None:
+                quantity_adjustment.inventory_site_location_ref = inventory_adjustment_line.inventory_site_location_ref
+            else:
+                quantity_adjustment.inventory_site_location_ref = InventorySiteLocationRef(full_name='Unspecified Site')
+            self.quantity_adjustment = quantity_adjustment
+        elif inventory_adjustment_line.serial_number_added_or_removed is not None:
+            assert inventory_adjustment_line.inventory_site_location_ref is not None
+            serial_number_adjustment = SerialNumberAdjustment()
+            if inventory_adjustment_line.serial_number_added_or_removed == 'Added':
+                serial_number_adjustment.add_serial_number = inventory_adjustment_line.serial_number
+            elif inventory_adjustment_line.serial_number_added_or_removed == 'Removed':
+                serial_number_adjustment.remove_serial_number = inventory_adjustment_line.serial_number
+            else:
+                raise(f'serial_number_added_or_removed = "{inventory_adjustment_line.serial_number_added_or_removed}". The value must be either "Added", "Removed".')
+            serial_number_adjustment.inventory_site_location_ref = inventory_adjustment_line.inventory_site_location_ref
+            self.serial_number_adjustment = serial_number_adjustment
+        elif inventory_adjustment_line.lot_number is not None:
+            assert inventory_adjustment_line.inventory_site_location_ref is not None
+            lot_number_adjustment = LotNumberAdjustment()
+            lot_number_adjustment.lot_number = inventory_adjustment_line.lot_number
+            lot_number_adjustment.count_adjustment = inventory_adjustment_line.quantity_difference
+            lot_number_adjustment.inventory_site_location_ref = inventory_adjustment_line.inventory_site_location_ref
+            self.lot_number_adjustment = lot_number_adjustment
+        else:
+            #todo: raise exception
+            pass
+
 
     @classmethod
     def create_add_or_mod_from_parent(cls, parent, add_or_mod, keep_ids=True):
@@ -1066,26 +1107,29 @@ class CreateAddOrModFromParentMixin:
             pass
 
         instance = cls()
-        for attr, value in parent.__dict__.items():
-            if value is None:
-                pass
-            elif attr[-6:] == '_lines' and attr not in ['journal_debit_lines', 'journal_credit_lines']:
-                attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
-                instance._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
-            elif attr in ['journal_debit_lines', 'journal_credit_lines'] and add_or_mod == 'Mod':
-                instance._handle_list_sub_instance('journal_line_mod', value, add_or_mod, keep_ids)
-            elif hasattr(instance, attr):
-                if isinstance(value, list):
-                    instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
+        if parent.Meta.name == 'InventoryAdjustmentLine' and add_or_mod == 'Add':
+            instance._create_inventory_adjustment_line_add(parent)
+        else:
+            for attr, value in parent.__dict__.items():
+                if value is None:
+                    pass
+                elif attr[-6:] == '_lines' and attr not in ['journal_debit_lines', 'journal_credit_lines']:
+                    attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
+                    instance._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
+                elif attr in ['journal_debit_lines', 'journal_credit_lines'] and add_or_mod == 'Mod':
+                    instance._handle_list_sub_instance('journal_line_mod', value, add_or_mod, keep_ids)
+                elif hasattr(instance, attr):
+                    if isinstance(value, list):
+                        instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
+                    else:
+                        instance._handle_regular_sub_value(attr, value, keep_ids)
                 else:
-                    instance._handle_regular_sub_value(attr, value, keep_ids)
+                    pass
+            if getattr(instance, 'validate', False):
+                instance.validate()
             else:
                 pass
-        if getattr(instance, 'validate', False):
-            instance.validate()
-        else:
-            pass
-        return instance
+            return instance
 
 
 class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, ReprMixin):
@@ -1368,10 +1412,12 @@ class PluralMixin:
         """
 
         list_of_xml = self.to_xml()
-        root = et.Element(f"{self.Meta.name}QueryRs")
+        QBXML = et.Element(f"QBXML")
+        QBXMLMsgsRs = et.SubElement(QBXML, "QBXMLMsgsRs")
+        QueryRs = et.SubElement(QBXMLMsgsRs, f"{self.Meta.name}QueryRs")
         for xml_element in list_of_xml:
-            root.append(xml_element)
-        xml_str = et.tostring(root, pretty_print=True, xml_declaration=True, encoding="UTF-8").decode()
+            QueryRs.append(xml_element)
+        xml_str = et.tostring(QBXML, pretty_print=True, xml_declaration=True, encoding="ISO-8859-1").decode()
         with open(file_path, "w") as file:
             try:
                 file.write(xml_str)
@@ -1684,9 +1730,9 @@ class PrefillAccountRef(QBRefMixin):
 
 
 @dataclass
-class ApaccountRef(QBRefMixin):
+class APAccountRef(QBRefMixin):
     class Meta:
-        name = "ApaccountRef"
+        name = "APAccountRef"
 
 
 @dataclass
@@ -2068,6 +2114,19 @@ class Address(AddressBlock):
             "max_length": 41
         },
     )
+
+    def validate(self):
+        super().validate()
+        if self.city is not None:
+            #this is here because if self.addr4 is filled out and city is filled out then it conflicts
+            self.addr4 = None
+        else:
+            pass
+        if self.country is not None:
+            # this is here because if self.addr5 is filled out and city is filled out then it conflicts
+            self.addr5 = None
+        else:
+            pass
 
 @dataclass
 class EmployeeAddress(AddressBlock):
@@ -6315,13 +6374,144 @@ class EstimateLineGroup(QBMixin):
 
 
 @dataclass
+class QuantityAdjustment(QBMixin):
+    class Meta:
+        name = "QuantityAdjustment"
+
+    new_quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "NewQuantity",
+            "type": "Element",
+        },
+    )
+    quantity_difference: Optional[float] = field(
+        default=0.0,
+        metadata={
+            "name": "QuantityDifference",
+            "type": "Element",
+        },
+    )
+    serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    lot_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "LotNumber",
+            "type": "Element",
+            "max_length": 40,
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+
+    def validate(self):
+        super().validate()
+        if self.new_quantity is not None:
+            self.quantity_difference is None
+        else:
+            pass
+        if self.serial_number is not None:
+            self.lot_number is None
+        else:
+            pass
+
+
+@dataclass
+class ValueAdjustment(QBMixin):
+    class Meta:
+        name = "ValueAdjustment"
+
+    Add: Type = 'self'
+    Mod: Type = 'self'
+
+    new_quantity: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "NewQuantity",
+            "type": "Element",
+        },
+    )
+    quantity_difference: Optional[float] = field(
+        default=0.0,
+        metadata={
+            "name": "QuantityDifference",
+            "type": "Element",
+        },
+    )
+    new_value: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "NewValue",
+            "type": "Element",
+        },
+    )
+    value_difference: Optional[float] = field(
+        default=0.0,
+        metadata={
+            "name": "ValueDifference",
+            "type": "Element",
+        },
+    )
+
+    def validate(self):
+        super().validate()
+        if self.new_quantity is not None:
+            self.quantity_difference is None
+        else:
+            pass
+        if self.new_value is not None:
+            self.value_difference is None
+        else:
+            pass
+
+
+@dataclass
 class SerialNumberAdjustment(QBMixin):
 
     class Meta:
         name = "SerialNumberAdjustment"
 
-    Add: Type = 'self'
-    Mod: Type = 'self'
+    add_serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AddSerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    remove_serial_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RemoveSerialNumber",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    inventory_site_location_ref: Optional[InventorySiteLocationRef] = field(
+        default=None,
+        metadata={
+            "name": "InventorySiteLocationRef",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class SerialNumberAdjustment(QBMixin):
+    class Meta:
+        name = "SerialNumberAdjustment"
 
     add_serial_number: Optional[str] = field(
         default=None,
@@ -6353,9 +6543,6 @@ class LotNumberAdjustment(QBMixin):
 
     class Meta:
         name = "LotNumberAdjustment"
-
-    Add: Type = 'self'
-    Mod: Type = 'self'
 
     lot_number: Optional[str] = field(
         default=None,
@@ -6395,7 +6582,7 @@ class InventoryAdjustmentLineAdd(QBAddMixin):
             "required": True,
         },
     )
-    quantity_adjustment: Optional[float] = field(
+    quantity_adjustment: Optional[QuantityAdjustment] = field(
         default=None,
         metadata={
             "name": "QuantityAdjustment",
@@ -6423,6 +6610,7 @@ class InventoryAdjustmentLineAdd(QBAddMixin):
             "type": "Element",
         },
     )
+
 
 @dataclass
 class InventoryAdjustmentLineMod(QBModMixin):
@@ -6501,7 +6689,7 @@ class InventoryAdjustmentLine(QBMixin):
     Mod: Type[InventoryAdjustmentLineMod] = InventoryAdjustmentLineMod
 
     class Meta:
-        name = "NameFilter"
+        name = "InventoryAdjustmentLine"
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -6561,7 +6749,7 @@ class InventoryAdjustmentLine(QBMixin):
         },
     )
     value_difference: Optional[Decimal] = field(
-        default=None,
+        default=Decimal('0.00'),
         metadata={
             "name": "ValueDifference",
             "type": "Element",
@@ -20615,7 +20803,7 @@ class BillPaymentCheckAdd(QBAddRqMixin):
             "required": True,
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -20826,7 +21014,7 @@ class BillPaymentCheck(QBMixinWithSave):
             "type": "Element",
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -21070,7 +21258,7 @@ class BillPaymentCreditCardAdd(QBAddRqMixin):
             "required": True,
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -21192,7 +21380,7 @@ class BillPaymentCreditCard(QBMixinWithSave):
             "type": "Element",
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -21440,7 +21628,7 @@ class BillAdd(QBAddRqMixin):
             "type": "Element",
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -21593,7 +21781,7 @@ class BillMod(QBModRqMixin):
             "type": "Element",
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -21756,7 +21944,7 @@ class Bill(QBMixinWithSave):
             "type": "Element",
         },
     )
-    apaccount_ref: Optional[ApaccountRef] = field(
+    apaccount_ref: Optional[APAccountRef] = field(
         default=None,
         metadata={
             "name": "APAccountRef",
@@ -21863,7 +22051,7 @@ class Bill(QBMixinWithSave):
             "type": "Element",
         },
     )
-    expense_line: List[ExpenseLine] = field(
+    expense_lines: List[ExpenseLine] = field(
         default_factory=list,
         metadata={
             "name": "ExpenseLineRet",
@@ -33155,5 +33343,524 @@ class TxnVoid(QBMixin):
             "required": True,
         },
     )
+
+
+@dataclass
+class VendorCreditQuery(QBQueryMixin):
+    FIELD_ORDER = [
+        "TxnID", "RefNumber", "RefNumberCaseSensitive", "MaxReturned",
+        "ModifiedDateRangeFilter", "TxnDateRangeFilter", "EntityFilter",
+        "AccountFilter", "RefNumberFilter", "RefNumberRangeFilter",
+        "CurrencyFilter", "IncludeLineItems", "IncludeLinkedTxns",
+        "IncludeRetElement", "OwnerID"
+    ]
+
+    class Meta:
+        name = "VendorCreditQuery"
+
+    txn_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    ref_number: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+        },
+    )
+    ref_number_case_sensitive: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "RefNumberCaseSensitive",
+            "type": "Element",
+        },
+    )
+    max_returned: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "MaxReturned",
+            "type": "Element",
+        },
+    )
+    modified_date_range_filter: Optional[ModifiedDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    txn_date_range_filter: Optional[TxnDateRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "TxnDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    entity_filter: Optional[EntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "EntityFilter",
+            "type": "Element",
+        },
+    )
+    account_filter: Optional[AccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "AccountFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_filter: Optional[RefNumberFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberFilter",
+            "type": "Element",
+        },
+    )
+    ref_number_range_filter: Optional[RefNumberRangeFilter] = field(
+        default=None,
+        metadata={
+            "name": "RefNumberRangeFilter",
+            "type": "Element",
+        },
+    )
+    currency_filter: Optional[CurrencyFilter] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyFilter",
+            "type": "Element",
+        },
+    )
+    include_line_items: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLineItems",
+            "type": "Element",
+        },
+    )
+    include_linked_txns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeLinkedTxns",
+            "type": "Element",
+        },
+    )
+    include_ret_element: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "IncludeRetElement",
+            "type": "Element",
+            "max_length": 50,
+        },
+    )
+    owner_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "OwnerID",
+            "type": "Element",
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+
+
+@dataclass
+class VendorCreditAdd(QBAddMixin):
+    FIELD_ORDER = [
+        "VendorRef", "APAccountRef", "TxnDate", "RefNumber", "Memo",
+        "ExchangeRate", "ExternalGUID", "ExpenseLineAdd", "ItemLineAdd",
+        "ItemGroupLineAdd"
+    ]
+
+    class Meta:
+        name = "VendorCreditAdd"
+
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    apaccount_ref: Optional[APAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    expense_line_add: List[ExpenseLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineAdd",
+            "type": "Element",
+        },
+    )
+    item_line_add: List[ItemLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineAdd",
+            "type": "Element",
+        },
+    )
+    item_group_line_add: List[ItemGroupLineAdd] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineAdd",
+            "type": "Element",
+        },
+    )
+    
+    
+@dataclass
+class VendorCreditMod(QBModMixin):
+    FIELD_ORDER = [
+        "TxnID", "EditSequence", "VendorRef", "APAccountRef", "TxnDate",
+        "RefNumber", "Memo", "ExchangeRate", "ClearExpenseLines",
+        "ExpenseLineMod", "ClearItemLines", "ItemLineMod", "ItemGroupLineMod"
+    ]
+
+    class Meta:
+        name = "VendorCreditMod"
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "required": True,
+            "max_length": 16,
+        },
+    )
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[APAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    clear_expense_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearExpenseLines",
+            "type": "Element",
+        },
+    )
+    expense_line_mod: List[ExpenseLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineMod",
+            "type": "Element",
+        },
+    )
+    clear_item_lines: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "ClearItemLines",
+            "type": "Element",
+        },
+    )
+    item_line_mod: List[ItemLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineMod",
+            "type": "Element",
+        },
+    )
+    item_group_line_mod: List[ItemGroupLineMod] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineMod",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class VendorCredit(QBMixinWithSave):
+
+    class Meta:
+        name = "VendorCredit"
+        plural_class_name = "VendorCredits"
+
+    Query: Type[VendorCreditQuery] = VendorCreditQuery
+    Add: Type[VendorCreditAdd] = VendorCreditAdd
+    Mod: Type[VendorCreditMod] = VendorCreditMod
+
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+        },
+    )
+    time_created: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeCreated",
+            "type": "Element",
+        },
+    )
+    time_modified: Optional[QBDateTime] = field(
+        default=None,
+        metadata={
+            "name": "TimeModified",
+            "type": "Element",
+        },
+    )
+    edit_sequence: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EditSequence",
+            "type": "Element",
+            "max_length": 16,
+        },
+    )
+    txn_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnNumber",
+            "type": "Element",
+        },
+    )
+    vendor_ref: Optional[VendorRef] = field(
+        default=None,
+        metadata={
+            "name": "VendorRef",
+            "type": "Element",
+        },
+    )
+    apaccount_ref: Optional[APAccountRef] = field(
+        default=None,
+        metadata={
+            "name": "APAccountRef",
+            "type": "Element",
+        },
+    )
+    txn_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "TxnDate",
+            "type": "Element",
+        },
+    )
+    credit_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "CreditAmount",
+            "type": "Element",
+        },
+    )
+    currency_ref: Optional[CurrencyRef] = field(
+        default=None,
+        metadata={
+            "name": "CurrencyRef",
+            "type": "Element",
+        },
+    )
+    exchange_rate: Optional[float] = field(
+        default=None,
+        metadata={
+            "name": "ExchangeRate",
+            "type": "Element",
+        },
+    )
+    credit_amount_in_home_currency: Optional[Decimal] = (
+        field(
+            default=None,
+            metadata={
+                "name": "CreditAmountInHomeCurrency",
+                "type": "Element",
+            },
+        )
+    )
+    ref_number: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "RefNumber",
+            "type": "Element",
+            "max_length": 20,
+        },
+    )
+    memo: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "Memo",
+            "type": "Element",
+            "max_length": 4095,
+        },
+    )
+    sales_tax_code_ref: Optional[SalesTaxCodeRef] = field(
+        default=None,
+        metadata={
+            "name": "SalesTaxCodeRef",
+            "type": "Element",
+        },
+    )
+    external_guid: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ExternalGUID",
+            "type": "Element",
+        },
+    )
+    linked_txn: List[LinkedTxn] = field(
+        default_factory=list,
+        metadata={
+            "name": "LinkedTxn",
+            "type": "Element",
+        },
+    )
+    expense_lines: List[ExpenseLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ExpenseLineRet",
+            "type": "Element",
+        },
+    )
+    item_lines: List[ItemLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemLineRet",
+            "type": "Element",
+        },
+    )
+    item_group_lines: List[ItemGroupLine] = field(
+        default_factory=list,
+        metadata={
+            "name": "ItemGroupLineRet",
+            "type": "Element",
+        },
+    )
+    open_amount: Optional[Decimal] = field(
+        default=None,
+        metadata={
+            "name": "OpenAmount",
+            "type": "Element",
+        },
+    )
+    data_ext: List[DataExt] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataExtRet",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class VendorCredits(PluralMixin, PluralTrxnSaveMixin):
+
+    class Meta:
+        name = "VendorCredit"
+        plural_of = VendorCredit
+
+    def __init__(self):
+        super().__init__()
 
 # endregion
