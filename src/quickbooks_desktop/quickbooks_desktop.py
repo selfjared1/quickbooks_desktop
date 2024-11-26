@@ -1068,10 +1068,7 @@ class CreateAddOrModFromParentMixin:
             quantity_adjustment.quantity_difference = inventory_adjustment_line.quantity_difference
             quantity_adjustment.serial_number = inventory_adjustment_line.serial_number
             quantity_adjustment.lot_number = inventory_adjustment_line.lot_number
-            if inventory_adjustment_line.inventory_site_location_ref is not None:
-                quantity_adjustment.inventory_site_location_ref = inventory_adjustment_line.inventory_site_location_ref
-            else:
-                quantity_adjustment.inventory_site_location_ref = InventorySiteLocationRef(full_name='Unspecified Site')
+            quantity_adjustment.inventory_site_location_ref = inventory_adjustment_line.inventory_site_location_ref
             self.quantity_adjustment = quantity_adjustment
         elif inventory_adjustment_line.serial_number_added_or_removed is not None:
             assert inventory_adjustment_line.inventory_site_location_ref is not None
@@ -1129,7 +1126,7 @@ class CreateAddOrModFromParentMixin:
                 instance.validate()
             else:
                 pass
-            return instance
+        return instance
 
 
 class QBQueryMixin(MaxLengthMixin, ToXmlMixin, ValidationMixin, ReprMixin):
