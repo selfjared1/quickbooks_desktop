@@ -463,17 +463,17 @@ class QuickbooksDesktop():
         if xml_content.startswith(f"<?xml version='1.0' encoding='{encoding}'?>"):
             full_request = xml_content.replace(
                 f"<?xml version='1.0' encoding='{encoding}'?>",
-                f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>',
+                f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="16.0"?>',
                 1
             )
         elif xml_content.startswith(f"""<?xml version="1.0" encoding="{encoding}"?>"""):
             full_request = xml_content.replace(
                 f"""<?xml version="1.0" encoding="{encoding}"?>""",
-                f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>',
+                f'<?xml version="1.0" encoding="{encoding}"?><?qbxml version="16.0"?>',
                 1
             )
         else:
-            full_request = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="13.0"?>""" + xml_content
+            full_request = f"""<?xml version="1.0" encoding="{encoding}"?><?qbxml version="16.0"?>""" + xml_content
 
         #todo:
         # validate_qbxml(full_request, self.SDK_version)
@@ -491,7 +491,7 @@ class QuickbooksDesktop():
                     'status_code'
                     'status_severity'
                     'status_message'
-                    'plural_instance'
+                    'plural_list'
             'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
             'none' -> response won't be returned
         """
@@ -537,7 +537,7 @@ class QuickbooksDesktop():
                     'statusMessage'
                     'response_list'
             'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
-            'plural' -> a list of plural class instances
+            'plural_list' -> a list of plural class instances
             'none' -> response won't be returned
         This method
             1. finishes the XML build
@@ -1368,7 +1368,10 @@ class PluralMixin:
         by calling each child's `to_xml` method.
         """
         xml_elements = []
-        next_request_id = first_request_id
+        if first_request_id:
+            current_request_id = first_request_id
+        else:
+            current_request_id = 1
         logger.debug(f'items = {len(self._items)}')
         item_qty = len(self._items)
         try:
@@ -1377,13 +1380,9 @@ class PluralMixin:
                 item = self._items[i]
                 add_cls = getattr(item, 'Add', None)
                 add_instance = add_cls.create_add_or_mod_from_parent(item, 'Add', keep_ids=keep_ids)
-                if first_request_id:
-                    xml_element = add_instance.to_xml_rq(next_request_id)
-                    xml_elements.append(xml_element)
-                    next_request_id += 1
-                else:
-                    xml_element = add_instance.to_xml_rq()
-                    xml_elements.append(xml_element)
+                xml_element = add_instance.to_xml_rq(current_request_id)
+                xml_elements.append(xml_element)
+                current_request_id += 1
         except Exception as e:
             logger.debug(e)
         return xml_elements
