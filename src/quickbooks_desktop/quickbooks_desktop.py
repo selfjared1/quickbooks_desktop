@@ -338,6 +338,8 @@ class QuickbooksDesktop():
         if isinstance(requestXML, list):
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
+            for element in requestXML:
+                QBXMLMsgsRq.append(element)
         elif requestXML.tag == 'QBXML':
             QBXML = requestXML
             QBXMLMsgsRq = QBXML.find('QBXMLMsgsRq')
@@ -345,10 +347,16 @@ class QuickbooksDesktop():
             QBXML = et.Element('QBXML')
             QBXML.append(requestXML)
             QBXMLMsgsRq = requestXML
-        else:
-            # Neither QBXML nor QBXMLMsgsRq is the root, create new structure
+        elif requestXML.tag[-2:] == 'Rq':
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
+            QBXMLMsgsRq.append(requestXML)
+        else:
+            # Neither QBXML nor QBXMLMsgsRq is the root, and the tag does not ends in Rq
+            QBXML = et.Element('QBXML')
+            QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
+            Rq = et.SubElement(QBXMLMsgsRq, requestXML.tag + 'Rq')
+            Rq.append(requestXML)
 
         return QBXML, QBXMLMsgsRq
 
@@ -1247,38 +1255,6 @@ class PluralMixin:
             instance.add_item(item)
         return instance
 
-    @classmethod
-    def get_all_from_qb(cls, qb, include_custom_fields=False, include_line_items=False, include_linked_txns=False):
-        QueryRq = et.Element(f'{cls.Meta.name}QueryRq')
-        if include_line_items:
-            custom_query = et.SubElement(QueryRq, 'IncludeLineItems')
-            custom_query.text = 'true'
-        else:
-            pass
-
-        if include_linked_txns:
-            custom_query = et.SubElement(QueryRq, 'IncludeLinkedTxns')
-            custom_query.text = 'true'
-        else:
-            pass
-
-        if include_custom_fields:
-            custom_query = et.SubElement(QueryRq, 'OwnerID')
-            custom_query.text = '0' #zero is the ownerID for all custom fields (not private fields)
-        else:
-            pass
-
-        QueryRs_list = qb.send_xml(QueryRq)
-        if type(QueryRs_list) == list and len(QueryRs_list) == 1:
-            QueryRs = QueryRs_list[0]
-            plural_instance = cls()
-            for Ret in QueryRs:
-                obj = plural_instance.Meta.plural_of.from_xml(Ret)
-                plural_instance._items.append(obj)
-            return plural_instance
-        else:
-            logger.debug(f"QueryRs_list is of type {type(QueryRs_list)} instead of list type")
-
     def to_list(self):
         return self._items
 
@@ -1425,7 +1401,32 @@ class PluralMixin:
         logger.debug('Finished to_xml_file')
 
 
-class PluralListSaveMixin:
+class PluralListMixin:
+
+    @classmethod
+    def get_all_from_qb(cls, qb, active_status='ActiveOnly', include_custom_fields=False):
+        """
+        options for active = 'ActiveOnly', 'InactiveOnly', 'All'
+        """
+        QueryRq = et.Element(f'{cls.Meta.name}QueryRq')
+        if active_status == 'ActiveOnly':
+            # is default
+            pass
+        elif active_status in ['InactiveOnly', 'All']:
+            custom_query = et.SubElement(QueryRq, 'ActiveStatus')
+            custom_query.text = active_status
+        else:
+            raise ValueError(f'active_status must be one of "ActiveOnly", "InactiveOnly", "All"')
+
+        if include_custom_fields:
+            custom_query = et.SubElement(QueryRq, 'OwnerID')
+            custom_query.text = '0'  # zero is the ownerID for all custom fields (not private fields)
+        else:
+            pass
+
+        plural_instance = qb.send_xml(QueryRq, response_type='plural_list')
+        return plural_instance
+
     def save_all(self, qb, raw_response=False):
         xml_requests = []
         for item in self:
@@ -1447,7 +1448,39 @@ class PluralListSaveMixin:
         return response
 
 
-class PluralTrxnSaveMixin:
+class PluralTrxnMixin:
+
+    @classmethod
+    def get_all_from_qb(cls, qb, include_custom_fields=False, include_line_items=False, include_linked_txns=False):
+        QueryRq = et.Element(f'{cls.Meta.name}QueryRq')
+        if include_line_items:
+            custom_query = et.SubElement(QueryRq, 'IncludeLineItems')
+            custom_query.text = 'true'
+        else:
+            pass
+
+        if include_linked_txns:
+            custom_query = et.SubElement(QueryRq, 'IncludeLinkedTxns')
+            custom_query.text = 'true'
+        else:
+            pass
+
+        if include_custom_fields:
+            custom_query = et.SubElement(QueryRq, 'OwnerID')
+            custom_query.text = '0'  # zero is the ownerID for all custom fields (not private fields)
+        else:
+            pass
+
+        QueryRs_list = qb.send_xml(QueryRq)
+        if type(QueryRs_list) == list and len(QueryRs_list) == 1:
+            QueryRs = QueryRs_list[0]
+            plural_instance = cls()
+            for Ret in QueryRs:
+                obj = plural_instance.Meta.plural_of.from_xml(Ret)
+                plural_instance._items.append(obj)
+            return plural_instance
+        else:
+            logger.debug(f"QueryRs_list is of type {type(QueryRs_list)} instead of list type")
 
     def _set_ids_to_none(self, id_name):
         # Iterate over each item in the _items list, assuming they are instances of some class
@@ -10240,7 +10273,7 @@ class Account(AccountBase, QBMixinWithSave):
 
 
 @dataclass
-class Accounts(PluralMixin, PluralListSaveMixin):
+class Accounts(PluralMixin, PluralListMixin):
     class Meta:
         name = "Account"
         plural_of = Account
@@ -10465,7 +10498,7 @@ class BillingRate(QBMixin):
 
 
 @dataclass
-class BillingRates(PluralMixin, PluralListSaveMixin):
+class BillingRates(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "BillingRate"
@@ -10705,7 +10738,7 @@ class ClassInQB(QBMixinWithSave):
 
 
 @dataclass
-class ClassesInQB(PluralMixin, PluralListSaveMixin):
+class ClassesInQB(PluralMixin, PluralListMixin):
     class Meta:
         name = "Class"
         plural_of = ClassInQB
@@ -11011,7 +11044,7 @@ class Currency(QBMixinWithSave):
 
 
 @dataclass
-class Currencies(PluralMixin, PluralListSaveMixin):
+class Currencies(PluralMixin, PluralListMixin):
     class Meta:
         name = "Currency"
         plural_of = Currency
@@ -11173,7 +11206,7 @@ class CustomerMsg(QBMixinWithSave):
 
 
 @dataclass
-class CustomerMsgs(PluralMixin, PluralListSaveMixin):
+class CustomerMsgs(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "CustomerMsg"
@@ -12543,7 +12576,7 @@ class Customer(QBMixinWithSave):
 
 
 @dataclass
-class Customers(PluralMixin, PluralListSaveMixin):
+class Customers(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "Customer"
@@ -13287,7 +13320,7 @@ class Employee(QBMixinWithSave):
 
 
 @dataclass
-class Employees(PluralMixin, PluralListSaveMixin):
+class Employees(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "Employee"
@@ -13694,7 +13727,7 @@ class InventorySite(QBMixinWithSave):
 
 
 @dataclass
-class InventorySites(PluralMixin, PluralListSaveMixin):
+class InventorySites(PluralMixin, PluralListMixin):
     class Meta:
         name = "InventorySite"
         plural_of = InventorySite
@@ -15487,7 +15520,7 @@ class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemDiscounts(PluralMixin, PluralListSaveMixin):
+class ItemDiscounts(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemDiscount"
@@ -15561,7 +15594,7 @@ class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemGroups(PluralMixin, PluralListSaveMixin):
+class ItemGroups(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemGroup"
@@ -15741,7 +15774,7 @@ class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemInventories(PluralMixin, PluralListSaveMixin):
+class ItemInventories(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemInventory"
@@ -15928,7 +15961,7 @@ class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemInventoryAssemblies(PluralMixin, PluralListSaveMixin):
+class ItemInventoryAssemblies(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemInventoryAssembly"
@@ -16015,7 +16048,7 @@ class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemNonInventories(PluralMixin, PluralListSaveMixin):
+class ItemNonInventories(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemNonInventory"
@@ -16095,7 +16128,7 @@ class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemOtherCharges(PluralMixin, PluralListSaveMixin):
+class ItemOtherCharges(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemOtherCharge"
@@ -16154,7 +16187,7 @@ class ItemPayment(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemPayments(PluralMixin, PluralListSaveMixin):
+class ItemPayments(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemPayment"
@@ -16227,7 +16260,7 @@ class ItemSalesTax(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemSalesTaxes(PluralMixin, PluralListSaveMixin):
+class ItemSalesTaxes(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemSalesTax"
@@ -16279,7 +16312,7 @@ class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemSalesTaxGroups(PluralMixin, PluralListSaveMixin):
+class ItemSalesTaxGroups(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemSalesTaxGroup"
@@ -16359,7 +16392,7 @@ class ItemService(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemServices(PluralMixin, PluralListSaveMixin):
+class ItemServices(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemService"
@@ -16410,7 +16443,7 @@ class ItemSubtotal(ItemMixin, QBMixinWithSave):
     )
 
 @dataclass
-class ItemSubtotals(PluralMixin, PluralListSaveMixin):
+class ItemSubtotals(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "ItemSubtotal"
@@ -16602,7 +16635,7 @@ class JobType(QBMixinWithSave):
     )
 
 @dataclass
-class JobTypes(PluralMixin, PluralListSaveMixin):
+class JobTypes(PluralMixin, PluralListMixin):
     class Meta:
         name = "JobType"
         plural_of = JobType
@@ -17170,7 +17203,7 @@ class OtherName(QBMixinWithSave):
     )
 
 @dataclass
-class OtherNames(PluralMixin, PluralListSaveMixin):
+class OtherNames(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "OtherName"
@@ -17372,7 +17405,7 @@ class PaymentMethod(QBMixinWithSave):
 
 
 @dataclass
-class PaymentMethods(PluralMixin, PluralListSaveMixin):
+class PaymentMethods(PluralMixin, PluralListMixin):
     class Meta:
         name = "PaymentMethod"
         plural_of = PaymentMethod
@@ -17799,7 +17832,7 @@ class PriceLevel(QBMixinWithSave):
 
 
 @dataclass
-class PriceLevels(PluralMixin, PluralListSaveMixin):
+class PriceLevels(PluralMixin, PluralListMixin):
     class Meta:
         name = "PriceLevel"
         plural_of = PriceLevel
@@ -18027,7 +18060,7 @@ class SalesRep(QBMixinWithSave):
 
 
 @dataclass
-class SalesReps(PluralMixin, PluralListSaveMixin):
+class SalesReps(PluralMixin, PluralListMixin):
     class Meta:
         name = "SalesRep"
         plural_of = SalesRep
@@ -18320,7 +18353,7 @@ class SalesTaxCode(QBMixinWithSave):
 
 
 @dataclass
-class SalesTaxCodes(PluralMixin, PluralListSaveMixin):
+class SalesTaxCodes(PluralMixin, PluralListMixin):
     class Meta:
         name = "SalesTaxCode"
         plural_of = SalesTaxCode
@@ -18494,7 +18527,7 @@ class ShipMethod(QBMixinWithSave):
 
 
 @dataclass
-class ShipMethods(PluralMixin, PluralListSaveMixin):
+class ShipMethods(PluralMixin, PluralListMixin):
     class Meta:
         name = "ShipMethod"
         plural_of = ShipMethod
@@ -18704,7 +18737,7 @@ class StandardTerm(QBMixinWithSave):
 
 
 @dataclass
-class StandardTerms(PluralMixin, PluralListSaveMixin):
+class StandardTerms(PluralMixin, PluralListMixin):
     class Meta:
         name = "StandardTerms"
         plural_of = StandardTerm
@@ -19020,7 +19053,7 @@ class UnitOfMeasureSet(QBMixinWithSave):
 
 
 @dataclass
-class UnitOfMeasureSets(PluralMixin, PluralListSaveMixin):
+class UnitOfMeasureSets(PluralMixin, PluralListMixin):
 
     class Meta:
         name = "UnitOfMeasureSet"
@@ -19211,7 +19244,7 @@ class VendorType(QBMixinWithSave):
 
 
 @dataclass
-class VendorTypes(PluralMixin, PluralListSaveMixin):
+class VendorTypes(PluralMixin, PluralListMixin):
     class Meta:
         name = "VendorType"
         plural_of = VendorType
@@ -20258,7 +20291,7 @@ class Vendor(QBMixinWithSave):
     )
 
 @dataclass
-class Vendors(PluralMixin, PluralListSaveMixin):
+class Vendors(PluralMixin, PluralListMixin):
     class Meta:
         name = "Vendor"
         plural_of = Vendor
@@ -20657,7 +20690,7 @@ class ARRefundCreditCard(QBMixinWithSave):
 
 
 @dataclass
-class ARRefundCreditCards(PluralMixin, PluralTrxnSaveMixin):
+class ARRefundCreditCards(PluralMixin, PluralTrxnMixin):
 
     class Meta:
         name = "ARRefundCreditCard"
@@ -21114,7 +21147,7 @@ class BillPaymentCheck(QBMixinWithSave):
 
 
 @dataclass
-class BillPaymentChecks(PluralMixin, PluralTrxnSaveMixin):
+class BillPaymentChecks(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "BillPaymentCheck"
         plural_of = BillPaymentCheck
@@ -21459,7 +21492,7 @@ class BillPaymentCreditCard(QBMixinWithSave):
 
 
 @dataclass
-class BillPaymentCreditCards(PluralMixin, PluralTrxnSaveMixin):
+class BillPaymentCreditCards(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "BillPaymentCreditCard"
         plural_of = BillPaymentCreditCard
@@ -22084,7 +22117,7 @@ class Bill(QBMixinWithSave):
     )
 
 @dataclass
-class Bills(PluralMixin, PluralTrxnSaveMixin):
+class Bills(PluralMixin, PluralTrxnMixin):
 
     class Meta:
         name = "Bill"
@@ -22572,7 +22605,7 @@ class BuildAssembly(QBMixinWithSave):
 
 
 @dataclass
-class BuildAssemblies(PluralMixin, PluralTrxnSaveMixin):
+class BuildAssemblies(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "BuildAssembly"
         plural_of = BuildAssembly
@@ -23194,7 +23227,7 @@ class Charge(QBMixinWithSave):
 
 
 @dataclass
-class Charges(PluralMixin, PluralTrxnSaveMixin):
+class Charges(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "Charge"
         plural_of = Charge
@@ -23796,7 +23829,7 @@ class Check(QBMixinWithSave):
 
 
 @dataclass
-class Checks(PluralMixin, PluralTrxnSaveMixin):
+class Checks(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "Check"
         plural_of = Check
@@ -24277,7 +24310,7 @@ class CreditCardCharge(QBMixinWithSave):
 
 
 @dataclass
-class CreditCardCharges(PluralMixin, PluralTrxnSaveMixin):
+class CreditCardCharges(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "CreditCardCharge"
         plural_of = CreditCardCharge
@@ -24758,7 +24791,7 @@ class CreditCardCredit(QBMixinWithSave):
 
 
 @dataclass
-class CreditCardCredits(PluralMixin, PluralTrxnSaveMixin):
+class CreditCardCredits(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "CreditCardCredit"
         plural_of = CreditCardCredit
@@ -25645,7 +25678,7 @@ class CreditMemo(QBMixinWithSave):
 
 
 @dataclass
-class CreditMemos(PluralMixin, PluralTrxnSaveMixin):
+class CreditMemos(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "CreditMemo"
         plural_of = CreditMemo
@@ -26114,7 +26147,7 @@ class Deposit(QBMixinWithSave):
 
 
 @dataclass
-class Deposits(PluralMixin, PluralTrxnSaveMixin):
+class Deposits(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "Deposit"
         plural_of = Deposit
@@ -26922,7 +26955,7 @@ class Estimate(QBMixinWithSave):
 
 
 @dataclass
-class Estimates(PluralMixin, PluralTrxnSaveMixin):
+class Estimates(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "Estimate"
         plural_of = Estimate
@@ -27338,7 +27371,7 @@ class InventoryAdjustment(QBMixinWithSave):
 
 
 @dataclass
-class InventoryAdjustments(PluralMixin, PluralTrxnSaveMixin):
+class InventoryAdjustments(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "InventoryAdjustment"
         plural_of = InventoryAdjustment
@@ -28293,7 +28326,7 @@ class Invoice(QBMixinWithSave):
 
 
 @dataclass
-class Invoices(PluralMixin, PluralTrxnSaveMixin):
+class Invoices(PluralMixin, PluralTrxnMixin):
 
     class Meta:
         name = "Invoice"
@@ -28733,7 +28766,7 @@ class JournalEntry(QBMixinWithSave):
 
 
 @dataclass
-class JournalEntries(PluralMixin, PluralTrxnSaveMixin):
+class JournalEntries(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "JournalEntry"
         plural_of = JournalEntry
@@ -29561,7 +29594,7 @@ class PurchaseOrder(QBMixinWithSave):
 
 
 @dataclass
-class PurchaseOrders(PluralMixin, PluralTrxnSaveMixin):
+class PurchaseOrders(PluralMixin, PluralTrxnMixin):
 
     class Meta:
         name = "PurchaseOrder"
@@ -30305,7 +30338,7 @@ class ReceivePayment(QBMixinWithSave):
 
 
 @dataclass
-class ReceivePayments(PluralMixin, PluralTrxnSaveMixin):
+class ReceivePayments(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "ReceivePayment"
         plural_of = ReceivePayment
@@ -31170,7 +31203,7 @@ class SalesOrder(QBMixinWithSave):
 
 
 @dataclass
-class SalesOrders(PluralMixin, PluralTrxnSaveMixin):
+class SalesOrders(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "SalesOrder"
         plural_of = SalesOrder
@@ -32050,7 +32083,7 @@ class SalesReceipt(QBMixinWithSave):
 
 
 @dataclass
-class SalesReceipts(PluralMixin, PluralTrxnSaveMixin):
+class SalesReceipts(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "SalesReceipt"
         plural_of = SalesReceipt
@@ -32454,7 +32487,7 @@ class TimeTracking(QBMixinWithSave):
 
 
 @dataclass
-class TimeTrackings(PluralMixin, PluralTrxnSaveMixin):
+class TimeTrackings(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "TimeTracking"
         plural_of = TimeTracking
@@ -33265,7 +33298,7 @@ class Transfer(QBMixinWithSave):
 
 
 @dataclass
-class Transfers(PluralMixin, PluralTrxnSaveMixin):
+class Transfers(PluralMixin, PluralTrxnMixin):
     class Meta:
         name = "Transfer"
         plural_of = Transfer
@@ -33850,7 +33883,7 @@ class VendorCredit(QBMixinWithSave):
     )
 
 @dataclass
-class VendorCredits(PluralMixin, PluralTrxnSaveMixin):
+class VendorCredits(PluralMixin, PluralTrxnMixin):
 
     class Meta:
         name = "VendorCredit"

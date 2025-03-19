@@ -156,7 +156,7 @@ class QBDateTime:
         return str(self._datetime_value)
 
     def to_xml(self, field_name: str) -> et.Element:
-        element = et.Element(field_name)
+        element = et.Element(snake_to_camel(field_name))
         element.text = self.__str__()
         return element
 

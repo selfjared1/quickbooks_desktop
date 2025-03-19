@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
 from decimal import Decimal
-from src.quickbooks_desktop.quickbooks_desktop import (
+from quickbooks_desktop.quickbooks_desktop import (
     QuickbooksDesktop, JournalEntry, Estimate, QBDateTime, InventoryAdjustmentLine, InventoryAdjustmentLineAdd,
     ItemRef, QuantityAdjustment, ValueAdjustment, SerialNumberAdjustment, LotNumberAdjustment
 )
@@ -76,36 +76,36 @@ class TestCopyFromParent(unittest.TestCase):
             <TxnNumber>104125</TxnNumber>
             <CustomerRef>
             <ListID>80004587-1623722347</ListID>
-            <FullName>FKN Systek Inc. (C)</FullName>
+            <FullName>Sample Customer 1</FullName>
             </CustomerRef>
             <TemplateRef>
             <ListID>80000047-1644348521</ListID>
-            <FullName>ARTCO Quote2</FullName>
+            <FullName>Sample Quote 1</FullName>
             </TemplateRef>
             <TxnDate>2003-11-01</TxnDate>
             <RefNumber>Q23-0147-1</RefNumber>
             <BillAddress>
-            <Addr1>FKN Systek Inc.</Addr1>
-            <Addr2>115  Pleasant Street</Addr2>
+            <Addr1>Sample Customer 1</Addr1>
+            <Addr2>Sample Street Address</Addr2>
             <City>Millis</City>
             <State>MA</State>
             <PostalCode>02054</PostalCode>
             </BillAddress>
             <BillAddressBlock>
-            <Addr1>FKN Systek Inc.</Addr1>
-            <Addr2>115  Pleasant Street</Addr2>
+            <Addr1>Sample Customer 1</Addr1>
+            <Addr2>Sample Street Address</Addr2>
             <Addr3>Millis, MA  02054</Addr3>
             </BillAddressBlock>
             <ShipAddress>
-            <Addr1>FKN SYSTEK</Addr1>
-            <Addr2>115  PLEASANT ST</Addr2>
+            <Addr1>Sample Customer 1</Addr1>
+            <Addr2>Sample Street Address</Addr2>
             <City>MILLS</City>
             <State>MA</State>
             <PostalCode>02054</PostalCode>
             </ShipAddress>
             <ShipAddressBlock>
-            <Addr1>FKN SYSTEK</Addr1>
-            <Addr2>115  PLEASANT ST</Addr2>
+            <Addr1>Sample Customer 1</Addr1>
+            <Addr2>Sample Street Address</Addr2>
             <Addr3>MILLS, MA  02054</Addr3>
             </ShipAddressBlock>
             <IsActive>true</IsActive>
@@ -140,7 +140,7 @@ class TestCopyFromParent(unittest.TestCase):
             <ListID>800016D0-1623185743</ListID>
             <FullName>Y1002892</FullName>
             </ItemRef>
-            <Desc>NSK Nakanishi&#174; Volvere i7 Dental Lab Grinder - AC 100-240V 50/60Hz  - 1,000 - 35,000rpm</Desc>
+            <Desc>Sample Desc</Desc>
             <Quantity>2</Quantity>
             <Rate>891</Rate>
             <Amount>1782.00</Amount>
@@ -187,7 +187,7 @@ class TestCopyFromParent(unittest.TestCase):
             <ListID>800016F4-1623185781</ListID>
             <FullName>NR-303</FullName>
             </ItemRef>
-            <Desc>NSK Nakanishi&#174; 22.8mm &#216; Spindle (-) - 30,000 max.rpm  CHK</Desc>
+            <Desc>Sample Desc 2</Desc>
             <Quantity>2</Quantity>
             <Rate>589.00</Rate>
             <Amount>1178.00</Amount>
@@ -206,9 +206,9 @@ class TestCopyFromParent(unittest.TestCase):
             <TxnLineID>DCEF3-1675796632</TxnLineID>
             <ItemRef>
             <ListID>8000289C-1623253956</ListID>
-            <FullName>Tool Holding:91593</FullName>
+            <FullName>Sample Item 1:Sample Child Item 1</FullName>
             </ItemRef>
-            <Desc>NSK Nakanishi&#174; CHK Collet - 3.175mm / 1/8&quot;&#248;</Desc>
+            <Desc>Sample Description 3</Desc>
             <Quantity>2</Quantity>
             <Rate>95.00</Rate>
             <Amount>190.00</Amount>
@@ -287,7 +287,7 @@ class TestCopyFromParent(unittest.TestCase):
             <OwnerID>0</OwnerID>
                 <DataExtName>AKA / DBA</DataExtName>
                 <DataExtType>STR255TYPE</DataExtType>
-                <DataExtValue>SYSTECH SKN NSK IEC</DataExtValue>
+                <DataExtValue>Sample DataExt Value 1</DataExtValue>
             </DataExtRet>
             <DataExtRet>
                 <OwnerID>0</OwnerID>
@@ -323,7 +323,7 @@ class TestCopyFromParent(unittest.TestCase):
                 <OwnerID>0</OwnerID>
                 <DataExtName>Contact</DataExtName>
                 <DataExtType>STR255TYPE</DataExtType>
-                <DataExtValue>Werner Christ</DataExtValue>
+                <DataExtValue>Sample DataExt Value 2</DataExtValue>
             </DataExtRet>
             </EstimateRet>
         """
@@ -336,7 +336,7 @@ class TestCopyFromParent(unittest.TestCase):
                             <ListID>800016D0-1623185743</ListID>
                             <FullName>Y1002892</FullName>
                             </ItemRef>
-                            <Desc>NSK Nakanishi&#174; Volvere i7 Dental Lab Grinder - AC 100-240V 50/60Hz  - 1,000 - 35,000rpm</Desc>
+                            <Desc>Sample Desc</Desc>
                             <Quantity>2</Quantity>
                             <Rate>891</Rate>
                             <Amount>1782.00</Amount>
@@ -373,7 +373,7 @@ class TestCopyFromParent(unittest.TestCase):
                             <OwnerID>0</OwnerID>
                             <DataExtName>AKA / DBA</DataExtName>
                             <DataExtType>STR255TYPE</DataExtType>
-                            <DataExtValue>SYSTECH SKN NSK IEC</DataExtValue>
+                            <DataExtValue>Sample DataExt Value 1</DataExtValue>
                         </DataExtRet>
                         <DataExtRet>
                             <OwnerID>0</OwnerID>
@@ -409,7 +409,7 @@ class TestCopyFromParent(unittest.TestCase):
                             <OwnerID>0</OwnerID>
                             <DataExtName>Contact</DataExtName>
                             <DataExtType>STR255TYPE</DataExtType>
-                            <DataExtValue>Werner Christ</DataExtValue>
+                            <DataExtValue>Sample DataExt Value 2</DataExtValue>
                         </DataExtRet>
                         </EstimateRet>
                         """
@@ -472,12 +472,12 @@ class TestCopyFromParent(unittest.TestCase):
     #     # Nested CustomerRef
     #     self.assertIsNotNone(estimate_add_wo_ids.customer_ref)
     #     self.assertIsNone(estimate_add_wo_ids.customer_ref.list_id)
-    #     self.assertEqual(estimate_add_wo_ids.customer_ref.full_name, 'FKN Systek Inc. (C)')
+    #     self.assertEqual(estimate_add_wo_ids.customer_ref.full_name, 'Sample Customer 1')
     #
     #     # Nested TemplateRef
     #     self.assertIsNotNone(estimate_add_wo_ids.template_ref)
     #     self.assertIsNone(estimate_add_wo_ids.template_ref.list_id)
-    #     self.assertEqual(estimate_add_wo_ids.template_ref.full_name, 'ARTCO Quote2')
+    #     self.assertEqual(estimate_add_wo_ids.template_ref.full_name, 'Sample Quote 1')
     #
     #     # DataExtRet checks
     #     self.assertIsNone(getattr(estimate_add_wo_ids, "data_ext", None))
@@ -513,7 +513,7 @@ class TestCopyFromParent(unittest.TestCase):
     #                 <ListID>800016D0-1623185743</ListID>
     #                 <FullName>Y1002892</FullName>
     #                 </ItemRef>
-    #                 <Desc>NSK Nakanishi&#174; Volvere i7 Dental Lab Grinder - AC 100-240V 50/60Hz  - 1,000 - 35,000rpm</Desc>
+    #                 <Desc>Sample Desc</Desc>
     #                 <Quantity>2</Quantity>
     #                 <Rate>891</Rate>
     #                 <Amount>1782.00</Amount>
@@ -560,7 +560,7 @@ class TestCopyFromParent(unittest.TestCase):
     #                 <ListID>800016F4-1623185781</ListID>
     #                 <FullName>NR-303</FullName>
     #                 </ItemRef>
-    #                 <Desc>NSK Nakanishi&#174; 22.8mm &#216; Spindle (-) - 30,000 max.rpm  CHK</Desc>
+    #                 <Desc>Sample Desc 2</Desc>
     #                 <Quantity>2</Quantity>
     #                 <Rate>589.00</Rate>
     #                 <Amount>1178.00</Amount>
@@ -579,9 +579,9 @@ class TestCopyFromParent(unittest.TestCase):
     #                 <TxnLineID>DCEF3-1675796632</TxnLineID>
     #                 <ItemRef>
     #                 <ListID>8000289C-1623253956</ListID>
-    #                 <FullName>Tool Holding:91593</FullName>
+    #                 <FullName>Sample Item 1:Sample Child Item 1</FullName>
     #                 </ItemRef>
-    #                 <Desc>NSK Nakanishi&#174; CHK Collet - 3.175mm / 1/8&quot;&#248;</Desc>
+    #                 <Desc>Sample Description 3</Desc>
     #                 <Quantity>2</Quantity>
     #                 <Rate>95.00</Rate>
     #                 <Amount>190.00</Amount>

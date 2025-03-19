@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, JournalEntry
+from quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, JournalEntry
 
 
 class TestQuickbooksDesktop(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
             <TxnLineID>19C73-1627671245</TxnLineID>
             <AccountRef>
             <ListID>80000015-1622404240</ListID>
-            <FullName>Notes - Artco, Inc.</FullName>
+            <FullName>Notes - Sample Company Inc.</FullName>
             </AccountRef>
             <Amount>210000.00</Amount>
             <Memo>original purchase</Memo>

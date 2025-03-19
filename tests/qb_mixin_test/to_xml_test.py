@@ -1,6 +1,6 @@
 import unittest
 from decimal import Decimal
-from src.quickbooks_desktop.quickbooks_desktop import (
+from quickbooks_desktop.quickbooks_desktop import (
     ToXmlMixin, LinkedTxn, QBDates, JournalEntryAdd,
     CurrencyRef, JournalDebitLine, JournalLineMod, AccountRef, JournalCreditLine, JournalEntries, QBDates,
     EstimateLineAdd, ItemRef, SalesTaxCodeRef, ItemInventoryAdd, InvoiceAdd, CustomerRef, InvoiceLineAdd,
@@ -225,7 +225,7 @@ class TestToXmlMixin2(unittest.TestCase):
                                  billable_status=None, def_macro=None)
             ],
             journal_credit_lines=[
-                JournalCreditLine(txn_line_id=None, account_ref=AccountRef(list_id=None, full_name='Notes - Artco, Inc.'),
+                JournalCreditLine(txn_line_id=None, account_ref=AccountRef(list_id=None, full_name='Notes - Sample Company Inc.'),
                                   amount=Decimal('210000.00'), tax_amount=None, memo='original purchase',
                                   entity_ref=None, class_ref=None, item_sales_tax_ref=None,
                                   billable_status=None, def_macro=None)

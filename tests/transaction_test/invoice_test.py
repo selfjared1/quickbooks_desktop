@@ -1,5 +1,5 @@
 import unittest
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, Invoices
+from quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, Invoices
 
 #todo
 # class test_query(unittest.TestCase):

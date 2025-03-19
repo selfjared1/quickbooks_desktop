@@ -3,7 +3,7 @@ from decimal import Decimal
 from lxml import etree as et
 from dataclasses import dataclass, field
 from typing import Optional, List
-from src.quickbooks_desktop.quickbooks_desktop import (
+from quickbooks_desktop.quickbooks_desktop import (
     FromXmlMixin, CustomerRef, Invoice, InvoiceLine, JournalEntry,
 )
 from datetime import datetime
