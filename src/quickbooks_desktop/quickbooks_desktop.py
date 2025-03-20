@@ -413,6 +413,11 @@ class QuickbooksDesktop():
                 for element in elements:
                     # if i == 1376:
                     #     pass
+                    if element.tag == 'ReportRet':
+                        # In order to dynamically look for the correct class
+                        element.tag = class_name +'Ret'
+                    else:
+                        pass
                     single_instance = cls.from_xml(element)
                     instance_list.append(single_instance)
                     i += 1
@@ -521,7 +526,7 @@ class QuickbooksDesktop():
                 pass
             QBXML = et.fromstring(responseXML)
             QBXMLMsgsRs = QBXML.find('QBXMLMsgsRs')
-            print('QBXMLMsgsRs found')
+            logger.debug('QBXMLMsgsRs found')
             if QBXMLMsgsRs is not None:
                 responses = QBXMLMsgsRs.getchildren()
                 if response_type == 'response_list':
@@ -921,13 +926,18 @@ class FromXmlMixin:
 
     @staticmethod
     def _parse_list_field_type(init_args, field, field_type, an_xml_list_element):
-        instance = field_type.__args__[0].from_xml(an_xml_list_element)
+        # instance = field_type.__args__[0].from_xml(an_xml_list_element)
+        list_element_type = field_type.__args__[0]
+
+        if hasattr(list_element_type, "from_xml"):
+            instance = list_element_type.from_xml(an_xml_list_element)
+        else:
+            instance = an_xml_list_element.text
         if field.name in init_args.keys():
             if isinstance(init_args[field.name], list):
                 init_args[field.name].append(instance)
             else:
-                # if it's not a list then what is it?
-                pass
+                init_args[field.name] = [init_args[field.name], instance]
         else:
             init_args[field.name] = [instance]
         return init_args
@@ -2127,8 +2137,10 @@ class ReportMixin(FromXmlMixin, ReprMixin):
 
     @cached_property
     def report_data(self):
-        report_data = ReportData.from_xml(self._report_data_xml)
-        return report_data
+        """Lazy-load ReportData only when accessed."""
+        if self._report_data_xml is not None:
+            return ReportData.from_xml(self._report_data_xml)
+        return None
 
 
 @dataclass
