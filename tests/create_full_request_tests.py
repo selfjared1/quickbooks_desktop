@@ -1,11 +1,12 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, JournalEntry
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, JournalEntry, GeneralSummaryReport
 
 class TestQuickbooksDesktop(unittest.TestCase):
 
     def setUp(self):
+        self.qb = QuickbooksDesktop()
         self.journal_xml = """
                 <JournalEntryRet>
                     <TxnID>19C72-1627671245</TxnID>
@@ -66,12 +67,33 @@ class TestQuickbooksDesktop(unittest.TestCase):
 
         element = et.fromstring(self.journal_xml)
         journal_entry = JournalEntry.from_xml(element)
-        qb = QuickbooksDesktop()
+
         jounal_entry_add = JournalEntry.Add.create_add_or_mod_from_parent(journal_entry, add_or_mod="Add")
         jounal_entry_add_xml = jounal_entry_add.to_xml()
-        full_request = qb._create_full_request(jounal_entry_add_xml)
+        full_request = self.qb._create_full_request(jounal_entry_add_xml)
         self.assertIsInstance(full_request, str)
         print(full_request)
+
+    def test_report_to_xml(self):
+        sample_full_request_str = """<?xml version="1.0" encoding="ISO-8859-1"?><?qbxml version="16.0"?><QBXML><QBXMLMsgsRq onError="stopOnError"><GeneralSummaryReportQueryRq requestID="1"><GeneralSummaryReportType>BalanceSheetStandard</GeneralSummaryReportType></GeneralSummaryReportQueryRq></QBXMLMsgsRq></QBXML>"""
+        sample_full_request_xml = et.fromstring(sample_full_request_str.encode("ISO-8859-1"))
+
+        report_query = GeneralSummaryReport.Query()
+        report_query.general_summary_report_type = 'BalanceSheetStandard'
+        report_query_rq_xml = report_query.to_xml_rq()
+        full_request = self.qb._create_full_request(report_query_rq_xml)
+        full_request_xml_1 = et.fromstring(full_request.encode("ISO-8859-1"))
+        self.assertTrue(et.tostring(sample_full_request_xml, method="c14n") ==
+            et.tostring(full_request_xml_1, method="c14n"))
+
+        report_query_xml = report_query.to_xml_rq()
+        full_request = self.qb._create_full_request(report_query_xml)
+        full_request_xml_2 = et.fromstring(full_request.encode("ISO-8859-1"))
+        self.assertTrue(et.tostring(sample_full_request_xml, method="c14n") ==
+                        et.tostring(full_request_xml_2, method="c14n"))
+
+
+
 
 
 

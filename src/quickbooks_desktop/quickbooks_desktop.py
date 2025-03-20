@@ -352,6 +352,11 @@ class QuickbooksDesktop():
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
             QBXMLMsgsRq.append(requestXML)
+        elif requestXML.tag[-5:] == 'Query':
+            requestXML.tag = requestXML.tag + 'Rq'
+            QBXML = et.Element('QBXML')
+            QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
+            QBXMLMsgsRq.append(requestXML)
         else:
             # Neither QBXML nor QBXMLMsgsRq is the root, and the tag does not ends in Rq
             QBXML = et.Element('QBXML')
@@ -535,7 +540,7 @@ class QuickbooksDesktop():
             else:
                 return None
 
-    def send_xml(self, requestXML, encoding="utf-8", is_full_request=False, response_type='raw_str'):
+    def send_xml(self, requestXML, encoding="ISO-8859-1", is_full_request=False, response_type='raw_str'):
         """
         valid_response types can be one of the following:
             'raw_str' -> unedited response and the default response

@@ -4,7 +4,7 @@ from src.quickbooks_desktop.quickbooks_desktop import (
     ToXmlMixin, LinkedTxn, QBDates, JournalEntryAdd,
     CurrencyRef, JournalDebitLine, JournalLineMod, AccountRef, JournalCreditLine, JournalEntries, QBDates,
     EstimateLineAdd, ItemRef, SalesTaxCodeRef, ItemInventoryAdd, InvoiceAdd, CustomerRef, InvoiceLineAdd,
-    UnitOfMeasureSetRef, IncomeAccountRef, PrefVendorRef, AssetAccountRef
+    UnitOfMeasureSetRef, IncomeAccountRef, PrefVendorRef, AssetAccountRef, GeneralSummaryReport
 )
 from lxml import etree as et
 import re
@@ -264,3 +264,18 @@ class TestToXmlMixin2(unittest.TestCase):
         self.assertFalse('&amp;amp;' in xml_content, "Over-escaping detected in desc_str")
         self.assertFalse('&amp;#216' in xml_content, "Over-escaping detected in desc_str")
         self.assertIn('&amp;', xml_content, "Ampersand is not escaped correctly as '&amp;'")
+
+    def test_report_to_xml(self):
+        root = et.Element('GeneralSummaryReportQuery')
+        report_type = et.SubElement(root, 'GeneralSummaryReportType')
+        report_type.text = 'BalanceSheetStandard'
+        sample_query = et.tostring(root).decode('ISO-8859-1')
+
+        report_query = GeneralSummaryReport.Query()
+        report_query.general_summary_report_type = 'BalanceSheetStandard'
+        report_query_xml = report_query.to_xml()
+        report_query_str = et.tostring(report_query_xml).decode('ISO-8859-1')
+        self.assertEqual(report_query_str, sample_query)
+
+
+
