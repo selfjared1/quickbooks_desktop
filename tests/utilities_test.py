@@ -1,6 +1,6 @@
 import unittest
 from lxml import etree as et
-from quickbooks_desktop.utilities import encode_special_characters
+from src.quickbooks_desktop.utilities import encode_special_characters
 
 
 class TestEncodeSpecialCharacters(unittest.TestCase):

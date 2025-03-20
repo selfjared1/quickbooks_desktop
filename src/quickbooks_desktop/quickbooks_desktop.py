@@ -11,6 +11,7 @@ from xml.sax.saxutils import unescape, escape
 from lxml import etree as et
 from .qb_special_fields import *
 from .utilities import encode_special_characters
+from functools import cached_property
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -951,7 +952,10 @@ class FromXmlMixin:
         init_args = {}
         for xml_element in element:
             field_name = xml_element.tag
-            if field_name in field_names:
+            if field_name == "ReportData":
+                # Store the entire XML element without parsing
+                init_args['ReportDataXML'] = xml_element
+            elif field_name in field_names:
                 field = field_names[field_name]
                 field_type = cls._get_field_type(field)
                 init_args = cls._parse_field_according_to_type(init_args, field, field_type, xml_element)
@@ -1577,8 +1581,18 @@ class QBRefMixin(QBMixin):
     full_name: Optional[str] = full_name
 
 
+# endregion
+
+
+# region Reports
+
+
 @dataclass
 class ReportPeriod(ToXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "ReportPeriod"
+
     from_report_date: Optional[QBDates] = field(
         default=None,
         metadata={
@@ -1595,15 +1609,12 @@ class ReportPeriod(ToXmlMixin, ReprMixin):
     )
 
 @dataclass
-class ReportAccountFilter(ToXmlMixin, ReprMixin):
-    account_type_filter: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AccountTypeFilter",
-            "type": "Element",
-            "valid_values": VALID_REPORT_ACCOUNT_TYPE_VALUES,
-        },
-    )
+class ReportFilterMixin(ToXmlMixin, ReprMixin):
+    FIELD_ORDER = ["list_id", "full_name", "list_idwith_children", "full_name_with_children"]
+
+    class Meta:
+        name = ""
+
     list_id: List[str] = field(
         default_factory=list,
         metadata={
@@ -1611,21 +1622,22 @@ class ReportAccountFilter(ToXmlMixin, ReprMixin):
             "type": "Element",
         },
     )
-    full_name: List[FullName] = field(
+    full_name: List[str] = field(
         default_factory=list,
         metadata={
             "name": "FullName",
             "type": "Element",
         },
     )
-    list_idwith_children: Optional[ListIdwithChildren] = field(
+    list_idwith_children: Optional[str] = field(
         default=None,
         metadata={
             "name": "ListIDWithChildren",
             "type": "Element",
+            "max_length": 36,
         },
     )
-    full_name_with_children: Optional[FullNameWithChildren] = field(
+    full_name_with_children: Optional[str] = field(
         default=None,
         metadata={
             "name": "FullNameWithChildren",
@@ -1635,7 +1647,90 @@ class ReportAccountFilter(ToXmlMixin, ReprMixin):
 
 
 @dataclass
+class ReportAccountFilter(ReportFilterMixin):
+    FIELD_ORDER = ["account_type_filter", "list_id", "full_name", "list_idwith_children", "full_name_with_children"]
+
+    class Meta:
+        name = "ReportAccountFilter"
+
+    account_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_ACCOUNT_TYPE_VALUES,
+        },
+    )
+
+
+
+@dataclass
+class ReportEntityFilter(ReportFilterMixin):
+    FIELD_ORDER = ["entity_type_filter", "list_id", "full_name", "list_idwith_children", "full_name_with_children"]
+
+    class Meta:
+        name = "ReportEntityFilter"
+
+    entity_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "EntityTypeFilter",
+            "type": "Element",
+            "valid_values": ["Customer", "Employee", "OtherName", "Vendor"],
+        },
+    )
+
+
+@dataclass
+class ReportItemFilter(ReportFilterMixin):
+    FIELD_ORDER = ["item_type_filter", "list_id", "full_name", "list_idwith_children", "full_name_with_children"]
+
+    class Meta:
+        name = "ReportItemFilter"
+
+    item_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ItemTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_ITEM_TYPE,
+        },
+    )
+
+@dataclass
+class ReportClassFilter(ReportFilterMixin):
+
+    class Meta:
+        name = "ReportClassFilter"
+
+@dataclass
+class ReportModifiedDateRangeFilter(ToXmlMixin):
+
+    class Meta:
+        name = "ModifiedDateRangeFilter"
+
+    from_report_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromReportModifiedDate",
+            "type": "Element",
+        },
+    )
+    to_report_modified_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToReportModifiedDate",
+            "type": "Element",
+        },
+    )
+
+
+
+@dataclass
 class ReportQueryMixin(ToXmlMixin, ReprMixin):
+
+    class Meta:
+        name = ""
 
     display_report: Optional[bool] = field(
         default=None,
@@ -1686,94 +1781,909 @@ class ReportQueryMixin(ToXmlMixin, ReprMixin):
             "type": "Element",
         },
     )
-    report_txn_type_filter: Optional[ReportTxnTypeFilter] = field(
-        default=None,
-        metadata={
-            "name": "ReportTxnTypeFilter",
-            "type": "Element",
-        },
-    )
-    report_modified_date_range_filter: Optional[
-        ReportModifiedDateRangeFilter
-    ] = field(
+
+    report_modified_date_range_filter: Optional[ReportModifiedDateRangeFilter] = field(
         default=None,
         metadata={
             "name": "ReportModifiedDateRangeFilter",
             "type": "Element",
         },
     )
-    report_modified_date_range_macro: Optional[
-        ReportModifiedDateRangeMacro
-    ] = field(
+    report_modified_date_range_macro: Optional[QBDatesMacro] = field(
         default=None,
         metadata={
             "name": "ReportModifiedDateRangeMacro",
             "type": "Element",
         },
     )
-    report_detail_level_filter: Optional[ReportDetailLevelFilter] = field(
+    report_detail_level_filter: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReportDetailLevelFilter",
             "type": "Element",
+            "valid_values": VALID_REPORT_DETAIL_LEVEL_FILTERS,
         },
     )
-    report_posting_status_filter: Optional[ReportPostingStatusFilter] = field(
+    report_posting_status_filter: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReportPostingStatusFilter",
             "type": "Element",
+            "valid_values": VALID_REPORT_POSTING_STATUS_FILTER,
         },
     )
-    summarize_columns_by: Optional[SummarizeColumnsBy] = field(
+
+
+
+@dataclass
+class ColDesc(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "ColDesc"
+
+    col_title: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ColTitle",
+            "type": "Element",
+            "min_occurs": 1,
+        },
+    )
+    col_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ColType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_COL_TYPE_VALUES,
+        },
+    )
+    col_id: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "colID",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+    # data_type: Optional[ColDescDataType] = field(
+    #     default=None,
+    #     metadata={
+    #         "name": "dataType",
+    #         "type": "Attribute",
+    #         "required": True,
+    #     },
+    # )
+
+@dataclass
+class RowData(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "RowData"
+
+    row_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "rowType",
+            "type": "Attribute",
+            "valid_values": VALID_ROW_DATA_ROW_TYPE_VALUES,
+        },
+    )
+    value: Optional[str] = field(
+        default=None,
+        metadata={
+            "type": "Attribute",
+        },
+    )
+
+@dataclass
+class ColData(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "ColData"
+
+    col_id: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "colID",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+    value: Optional[str] = field(
+        default=None,
+        metadata={
+            "type": "Attribute",
+        },
+    )
+    data_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "dataType",
+            "type": "Attribute",
+            "valid_values": VALID_COL_DATA_DATA_TYPE_VALUES,
+        },
+    )
+
+
+@dataclass
+class DataRow(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "DataRow"
+
+    row_data: Optional[RowData] = field(
+        default=None,
+        metadata={
+            "name": "RowData",
+            "type": "Element",
+        },
+    )
+    col_data: List[ColData] = field(
+        default_factory=list,
+        metadata={
+            "name": "ColData",
+            "type": "Element",
+        },
+    )
+    row_number: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "rowNumber",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+
+@dataclass
+class TextRow(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "TextRow"
+
+    row_number: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "rowNumber",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+    value: Optional[str] = field(
+        default=None,
+        metadata={
+            "type": "Attribute",
+        },
+    )
+
+@dataclass
+class SubtotalRow(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "SubtotalRow"
+
+    row_data: Optional[RowData] = field(
+        default=None,
+        metadata={
+            "name": "RowData",
+            "type": "Element",
+        },
+    )
+    col_data: List[ColData] = field(
+        default_factory=list,
+        metadata={
+            "name": "ColData",
+            "type": "Element",
+        },
+    )
+    row_number: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "rowNumber",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+
+@dataclass
+class TotalRow(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "TotalRow"
+
+    row_data: Optional[RowData] = field(
+        default=None,
+        metadata={
+            "name": "RowData",
+            "type": "Element",
+        },
+    )
+    col_data: List[ColData] = field(
+        default_factory=list,
+        metadata={
+            "name": "ColData",
+            "type": "Element",
+        },
+    )
+    row_number: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "rowNumber",
+            "type": "Attribute",
+            "required": True,
+        },
+    )
+
+
+@dataclass
+class ReportData(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "ReportData"
+
+    data_row: List[DataRow] = field(
+        default_factory=list,
+        metadata={
+            "name": "DataRow",
+            "type": "Element",
+        },
+    )
+    text_row: List[TextRow] = field(
+        default_factory=list,
+        metadata={
+            "name": "TextRow",
+            "type": "Element",
+        },
+    )
+    subtotal_row: List[SubtotalRow] = field(
+        default_factory=list,
+        metadata={
+            "name": "SubtotalRow",
+            "type": "Element",
+        },
+    )
+    total_row: List[TotalRow] = field(
+        default_factory=list,
+        metadata={
+            "name": "TotalRow",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ReportMixin(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = ""
+
+    report_title: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTitle",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    report_subtitle: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportSubtitle",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    report_basis: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportBasis",
+            "type": "Element",
+            "valid_values": VALID_REPORT_BASIS,
+        },
+    )
+    num_rows: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "NumRows",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    num_columns: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "NumColumns",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    num_col_title_rows: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "NumColTitleRows",
+            "type": "Element",
+            "required": True,
+        },
+    )
+    col_desc: List[ColDesc] = field(
+        default_factory=list,
+        metadata={
+            "name": "ColDesc",
+            "type": "Element",
+            "min_occurs": 1,
+        },
+    )
+    _report_data_xml: Optional[et.Element] = field(  # Accepts raw XML Element
+        default=None,
+        metadata={
+            "name": "ReportDataXML",
+            "type": "Element",
+        },
+    )
+
+    @cached_property
+    def report_data(self):
+        report_data = ReportData.from_xml(self._report_data_xml)
+        return report_data
+
+
+@dataclass
+class CustomDetailReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+    "CustomDetailReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+    "AccountTypeFilter", "ReportEntityFilter", "ReportItemFilter", "ReportClassFilter", "ReportTxnTypeFilter",
+    "ReportModifiedDateRangeFilter", "ReportModifiedDateRangeMacro",
+    "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeRowsBy", "IncludeColumn",
+    "IncludeAccounts", "ReportOpenBalanceAsOf", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "CustomDetailReportQuery"
+
+    custom_detail_report_type: str = field(
+        default="CustomTxnDetail",
+        metadata={
+            "name": "CustomDetailReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": ["CustomTxnDetail"],
+        },
+    )
+    report_txn_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+    summarize_rows_by: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SummarizeRowsBy",
+            "type": "Element",
+            "valid_values": VALID_SUMMARIZE_ROWS_BY,
+        },
+    )
+    include_column: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "Includecolumn",
+            "type": "Element",
+            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
+        },
+    )
+    include_accounts: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "IncludeAccounts",
+            "type": "Element",
+            "valid_values": ["All", "InUse"],
+        },
+    )
+    report_open_balance_as_of: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportOpenBalanceAsOf",
+            "type": "Element",
+            "valid_values": ["ReportEndDate", "Today"],
+        },
+    )
+    report_basis: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportBasis",
+            "type": "Element",
+            "valid_values": VALID_REPORT_BASIS,
+        },
+    )
+
+
+@dataclass
+class CustomDetailReport(ReportMixin):
+
+    class Meta:
+        name = "CustomDetailReport"
+
+    Query: Type[CustomDetailReportQuery] = CustomDetailReportQuery
+
+@dataclass
+class CustomSummaryReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+        "CustomSummaryReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+        "AccountTypeFilter", "ReportEntityFilter", "ReportItemFilter", "ReportClassFilter", "ReportTxnTypeFilter",
+        "ReportModifiedDateRangeFilter", "ReportModifiedDateRangeMacro",
+        "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeColumnsBy", "IncludeSubcolumns",
+        "ReportCalendar", "ReturnRows", "ReturnColumns", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "CustomSummaryReportQuery"
+
+    general_summary_report_type: str = field(
+        default="CustomSummary",
+        metadata={
+            "name": "CustomSummaryReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": ["CustomSummary"],
+        },
+    )
+    report_txn_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+    summarize_columns_by: Optional[str] = field(
         default=None,
         metadata={
             "name": "SummarizeColumnsBy",
             "type": "Element",
+            "valid_values": VALID_SUMMARIZE_COLUMNS_BY,
         },
     )
-    include_subcolumns: Optional[IncludeSubcolumns] = field(
+    include_subcolumns: Optional[bool] = field(
         default=None,
         metadata={
             "name": "IncludeSubcolumns",
             "type": "Element",
         },
     )
-    report_calendar: Optional[ReportCalendar] = field(
+    report_calendar: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReportCalendar",
             "type": "Element",
+            "valid_values": VALID_REPORT_CALENDAR,
         },
     )
-    return_rows: Optional[ReturnRows] = field(
+    return_rows: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReturnRows",
             "type": "Element",
+            "valid_values": VALID_RETURN_ROWS,
         },
     )
-    return_columns: Optional[ReturnColumns] = field(
+    return_columns: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReturnColumns",
             "type": "Element",
+            "valid_values": VALID_RETURN_COLUMNS,
         },
     )
-    report_basis: Optional[ReportBasis] = field(
+    report_basis: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReportBasis",
             "type": "Element",
+            "valid_values": VALID_REPORT_BASIS,
         },
     )
-    request_id: Optional[str] = field(
+
+
+@dataclass
+class CustomSummaryReport(ReportMixin):
+
+    class Meta:
+        name = "CustomSummaryReport"
+
+    Query: Type[CustomSummaryReportQuery] = CustomSummaryReportQuery
+
+
+@dataclass
+class GeneralDetailReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+    "GeneralDetailReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+    "AccountTypeFilter", "ReportEntityFilter", "ReportItemFilter", "ReportClassFilter", "ReportTxnTypeFilter",
+    "ReportModifiedDateRangeFilter", "ReportModifiedDateRangeMacro",
+    "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeRowsBy", "IncludeColumn",
+    "IncludeAccounts", "ReportOpenBalanceAsOf", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "GeneralDetailReportQuery"
+
+    general_detail_report_type: Optional[str] = field(
         default=None,
         metadata={
-            "name": "requestID",
-            "type": "Attribute",
+            "name": "GeneralDetailReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_GENERAL_DETAIL_REPORT_TYPE_VALUES,
         },
     )
+    report_txn_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+    summarize_rows_by: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SummarizeRowsBy",
+            "type": "Element",
+            "valid_values": VALID_SUMMARIZE_ROWS_BY,
+        },
+    )
+    include_column: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "Includecolumn",
+            "type": "Element",
+            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
+        },
+    )
+    include_accounts: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "IncludeAccounts",
+            "type": "Element",
+            "valid_values": ["All", "InUse"],
+        },
+    )
+    report_open_balance_as_of: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportOpenBalanceAsOf",
+            "type": "Element",
+            "valid_values": ["ReportEndDate", "Today"],
+        },
+    )
+    report_basis: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportBasis",
+            "type": "Element",
+            "valid_values": VALID_REPORT_BASIS,
+        },
+    )
+
+
+@dataclass
+class GeneralDetailReport(ReportMixin):
+
+    class Meta:
+        name = "GeneralDetailReport"
+
+    Query: Type[GeneralDetailReportQuery] = GeneralDetailReportQuery
+
+
+@dataclass
+class GeneralSummaryReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+        "GeneralSummaryReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+        "AccountTypeFilter", "ReportEntityFilter", "ReportItemFilter", "ReportClassFilter", "ReportTxnTypeFilter",
+        "ReportModifiedDateRangeFilter", "ReportModifiedDateRangeMacro",
+        "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeColumnsBy", "IncludeSubcolumns",
+        "ReportCalendar", "ReturnRows", "ReturnColumns", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "GeneralSummaryReportQuery"
+
+    general_summary_report_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "GeneralSummaryReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_GENERAL_SUMMARY_REPORT_TYPE_VALUES,
+        },
+    )
+    report_txn_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+    summarize_columns_by: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SummarizeColumnsBy",
+            "type": "Element",
+            "valid_values": VALID_SUMMARIZE_COLUMNS_BY,
+        },
+    )
+    include_subcolumns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeSubcolumns",
+            "type": "Element",
+        },
+    )
+    report_calendar: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportCalendar",
+            "type": "Element",
+            "valid_values": VALID_REPORT_CALENDAR,
+        },
+    )
+    return_rows: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReturnRows",
+            "type": "Element",
+            "valid_values": VALID_RETURN_ROWS,
+        },
+    )
+    return_columns: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReturnColumns",
+            "type": "Element",
+            "valid_values": VALID_RETURN_COLUMNS,
+        },
+    )
+    report_basis: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportBasis",
+            "type": "Element",
+            "valid_values": VALID_REPORT_BASIS,
+        },
+    )
+
+
+@dataclass
+class GeneralSummaryReport(ReportMixin):
+
+    class Meta:
+        name = "GeneralSummaryReport"
+
+    Query: Type[GeneralSummaryReportQuery] = GeneralSummaryReportQuery
+
+
+@dataclass
+class AgingReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+    "AgingReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+    "AccountTypeFilter", "ListID", "FullName", "ListIDWithChildren", "FullNameWithChildren",
+    "EntityTypeFilter", "ItemTypeFilter", "ReportClassFilter", "TxnTypeFilter",
+    "FromReportModifiedDate", "ToReportModifiedDate", "ReportModifiedDateRangeMacro",
+    "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeColumnsBy", "IncludeSubcolumns",
+    "ReportCalendar", "ReturnRows", "ReturnColumns", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "AgingReportQuery"
+
+    aging_report_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AgingReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_AGING_REPORT_TYPE_VALUES,
+        },
+    )
+    report_txn_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+    include_column: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "Includecolumn",
+            "type": "Element",
+            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
+        },
+    )
+    include_accounts: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "IncludeAccounts",
+            "type": "Element",
+            "valid_values": ["All", "InUse"],
+        },
+    )
+    report_aging_as_of: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportAgingAsOf",
+            "type": "Element",
+            "valid_values": ["ReportEndDate", "Today"],
+        },
+    )
+
+
+@dataclass
+class AgingReport(ReportMixin):
+
+    class Meta:
+        name = "AgingReport"
+
+    Query: Type[AgingReportQuery] = AgingReportQuery
+
+#todo:BudgetSummaryReportQueryRq
+
+
+@dataclass
+class PayrollDetailReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+    "PayrollDetailReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+    "AccountTypeFilter", "ReportEntityFilter", "ReportItemFilter", "ReportClassFilter", "ReportTxnTypeFilter",
+    "ReportModifiedDateRangeFilter", "ReportModifiedDateRangeMacro",
+    "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeRowsBy", "IncludeColumn",
+    "IncludeAccounts", "ReportOpenBalanceAsOf", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "PayrollDetailReportQuery"
+
+    payroll_detail_report_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PayrollDetailReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_PAYROLL_DETAIL_REPORT_TYPE_VALUES,
+        },
+    )
+    summarize_rows_by: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SummarizeRowsBy",
+            "type": "Element",
+            "valid_values": VALID_SUMMARIZE_ROWS_BY,
+        },
+    )
+    include_column: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "Includecolumn",
+            "type": "Element",
+            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
+        },
+    )
+    include_accounts: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "IncludeAccounts",
+            "type": "Element",
+            "valid_values": ["All", "InUse"],
+        },
+    )
+    report_open_balance_as_of: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportOpenBalanceAsOf",
+            "type": "Element",
+            "valid_values": ["ReportEndDate", "Today"],
+        },
+    )
+
+
+@dataclass
+class PayrollDetailReport(ReportMixin):
+
+    class Meta:
+        name = "PayrollDetailReport"
+
+    Query: Type[PayrollDetailReportQuery] = PayrollDetailReportQuery
+
+
+@dataclass
+class PayrollSummaryReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+        "PayrollSummaryReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+        "AccountTypeFilter", "ReportEntityFilter", "ReportItemFilter", "ReportClassFilter", "ReportTxnTypeFilter",
+        "ReportModifiedDateRangeFilter", "ReportModifiedDateRangeMacro",
+        "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeColumnsBy", "IncludeSubcolumns",
+        "ReportCalendar", "ReturnRows", "ReturnColumns", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "PayrollSummaryReportQuery"
+
+    payroll_summary_report_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "PayrollSummaryReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": ["EmployeeEarningsSummary", "PayrollLiabilityBalances", "PayrollSummary"],
+        },
+    )
+    report_txn_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+    summarize_columns_by: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "SummarizeColumnsBy",
+            "type": "Element",
+            "valid_values": VALID_SUMMARIZE_COLUMNS_BY,
+        },
+    )
+    include_subcolumns: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "IncludeSubcolumns",
+            "type": "Element",
+        },
+    )
+    report_calendar: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportCalendar",
+            "type": "Element",
+            "valid_values": VALID_REPORT_CALENDAR,
+        },
+    )
+    return_rows: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReturnRows",
+            "type": "Element",
+            "valid_values": VALID_RETURN_ROWS,
+        },
+    )
+    return_columns: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReturnColumns",
+            "type": "Element",
+            "valid_values": VALID_RETURN_COLUMNS,
+        },
+    )
+    report_basis: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportBasis",
+            "type": "Element",
+            "valid_values": VALID_REPORT_BASIS,
+        },
+    )
+
+
+@dataclass
+class PayrollSummaryReport(ReportMixin):
+
+    class Meta:
+        name = "PayrollSummaryReport"
+
+    Query: Type[PayrollSummaryReportQuery] = PayrollSummaryReportQuery
+
+
 
 # endregion
 

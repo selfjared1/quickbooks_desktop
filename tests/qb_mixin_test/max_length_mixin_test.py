@@ -1,6 +1,6 @@
 import unittest
 from dataclasses import dataclass, field
-from quickbooks_desktop.quickbooks_desktop import MaxLengthMixin
+from src.quickbooks_desktop.quickbooks_desktop import MaxLengthMixin
 
 
 # Sample dataclass to test the mixin
@@ -26,6 +26,7 @@ class TestMaxLengthMixin(unittest.TestCase):
         obj = TestClass(name="NowIsTooLon&#216;")
         self.assertEqual(obj.name, "NowIsTooLo")
         obj = TestClass(name="IsTooLon&#216;Now")
+        #todo: assersion fails.  I have a way to incorporate special caracters I need to implement it.
         self.assertEqual(obj.name, "IsTooLon&#216;N")
 
 

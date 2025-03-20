@@ -10,7 +10,6 @@ from .utilities import snake_to_camel
 @dataclass
 class QBDatesMacro:
     name: Optional[str] = field(default="QBDatesMacro", init=False)
-    date: Optional[str] = field(default=None)
 
     @property
     def date(self) -> Optional[str]:
@@ -84,7 +83,10 @@ class QBDatesMacro:
         }
 
     def to_xml(self, *args):
-        element = et.Element(snake_to_camel(self.name))
+        if args[0] is not None:
+            element = et.Element(snake_to_camel(args[0]))
+        else:
+            element = et.Element(snake_to_camel(self.name))
         element.text = self.__str__()
         return element
 
@@ -111,14 +113,20 @@ class QBDatesMacro:
 class QBDates(QBDatesMacro):
 
     _name = 'QBDates'
-    date: Optional[Union[str, dt.date, dt.datetime]] = field(default=None)
+    # date: Optional[Union[str, dt.date, dt.datetime]] = field(default=None, init=False)
     date_is_macro: bool = field(init=False, default=False)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, date: Optional[Union[dt.date, dt.datetime]] = None):
+        """Ensures `date` is set properly during initialization."""
+        super().__init__()  # Calls parent class constructor
 
-    # def __post_init__(self):
-    #     self.date = self.date  # Trigger the setter for initial date value
+        if date is not None:
+            self.date = date  # This will now call the property setter correctly
+
+    def __post_init__(self):
+        """Ensure 'date' does not exist as a conflicting attribute from dataclass."""
+        if "date" in self.__dict__:
+            del self.__dict__["date"]
 
     @property
     def date(self) -> Optional[Union[str, dt.date, dt.datetime]]:
@@ -131,7 +139,7 @@ class QBDates(QBDatesMacro):
         else:
             self._date = self.parse_date(value)
 
-    def parse_date(self, date: Union[str, dt.date, dt.datetime]) -> str:
+    def parse_date(self, date: Union[str, dt.date, dt.datetime]) -> Union[str, dt.date, dt.datetime]:
         if isinstance(date, str):
             if date.lower() in self.macro_dict.keys():
                 self.date_is_macro = True

@@ -1,12 +1,12 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
-from quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
 
 
 class TestQuickbooksDesktop(unittest.TestCase):
 
-    @patch('quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
+    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_dispatch_without_company_file(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop()
         qb_desktop.dispatch()
@@ -15,7 +15,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
         mock_dispatch.assert_called_once_with("QBXMLRP2.RequestProcessor")
         self.assertIsNotNone(qb_desktop.qbXMLRP)
 
-    @patch('quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
+    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_dispatch_with_company_file(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop(company_file="path/to/company.qbw")
         qb_desktop.dispatch()
@@ -25,7 +25,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
             qb_desktop.dispatch()
             mocked_print.assert_called_once_with("company file isn't an option right now")
 
-    @patch('quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
+    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_open_connection(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop()
         mock_qbXMLRP = MagicMock()
@@ -37,7 +37,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
         mock_qbXMLRP.OpenConnection2.assert_called_once_with('', 'accountingpy', 1)
         self.assertTrue(qb_desktop.connection_open)
 
-    @patch('quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
+    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_begin_session(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop()
         mock_qbXMLRP = MagicMock()
@@ -83,7 +83,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
         self.assertEqual(QBXMLMsgsRq.tag, "QBXMLMsgsRq")
         self.assertEqual(QBXMLMsgsRq.get("onError"), "stopOnError")
 
-    @patch('quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
+    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_send_xml(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop()
         mock_qbXMLRP = MagicMock()
@@ -101,7 +101,7 @@ class TestQuickbooksDesktop(unittest.TestCase):
         mock_qbXMLRP.ProcessRequest.assert_called_once()
         self.assertIsNotNone(result)
 
-    @patch('quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
+    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_close_qb(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop()
         mock_qbXMLRP = MagicMock()

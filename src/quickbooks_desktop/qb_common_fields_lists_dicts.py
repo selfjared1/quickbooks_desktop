@@ -27,6 +27,8 @@ VALID_TXN_TYPE_VALUES = [
     "Transfer", "VendorCredit", "YTDAdjustment"
 ]
 
+VALID_REPORT_TXN_TYPE_VALUES = ["All"] + VALID_TXN_TYPE_VALUES
+
 VALID_OPERATOR_VALUES = ["LessThan", "LessThanEqual", "Equal", "GreaterThan", "GreaterThanEqual"]
 
 VALID_RELATION_VALUES = [
@@ -85,6 +87,125 @@ VALID_REPORT_ACCOUNT_TYPE_VALUES = [
     "OrdinaryIncomeAndCOGS", "OrdinaryIncomeAndExpense", "OtherAsset", "OtherCurrentAsset",
     "OtherCurrentLiability", "OtherExpense", "OtherIncome", "OtherIncomeOrExpense"
 ]
+
+VALID_REPORT_ITEM_TYPE = [
+    "AllExceptFixedAsset", "Assembly", "Discount", "FixedAsset", "Inventory",
+    "InventoryAndAssembly", "NonInventory", "OtherCharge", "Payment", "Sales",
+    "SalesTax", "Service"
+]
+
+VALID_SUMMARIZE_ROWS_BY = [
+    "Account", "BalanceSheet", "Class", "Customer", "CustomerType", "Day", "Employee",
+    "FourWeek", "HalfMonth", "IncomeStatement", "ItemDetail", "ItemType", "Month",
+    "Payee", "PaymentMethod", "PayrollItemDetail", "PayrollYtdDetail", "Quarter",
+    "SalesRep", "SalesTaxCode", "ShipMethod", "TaxLine", "Terms", "TotalOnly",
+    "TwoWeek", "Vendor", "VendorType", "Week", "Year"
+]
+
+VALID_SUMMARIZE_COLUMNS_BY = [
+    "Account", "BalanceSheet", "Class", "Customer", "CustomerType", "Day", "Employee",
+    "FourWeek", "HalfMonth", "IncomeStatement", "ItemDetail", "ItemType", "Month", "Payee",
+    "PaymentMethod", "PayrollItemDetail", "PayrollYtdDetail", "Quarter", "SalesRep",
+    "SalesTaxCode", "ShipMethod", "Terms", "TotalOnly", "TwoWeek", "Vendor",
+    "VendorType", "Week", "Year"
+]
+
+VALID_INCLUDE_COLUMN_VALUES = [
+    "Account", "Aging", "Amount", "AmountDifference", "AverageCost", "BilledDate",
+    "BillingStatus", "CalculatedAmount", "Class", "ClearedStatus", "CostPrice", "Credit",
+    "Currency", "Date", "Debit", "DeliveryDate", "DueDate", "EstimateActive", "ExchangeRate",
+    "FOB", "IncomeSubjectToTax", "Invoiced", "Item", "ItemDesc", "LastModifiedBy",
+    "LatestOrPriorState", "Memo", "ModifiedTime", "Name", "NameAccountNumber", "NameAddress",
+    "NameCity", "NameContact", "NameEmail", "NameFax", "NamePhone", "NameState", "NameZip",
+    "OpenBalance", "OriginalAmount", "PaidAmount", "PaidStatus", "PaidThroughDate",
+    "PaymentMethod", "PayrollItem", "PONumber", "PrintStatus", "ProgressAmount",
+    "ProgressPercent", "Quantity", "QuantityAvailable", "QuantityOnHand", "QuantityOnSalesOrder",
+    "ReceivedQuantity", "RefNumber", "RunningBalance", "SalesRep", "SalesTaxCode",
+    "SerialOrLotNumber", "ShipDate", "ShipMethod", "SourceName", "SplitAccount",
+    "SSNOrTaxID", "TaxLine", "TaxTableVersion", "Terms", "TxnID", "TxnNumber",
+    "TxnType", "UnitPrice", "UserEdit", "ValueOnHand", "WageBase", "WageBaseTips"
+]
+
+VALID_REPORT_DETAIL_LEVEL_FILTERS = ["All", "AllExceptSummary", "SummaryOnly"]
+
+VALID_REPORT_POSTING_STATUS_FILTER = ["Either", "NonPosting", "Posting"]
+
+VALID_RETURN_ROWS = ["ActiveOnly", "NonZero", "All"]
+
+VALID_REPORT_CALENDAR = ["CalendarYear", "FiscalYear", "TaxYear"]
+
+VALID_RETURN_COLUMNS = ["ActiveOnly", "NonZero", "All"]
+
+VALID_REPORT_BASIS = ["Accrual", "Cash", "None"]
+
+VALID_COL_TYPE_VALUES = [
+    "Account", "Addr1", "Addr2", "Addr3", "Addr4", "Addr5", "Aging", "Amount",
+    "AmountDifference", "AverageCost", "BilledDate", "BillingStatus", "Blank",
+    "CalculatedAmount", "Class", "ClearedStatus", "CostPrice", "CreateDate", "Credit",
+    "CustomField", "Date", "Debit", "DeliveryDate", "DueDate", "Duration",
+    "EarliestReceiptDate", "EstimateActive", "FOB", "IncomeSubjectToTax", "Invoiced",
+    "IsAdjustment", "Item", "ItemDesc", "ItemVendor", "Label", "LastModifiedBy",
+    "LatestOrPriorState", "Memo", "ModifiedTime", "Name", "NameAccountNumber",
+    "NameAddress", "NameCity", "NameContact", "NameEmail", "NameFax", "NamePhone",
+    "NameState", "NameZip", "OpenBalance", "OriginalAmount", "PaidAmount",
+    "PaidStatus", "PaidThroughDate", "PaymentMethod", "PayrollItem", "Percent",
+    "PercentChange", "PercentOfTotalRetail", "PercentOfTotalValue", "PhysicalCount",
+    "PONumber", "PrintStatus", "ProgressAmount", "ProgressPercent", "Quantity",
+    "QuantityAvailable", "QuantityOnHand", "QuantityOnOrder", "QuantityOnPendingBuild",
+    "QuantityOnSalesOrder", "ReceivedQuantity", "RefNumber", "ReorderPoint",
+    "RetailValueOnHand", "RunningBalance", "SalesPerWeek", "SalesRep", "SalesTaxCode",
+    "ShipDate", "ShipMethod", "ShipToAddr1", "ShipToAddr2", "ShipToAddr3",
+    "ShipToAddr4", "ShipToAddr5", "SONumber", "SourceName", "SplitAccount",
+    "SSNOrTaxID", "SuggestedReorder", "TaxLine", "TaxTableVersion", "Terms", "Total",
+    "TxnID", "TxnNumber", "TxnType", "UnitPrice", "UserEdit", "ValueOnHand",
+    "WageBase", "WageBaseTips"
+]
+
+VALID_ROW_DATA_ROW_TYPE_VALUES = [
+    "account", "class", "customer", "customerMessage", "customerType", "employee",
+    "item", "jobType", "label", "memorizedTxn", "memorizedReport", "name",
+    "otherName", "paymentMethod", "payrollItem", "salesRep", "salesTaxCode",
+    "shipMethod", "state", "style", "terms", "toDo", "vendor", "vendorType"
+]
+
+VALID_COL_DATA_DATA_TYPE_VALUES = [
+    "IDTYPE", "GUIDTYPE", "STRTYPE", "BOOLTYPE", "DATETYPE", "DATETIMETYPE",
+    "TIMEINTERVALTYPE", "AMTTYPE", "PRICETYPE", "QUANTYPE", "PERCENTTYPE",
+    "ENUMTYPE", "INTTYPE"
+]
+
+VALID_GENERAL_SUMMARY_REPORT_TYPE_VALUES = [
+    "BalanceSheetByClass", "BalanceSheetPrevYearComp", "BalanceSheetStandard", "BalanceSheetSummary",
+    "CustomerBalanceSummary", "ExpenseByVendorSummary", "IncomeByCustomerSummary", "InventoryStockStatusByItem",
+    "InventoryStockStatusByVendor", "IncomeTaxSummary", "InventoryValuationSummary", "InventoryValuationSummaryBySite",
+    "LotNumberInStockBySite", "PhysicalInventoryWorksheet", "ProfitAndLossByClass", "ProfitAndLossByJob",
+    "ProfitAndLossPrevYearComp", "ProfitAndLossStandard", "ProfitAndLossYTDComp", "PurchaseByItemSummary",
+    "PurchaseByVendorSummary", "SalesByCustomerSummary", "SalesByItemSummary", "SalesByRepSummary",
+    "SalesTaxLiability", "SalesTaxRevenueSummary", "SerialNumberInStockBySite", "TrialBalance",
+    "VendorBalanceSummary"
+]
+
+VALID_GENERAL_DETAIL_REPORT_TYPE_VALUES = [
+    "1099Detail", "AuditTrail", "BalanceSheetDetail", "CheckDetail", "CustomerBalanceDetail",
+    "DepositDetail", "EstimatesByJob", "ExpenseByVendorDetail", "GeneralLedger",
+    "IncomeByCustomerDetail", "IncomeTaxDetail", "InventoryValuationDetail",
+    "JobProgressInvoicesVsEstimates", "Journal", "MissingChecks", "OpenInvoices",
+    "OpenPOs", "OpenPOsByJob", "OpenSalesOrderByCustomer", "OpenSalesOrderByItem",
+    "PendingSales", "ProfitAndLossDetail", "PurchaseByItemDetail", "PurchaseByVendorDetail",
+    "SalesByCustomerDetail", "SalesByItemDetail", "SalesByRepDetail", "TxnDetailByAccount",
+    "TxnListByCustomer", "TxnListByDate", "TxnListByVendor", "UnpaidBillsDetail",
+    "UnbilledCostsByJob", "VendorBalanceDetail"
+]
+
+VALID_AGING_REPORT_TYPE_VALUES = [
+    "APAgingDetail", "APAgingSummary", "ARAgingDetail", "ARAgingSummary", "CollectionsReport"
+]
+
+VALID_PAYROLL_DETAIL_REPORT_TYPE_VALUES = [
+    "EmployeeStateTaxesDetail", "PayrollItemDetail", "PayrollReviewDetail",
+    "PayrollTransactionDetail", "PayrollTransactionsByPayee"
+]
+
 
 
 list_id: Optional[str] = field(

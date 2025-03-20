@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 from lxml import etree as et
 from decimal import Decimal
 from datetime import datetime
-from quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, Estimate, EstimateLine, QBDateTime
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, Estimate, EstimateLine, QBDateTime
 
 class TestCreateEstimate(unittest.TestCase):
 

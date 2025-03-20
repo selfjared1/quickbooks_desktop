@@ -31,8 +31,9 @@ class TestQBDateMacro(unittest.TestCase):
 
     def test_to_xml(self):
         field_name = 'ReportDateMacro'
-        str_xml = str(self.qb_date_macro.to_xml(field_name))
-        self.assertTrue(field_name in str_xml and 'QBDateMacro' in str_xml)
+        self.qb_date_macro.date = "today"
+        date_xml = self.qb_date_macro.to_xml(field_name)
+        self.assertTrue('Reportdatemacro' in date_xml.tag)
 
     def test_from_xml(self):
         element = et.Element('test_element')

@@ -1,6 +1,6 @@
 import unittest
 from decimal import Decimal
-from quickbooks_desktop.quickbooks_desktop import (
+from src.quickbooks_desktop.quickbooks_desktop import (
     ToXmlMixin, LinkedTxn, QBDates, JournalEntryAdd,
     CurrencyRef, JournalDebitLine, JournalLineMod, AccountRef, JournalCreditLine, JournalEntries, QBDates,
     EstimateLineAdd, ItemRef, SalesTaxCodeRef, ItemInventoryAdd, InvoiceAdd, CustomerRef, InvoiceLineAdd,
