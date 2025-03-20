@@ -6,47 +6,29 @@ from dateutil import parser
 from datetime import timedelta, datetime
 from .utilities import snake_to_camel
 
-@dataclass
-class QBDates:
-    _name = 'QBDates'
-    date: Optional[Union[str, dt.date, dt.datetime]] = field(default=None)
-    date_is_macro: bool = field(init=False, default=False)
 
-    # def __post_init__(self):
-    #     self.date = self.date  # Trigger the setter for initial date value
+@dataclass
+class QBDatesMacro:
+    name: Optional[str] = field(default="QBDatesMacro", init=False)
+    date: Optional[str] = field(default=None)
+
+    @property
+    def date(self) -> Optional[str]:
+        return self._date
+
+    @date.setter
+    def date(self, value: Optional[str]):
+        if value is None:
+            raise ValueError("You did not include a date")
+        elif value in self.macro_dict.keys():
+            self._date = self.macro_dict[value.lower()]
+        else:
+            raise ValueError(
+                f"You did not provide a proper macro value. Please provide one of the following: {list(self.macro_dict.keys())}")
 
     @property
     def macro_dict(self):
         return self.get_macro_dict()
-
-    @property
-    def date(self) -> Optional[Union[str, dt.date, dt.datetime]]:
-        return self._date
-
-    @date.setter
-    def date(self, value: Optional[Union[str, dt.date, dt.datetime]]):
-        if value is None:
-            raise ValueError("You did not include a date")
-        else:
-            self._date = self.parse_date(value)
-
-    def parse_date(self, date: Union[str, dt.date, dt.datetime]) -> str:
-        if isinstance(date, str):
-            if date.lower() in self.macro_dict:
-                self.date_is_macro = True
-                return str(self.macro_dict[date.lower()])
-            else:
-                try:
-                    date_parsed = parser.parse(date)
-                    return date_parsed
-                except Exception as e:
-                    raise ValueError(f'Your date parameter "{date}" could not be parsed: {e}')
-        elif isinstance(date, dt.datetime):
-            return date
-        elif isinstance(date, dt.date):
-            return date
-        else:
-            raise ValueError(f'Unsupported date type: {type(date)}')
 
     @staticmethod
     def get_macro_dict() -> Dict[str, int]:
@@ -101,6 +83,72 @@ class QBDates:
             "next_year": 23,
         }
 
+    def to_xml(self, *args):
+        element = et.Element(snake_to_camel(self.name))
+        element.text = self.__str__()
+        return element
+
+
+    @classmethod
+    def from_xml(cls, xml_element):
+        qb_date = cls()
+        qb_date.name = xml_element.tag
+        try:
+            qb_date.date = int(xml_element.text)
+        except ValueError:
+            qb_date.date = xml_element.text
+        return qb_date
+
+    def __str__(self):
+        if isinstance(self._date, int):  # Macro values are stored as integers
+            return str(self._date)
+        else:
+            raise ValueError(
+                f"You did not provide a proper macro value. Please provide one of the following: {list(self.macro_dict.keys())}")
+
+
+@dataclass
+class QBDates(QBDatesMacro):
+
+    _name = 'QBDates'
+    date: Optional[Union[str, dt.date, dt.datetime]] = field(default=None)
+    date_is_macro: bool = field(init=False, default=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    # def __post_init__(self):
+    #     self.date = self.date  # Trigger the setter for initial date value
+
+    @property
+    def date(self) -> Optional[Union[str, dt.date, dt.datetime]]:
+        return self._date
+
+    @date.setter
+    def date(self, value: Optional[Union[str, dt.date, dt.datetime]]):
+        if value is None:
+            raise ValueError("You did not include a date")
+        else:
+            self._date = self.parse_date(value)
+
+    def parse_date(self, date: Union[str, dt.date, dt.datetime]) -> str:
+        if isinstance(date, str):
+            if date.lower() in self.macro_dict.keys():
+                self.date_is_macro = True
+                return str(self.macro_dict[date.lower()])
+            else:
+                try:
+                    date_parsed = parser.parse(date)
+                    return date_parsed
+                except Exception as e:
+                    raise ValueError(f'Your date parameter "{date}" could not be parsed: {e}')
+        elif isinstance(date, dt.datetime):
+            return date
+        elif isinstance(date, dt.date):
+            return date
+        else:
+            raise ValueError(f'Unsupported date type: {type(date)}')
+
     def __str__(self):
         if isinstance(self._date, int):  # Macro values are stored as integers
             return str(self._date)
@@ -108,17 +156,6 @@ class QBDates:
             return self._date
         else:
             return self._date.strftime("%Y-%m-%d")
-
-    def to_xml(self, field_name):
-        element = et.Element(snake_to_camel(field_name))
-        element.text = self.__str__()
-        return element
-
-
-    @classmethod
-    def from_xml(cls, xml_element):
-        qb_date = cls(xml_element.text)
-        return qb_date
 
 
 @dataclass

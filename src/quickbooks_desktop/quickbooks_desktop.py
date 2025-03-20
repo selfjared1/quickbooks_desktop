@@ -1576,6 +1576,205 @@ class QBRefMixin(QBMixin):
     list_id: Optional[str] = list_id
     full_name: Optional[str] = full_name
 
+
+@dataclass
+class ReportPeriod(ToXmlMixin, ReprMixin):
+    from_report_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "FromReportDate",
+            "type": "Element",
+        },
+    )
+    to_report_date: Optional[QBDates] = field(
+        default=None,
+        metadata={
+            "name": "ToReportDate",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class ReportAccountFilter(ToXmlMixin, ReprMixin):
+    account_type_filter: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "AccountTypeFilter",
+            "type": "Element",
+            "valid_values": VALID_REPORT_ACCOUNT_TYPE_VALUES,
+        },
+    )
+    list_id: List[str] = field(
+        default_factory=list,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+        },
+    )
+    full_name: List[FullName] = field(
+        default_factory=list,
+        metadata={
+            "name": "FullName",
+            "type": "Element",
+        },
+    )
+    list_idwith_children: Optional[ListIdwithChildren] = field(
+        default=None,
+        metadata={
+            "name": "ListIDWithChildren",
+            "type": "Element",
+        },
+    )
+    full_name_with_children: Optional[FullNameWithChildren] = field(
+        default=None,
+        metadata={
+            "name": "FullNameWithChildren",
+            "type": "Element",
+        },
+    )
+
+
+@dataclass
+class ReportQueryMixin(ToXmlMixin, ReprMixin):
+
+    display_report: Optional[bool] = field(
+        default=None,
+        metadata={
+            "name": "DisplayReport",
+            "type": "Element",
+        },
+    )
+    report_period: Optional[ReportPeriod] = field(
+        default=None,
+        metadata={
+            "name": "ReportPeriod",
+            "type": "Element",
+        },
+    )
+    report_date_macro: Optional[QBDatesMacro] = field(
+        default=None,
+        metadata={
+            "name": "ReportDateMacro",
+            "type": "Element",
+        },
+    )
+    report_account_filter: Optional[ReportAccountFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportAccountFilter",
+            "type": "Element",
+        },
+    )
+    report_entity_filter: Optional[ReportEntityFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportEntityFilter",
+            "type": "Element",
+        },
+    )
+    report_item_filter: Optional[ReportItemFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportItemFilter",
+            "type": "Element",
+        },
+    )
+    report_class_filter: Optional[ReportClassFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportClassFilter",
+            "type": "Element",
+        },
+    )
+    report_txn_type_filter: Optional[ReportTxnTypeFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+        },
+    )
+    report_modified_date_range_filter: Optional[
+        ReportModifiedDateRangeFilter
+    ] = field(
+        default=None,
+        metadata={
+            "name": "ReportModifiedDateRangeFilter",
+            "type": "Element",
+        },
+    )
+    report_modified_date_range_macro: Optional[
+        ReportModifiedDateRangeMacro
+    ] = field(
+        default=None,
+        metadata={
+            "name": "ReportModifiedDateRangeMacro",
+            "type": "Element",
+        },
+    )
+    report_detail_level_filter: Optional[ReportDetailLevelFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportDetailLevelFilter",
+            "type": "Element",
+        },
+    )
+    report_posting_status_filter: Optional[ReportPostingStatusFilter] = field(
+        default=None,
+        metadata={
+            "name": "ReportPostingStatusFilter",
+            "type": "Element",
+        },
+    )
+    summarize_columns_by: Optional[SummarizeColumnsBy] = field(
+        default=None,
+        metadata={
+            "name": "SummarizeColumnsBy",
+            "type": "Element",
+        },
+    )
+    include_subcolumns: Optional[IncludeSubcolumns] = field(
+        default=None,
+        metadata={
+            "name": "IncludeSubcolumns",
+            "type": "Element",
+        },
+    )
+    report_calendar: Optional[ReportCalendar] = field(
+        default=None,
+        metadata={
+            "name": "ReportCalendar",
+            "type": "Element",
+        },
+    )
+    return_rows: Optional[ReturnRows] = field(
+        default=None,
+        metadata={
+            "name": "ReturnRows",
+            "type": "Element",
+        },
+    )
+    return_columns: Optional[ReturnColumns] = field(
+        default=None,
+        metadata={
+            "name": "ReturnColumns",
+            "type": "Element",
+        },
+    )
+    report_basis: Optional[ReportBasis] = field(
+        default=None,
+        metadata={
+            "name": "ReportBasis",
+            "type": "Element",
+        },
+    )
+    request_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "requestID",
+            "type": "Attribute",
+        },
+    )
+
 # endregion
 
 

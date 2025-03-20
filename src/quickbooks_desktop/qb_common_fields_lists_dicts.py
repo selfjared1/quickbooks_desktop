@@ -76,6 +76,16 @@ VALID_SPECIAL_ACCOUNT_TYPE_VALUES = [
 
 VALID_CASH_FLOW_CLASSIFICATION_VALUES = ["None", "Operating", "Investing", "Financing", "NotApplicable"]
 
+VALID_REPORT_ACCOUNT_TYPE_VALUES = [
+    "AccountsPayable", "AccountsReceivable", "AllowedFor1099", "APAndSalesTax", "APOrCreditCard", "ARAndAP",
+    "Asset", "BalanceSheet", "Bank", "BankAndARAndAPAndUF", "BankAndUF", "CostOfSales", "CreditCard",
+    "CurrentAsset", "CurrentAssetAndExpense", "CurrentLiability", "Equity", "EquityAndIncomeAndExpense",
+    "ExpenseAndOtherExpense", "FixedAsset", "IncomeAndExpense", "IncomeAndOtherIncome", "Liability",
+    "LiabilityAndEquity", "LongTermLiability", "NonPosting", "OrdinaryExpense", "OrdinaryIncome",
+    "OrdinaryIncomeAndCOGS", "OrdinaryIncomeAndExpense", "OtherAsset", "OtherCurrentAsset",
+    "OtherCurrentLiability", "OtherExpense", "OtherIncome", "OtherIncomeOrExpense"
+]
+
 
 list_id: Optional[str] = field(
         default=None,
