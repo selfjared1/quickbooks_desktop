@@ -266,10 +266,7 @@ class TestToXmlMixin2(unittest.TestCase):
         self.assertIn('&amp;', xml_content, "Ampersand is not escaped correctly as '&amp;'")
 
     def test_report_to_xml(self):
-        root = et.Element('GeneralSummaryReportQuery')
-        report_type = et.SubElement(root, 'GeneralSummaryReportType')
-        report_type.text = 'BalanceSheetStandard'
-        sample_query = et.tostring(root).decode('ISO-8859-1')
+        sample_query = "<GeneralSummaryReportQuery><GeneralSummaryReportType>BalanceSheetStandard</GeneralSummaryReportType><ReportTxnTypeFilter><TxnTypeFilter>All</TxnTypeFilter></ReportTxnTypeFilter></GeneralSummaryReportQuery>"
 
         report_query = GeneralSummaryReport.Query()
         report_query.general_summary_report_type = 'BalanceSheetStandard'

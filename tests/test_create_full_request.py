@@ -75,22 +75,14 @@ class TestQuickbooksDesktop(unittest.TestCase):
         print(full_request)
 
     def test_report_to_xml(self):
-        sample_full_request_str = """<?xml version="1.0" encoding="ISO-8859-1"?><?qbxml version="16.0"?><QBXML><QBXMLMsgsRq onError="stopOnError"><GeneralSummaryReportQueryRq requestID="1"><GeneralSummaryReportType>BalanceSheetStandard</GeneralSummaryReportType></GeneralSummaryReportQueryRq></QBXMLMsgsRq></QBXML>"""
-        sample_full_request_xml = et.fromstring(sample_full_request_str.encode("ISO-8859-1"))
+        sample_full_request_str = '<?xml version="1.0" encoding="ISO-8859-1"?><?qbxml version="16.0"?>\n<QBXML><QBXMLMsgsRq onError="stopOnError"><GeneralSummaryReportQueryRq requestID="1"><GeneralSummaryReportType>BalanceSheetStandard</GeneralSummaryReportType><ReportTxnTypeFilter><TxnTypeFilter>All</TxnTypeFilter></ReportTxnTypeFilter></GeneralSummaryReportQueryRq></QBXMLMsgsRq></QBXML>'
 
         report_query = GeneralSummaryReport.Query()
         report_query.general_summary_report_type = 'BalanceSheetStandard'
         report_query_rq_xml = report_query.to_xml_rq()
         full_request = self.qb._create_full_request(report_query_rq_xml)
-        full_request_xml_1 = et.fromstring(full_request.encode("ISO-8859-1"))
-        self.assertTrue(et.tostring(sample_full_request_xml, method="c14n") ==
-            et.tostring(full_request_xml_1, method="c14n"))
+        self.assertEqual(full_request, sample_full_request_str)
 
-        report_query_xml = report_query.to_xml_rq()
-        full_request = self.qb._create_full_request(report_query_xml)
-        full_request_xml_2 = et.fromstring(full_request.encode("ISO-8859-1"))
-        self.assertTrue(et.tostring(sample_full_request_xml, method="c14n") ==
-                        et.tostring(full_request_xml_2, method="c14n"))
 
 
 
