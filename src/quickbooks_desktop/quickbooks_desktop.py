@@ -12,6 +12,7 @@ from lxml import etree as et
 from .qb_special_fields import *
 from .utilities import encode_special_characters
 from functools import cached_property
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -421,11 +422,11 @@ class QuickbooksDesktop():
                     single_instance = cls.from_xml(element)
                     instance_list.append(single_instance)
                     i += 1
-                    print(i)
+                    # print(i)
                 instances[class_name] = instance_list
             except (ModuleNotFoundError, AttributeError) as e:
-                print(f"Error loading class for {class_name}: {e}")
-        print('Finished _break_response_into_single_instances')
+                logger.debug(f"Error loading class for {class_name}: {e}")
+        logger.debug('Finished _break_response_into_single_instances')
         return instances
 
     def _break_response_into_plural_instances(self, responses):
@@ -821,6 +822,17 @@ class ToXmlMixin:
             if isinstance(obj, et._Element):
                 #the object is already an lxml element and can be added directly to the parent.
                 list_of_elements.append(obj)
+            elif isinstance(obj, str):
+                if 'valid_values' in field.metadata.keys() and obj not in field.metadata['valid_values']:
+                    raise ValueError(
+                        f'"{obj}" is not a valid value for {field.name}. '
+                        f'Valid values are: {field.metadata["valid_values"]}'
+                    )
+                else:
+                    #No valid_values or obj is in the valid values
+                    element = et.Element(field.metadata['name'])
+                    element.text = obj
+                    list_of_elements.append(element)
             else:
                 element = obj.to_xml()
                 list_of_elements.append(element)
@@ -870,6 +882,19 @@ class ValidationMixin:
     def __post_init__(self):
         if self.validate_on_init:
             self.validate()
+
+    def __setattr__(self, name, value):
+        # Let dataclass init finish first
+        super().__setattr__(name, value)
+        if hasattr(self, '__dataclass_fields__') and name in self.__dataclass_fields__:
+            field_def = self.__dataclass_fields__[name]
+            valid_values = field_def.metadata.get("valid_values")
+            if valid_values:
+                if isinstance(value, list):
+                    for item in value:
+                        self._validate_str_from_list_of_values(name, item, valid_values)
+                else:
+                    self._validate_str_from_list_of_values(name, value, valid_values)
 
     def validate(self) -> None:
         """
@@ -969,7 +994,9 @@ class FromXmlMixin:
             field_name = xml_element.tag
             if field_name == "ReportData":
                 # Store the entire XML element without parsing
-                init_args['ReportDataXML'] = xml_element
+                init_args['_report_data_xml'] = xml_element
+            # elif field_name == 'ColTitle':
+            #     pass
             elif field_name in field_names:
                 field = field_names[field_name]
                 field_type = cls._get_field_type(field)
@@ -1742,7 +1769,7 @@ class ReportModifiedDateRangeFilter(ToXmlMixin):
 
 
 @dataclass
-class ReportQueryMixin(ToXmlMixin, ReprMixin):
+class ReportQueryMixin(QBQueryMixin):
 
     class Meta:
         name = ""
@@ -1761,11 +1788,12 @@ class ReportQueryMixin(ToXmlMixin, ReprMixin):
             "type": "Element",
         },
     )
-    report_date_macro: Optional[QBDatesMacro] = field(
+    report_date_macro: Optional[str] = field(
         default=None,
         metadata={
             "name": "ReportDateMacro",
             "type": "Element",
+            "valid_values": VALID_REPORT_DATE_MACRO_VALUES,
         },
     )
     report_account_filter: Optional[ReportAccountFilter] = field(
@@ -1829,6 +1857,34 @@ class ReportQueryMixin(ToXmlMixin, ReprMixin):
     )
 
 
+@dataclass
+class ColTitle(FromXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "ColTitle"
+
+    title_row: Optional[int] = field(
+        default=None,
+        metadata={
+            "name": "titleRow",
+            "type": "Element",
+        },
+    )
+    title_value: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "titleRow",
+            "type": "Element",
+        },
+    )
+
+    @classmethod
+    def from_xml(cls, element):
+        instance = cls()
+        instance.title_row = int(element.get("titleRow"))
+        instance.title_value = element.get("value")
+        return instance
+
 
 @dataclass
 class ColDesc(FromXmlMixin, ReprMixin):
@@ -1836,7 +1892,7 @@ class ColDesc(FromXmlMixin, ReprMixin):
     class Meta:
         name = "ColDesc"
 
-    col_title: List[str] = field(
+    col_title: List[ColTitle] = field(
         default_factory=list,
         metadata={
             "name": "ColTitle",
@@ -1869,6 +1925,12 @@ class ColDesc(FromXmlMixin, ReprMixin):
     #         "required": True,
     #     },
     # )
+    @classmethod
+    def from_xml(cls, element):
+        instance = super().from_xml(element)
+        instance.col_id = int(element.get("colID"))
+        return instance
+
 
 @dataclass
 class RowData(FromXmlMixin, ReprMixin):
@@ -2066,6 +2128,24 @@ class ReportData(FromXmlMixin, ReprMixin):
     )
 
 @dataclass
+class ReportTxnTypeFilter(ToXmlMixin, ReprMixin):
+
+    class Meta:
+        name = "ReportTxnTypeFilter"
+
+    txn_type_filter: List[str] = field(
+        default_factory=lambda: ['All'],
+        metadata={
+            "name": "TxnTypeFilter",
+            "type": "Element",
+            "min_occurs": 1,
+            "required": True,
+            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
+        },
+    )
+
+
+@dataclass
 class ReportMixin(FromXmlMixin, ReprMixin):
 
     class Meta:
@@ -2142,6 +2222,159 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             return ReportData.from_xml(self._report_data_xml)
         return None
 
+    def _convert_data_type(value, data_type):
+        if value is None:
+            return None
+        try:
+            if data_type in {"AMTTYPE", "PRICETYPE"}:
+                return Decimal(value)
+            elif data_type in {"DATETYPE", "DATETIMETYPE"}:
+                qb_date = QBDates(value)
+                return qb_date.date
+            elif data_type in {"INTTYPE"}:
+                return int(value)
+            elif data_type in {"BOOLTYPE"}:
+                return value.lower() == "true"
+            else:
+                return value  # Default to string
+        except Exception:
+            return value  # Fallback if conversion fails
+
+    def _get_report_column_headers(self, with_row_type=False):
+        title_rows = {}
+        for col in self.col_desc:
+            # col_id = col.col_id
+            for title in col.col_title:
+                if title.title_row in title_rows.keys():
+                    if title.title_value:
+                        title_rows[title.title_row].append(title.title_value)
+                    else:
+                        title_rows[title.title_row].append('Column' + str(col.col_id).zfill(2))
+                else:
+                    if title.title_value:
+                        title_rows[title.title_row] = [title.title_value]
+                    else:
+                        title_rows[title.title_row] = ['Column' + str(col.col_id).zfill(2)]
+
+        # The highest numbered title_rows is the header right before the data.
+        # So the column headers of the dataframe are the title_rows with the highest key
+        col_headers = title_rows[max(title_rows.keys())]
+        if with_row_type:
+            col_headers = ['Column00'] + col_headers
+            return col_headers
+        else:
+            return col_headers
+
+    def _create_data_row(self, col_headers, row, with_row_type):
+        if with_row_type:
+            row_dict = {'Column00': 'RowData'}
+        else:
+            row_dict = {}
+        for data in row.findall('ColData'):
+            pass
+            # todo: loop through coldata and add each to row_dict
+        # row_dict = {'Column00': 'RowData', col_headers[1]: row.get('value')}
+        return row_dict
+
+    def _get_report_rows(self, col_headers, with_row_type=False):
+        rows = []
+        for row in self._report_data_xml:
+
+            if row.tag == 'DataRow' and with_row_type:
+                row_dict = self._create_data_row(col_headers, row, with_row_type)
+
+            elif row.tag == 'DataRow':
+                row_dict = self._create_data_row(col_headers, row, with_row_type)
+            elif row.tag == 'TextRow' and with_row_type:
+                row_dict = {'Column00': 'TextRow', col_headers[1]: row.get('value')}
+            elif row.tag == 'TextRow':
+                row_dict = {col_headers[0]: row.get('value')}
+            elif row.tag == 'SubtotalRow':
+                pass
+            elif row.tag == 'TotalRow':
+                pass
+            else:
+                # What else is there?
+                pass
+
+            rows.append(row_dict)
+        return rows
+
+
+    def to_dataframe(self, with_row_type=False) -> pd.DataFrame:
+        """Convert report_data into a Pandas DataFrame."""
+        if not self._report_data_xml:
+            return pd.DataFrame()
+        else:
+            col_headers = self._get_report_column_headers(with_row_type=with_row_type)
+            rows = self._get_report_rows(col_headers, with_row_type=with_row_type)
+            df = pd.DataFrame(rows, columns=col_headers)
+            return df
+
+
+@dataclass
+class AgingReportQuery(ReportQueryMixin):
+    FIELD_ORDER = [
+    "AgingReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
+    "AccountTypeFilter", "ListID", "FullName", "ListIDWithChildren", "FullNameWithChildren",
+    "EntityTypeFilter", "ItemTypeFilter", "ReportClassFilter", "TxnTypeFilter",
+    "FromReportModifiedDate", "ToReportModifiedDate", "ReportModifiedDateRangeMacro",
+    "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeColumnsBy", "IncludeSubcolumns",
+    "ReportCalendar", "ReturnRows", "ReturnColumns", "ReportBasis"
+    ]
+
+    class Meta:
+        name = "AgingReportQuery"
+
+    aging_report_type: str = field(
+        default='APAgingDetail',
+        metadata={
+            "name": "AgingReportType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_AGING_REPORT_TYPE_VALUES,
+        },
+    )
+    report_txn_type_filter: List[ReportTxnTypeFilter] = field(
+        default_factory=lambda: [ReportTxnTypeFilter()],
+        metadata={
+            "name": "ReportTxnTypeFilter",
+            "type": "Element",
+        },
+    )
+    include_column: Optional[List[str]] = field(
+        default=None,
+        metadata={
+            "name": "IncludeColumn",
+            "type": "Element",
+        },
+    )
+    include_accounts: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "IncludeAccounts",
+            "type": "Element",
+            "valid_values": ["All", "InUse"],
+        },
+    )
+    report_aging_as_of: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ReportAgingAsOf",
+            "type": "Element",
+            "valid_values": ["ReportEndDate", "Today"],
+        },
+    )
+
+
+@dataclass
+class AgingReport(ReportMixin):
+
+    class Meta:
+        name = "AgingReport"
+
+    Query: Type[AgingReportQuery] = AgingReportQuery
+
 
 @dataclass
 class CustomDetailReportQuery(ReportQueryMixin):
@@ -2165,16 +2398,15 @@ class CustomDetailReportQuery(ReportQueryMixin):
             "valid_values": ["CustomTxnDetail"],
         },
     )
-    report_txn_type_filter: Optional[str] = field(
-        default=None,
+    report_txn_type_filter: List[ReportTxnTypeFilter] = field(
+        default_factory=lambda: [ReportTxnTypeFilter()],
         metadata={
             "name": "ReportTxnTypeFilter",
             "type": "Element",
-            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
         },
     )
-    summarize_rows_by: Optional[str] = field(
-        default=None,
+    summarize_rows_by: str = field(
+        default='Account',
         metadata={
             "name": "SummarizeRowsBy",
             "type": "Element",
@@ -2182,11 +2414,11 @@ class CustomDetailReportQuery(ReportQueryMixin):
         },
     )
     include_column: List[str] = field(
-        default_factory=list,
+        default_factory=lambda: ['TxnID', 'Debit', 'Credit'],
         metadata={
-            "name": "Includecolumn",
+            "name": "IncludeColumn",
             "type": "Element",
-            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
+            "valid_values": VALID_INCLUDE_COLUMN_VALUES
         },
     )
     include_accounts: Optional[str] = field(
@@ -2245,20 +2477,27 @@ class CustomSummaryReportQuery(ReportQueryMixin):
             "valid_values": ["CustomSummary"],
         },
     )
-    report_txn_type_filter: Optional[str] = field(
-        default=None,
+    report_txn_type_filter: List[ReportTxnTypeFilter] = field(
+        default_factory=lambda: [ReportTxnTypeFilter()],
         metadata={
             "name": "ReportTxnTypeFilter",
             "type": "Element",
-            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
         },
     )
-    summarize_columns_by: Optional[str] = field(
-        default=None,
+    summarize_columns_by: str = field(
+        default='TotalOnly',
         metadata={
             "name": "SummarizeColumnsBy",
             "type": "Element",
             "valid_values": VALID_SUMMARIZE_COLUMNS_BY,
+        },
+    )
+    summarize_rows_by: str = field(
+        default='Account',
+        metadata={
+            "name": "SummarizeRowsBy",
+            "type": "Element",
+            "valid_values": VALID_SUMMARIZE_ROWS_BY,
         },
     )
     include_subcolumns: Optional[bool] = field(
@@ -2324,8 +2563,8 @@ class GeneralDetailReportQuery(ReportQueryMixin):
     class Meta:
         name = "GeneralDetailReportQuery"
 
-    general_detail_report_type: Optional[str] = field(
-        default=None,
+    general_detail_report_type: str = field(
+        default='TxnDetailByAccount',
         metadata={
             "name": "GeneralDetailReportType",
             "type": "Element",
@@ -2333,12 +2572,11 @@ class GeneralDetailReportQuery(ReportQueryMixin):
             "valid_values": VALID_GENERAL_DETAIL_REPORT_TYPE_VALUES,
         },
     )
-    report_txn_type_filter: Optional[str] = field(
-        default=None,
+    report_txn_type_filter: List[ReportTxnTypeFilter] = field(
+        default_factory=lambda: [ReportTxnTypeFilter()],
         metadata={
             "name": "ReportTxnTypeFilter",
             "type": "Element",
-            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
         },
     )
     summarize_rows_by: Optional[str] = field(
@@ -2349,12 +2587,11 @@ class GeneralDetailReportQuery(ReportQueryMixin):
             "valid_values": VALID_SUMMARIZE_ROWS_BY,
         },
     )
-    include_column: List[str] = field(
-        default_factory=list,
+    include_column: Optional[List[str]] = field(
+        default=None,
         metadata={
-            "name": "Includecolumn",
+            "name": "IncludeColumn",
             "type": "Element",
-            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
         },
     )
     include_accounts: Optional[str] = field(
@@ -2405,8 +2642,8 @@ class GeneralSummaryReportQuery(ReportQueryMixin):
     class Meta:
         name = "GeneralSummaryReportQuery"
 
-    general_summary_report_type: Optional[str] = field(
-        default=None,
+    general_summary_report_type: str = field(
+        default='TrialBalance',
         metadata={
             "name": "GeneralSummaryReportType",
             "type": "Element",
@@ -2414,12 +2651,11 @@ class GeneralSummaryReportQuery(ReportQueryMixin):
             "valid_values": VALID_GENERAL_SUMMARY_REPORT_TYPE_VALUES,
         },
     )
-    report_txn_type_filter: Optional[str] = field(
-        default=None,
+    report_txn_type_filter: List[ReportTxnTypeFilter] = field(
+        default_factory=lambda: [ReportTxnTypeFilter()],
         metadata={
             "name": "ReportTxnTypeFilter",
             "type": "Element",
-            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
         },
     )
     summarize_columns_by: Optional[str] = field(
@@ -2480,71 +2716,6 @@ class GeneralSummaryReport(ReportMixin):
     Query: Type[GeneralSummaryReportQuery] = GeneralSummaryReportQuery
 
 
-@dataclass
-class AgingReportQuery(ReportQueryMixin):
-    FIELD_ORDER = [
-    "AgingReportType", "DisplayReport", "ReportPeriod", "ReportDateMacro",
-    "AccountTypeFilter", "ListID", "FullName", "ListIDWithChildren", "FullNameWithChildren",
-    "EntityTypeFilter", "ItemTypeFilter", "ReportClassFilter", "TxnTypeFilter",
-    "FromReportModifiedDate", "ToReportModifiedDate", "ReportModifiedDateRangeMacro",
-    "ReportDetailLevelFilter", "ReportPostingStatusFilter", "SummarizeColumnsBy", "IncludeSubcolumns",
-    "ReportCalendar", "ReturnRows", "ReturnColumns", "ReportBasis"
-    ]
-
-    class Meta:
-        name = "AgingReportQuery"
-
-    aging_report_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "AgingReportType",
-            "type": "Element",
-            "required": True,
-            "valid_values": VALID_AGING_REPORT_TYPE_VALUES,
-        },
-    )
-    report_txn_type_filter: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ReportTxnTypeFilter",
-            "type": "Element",
-            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
-        },
-    )
-    include_column: List[str] = field(
-        default_factory=list,
-        metadata={
-            "name": "Includecolumn",
-            "type": "Element",
-            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
-        },
-    )
-    include_accounts: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "IncludeAccounts",
-            "type": "Element",
-            "valid_values": ["All", "InUse"],
-        },
-    )
-    report_aging_as_of: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ReportAgingAsOf",
-            "type": "Element",
-            "valid_values": ["ReportEndDate", "Today"],
-        },
-    )
-
-
-@dataclass
-class AgingReport(ReportMixin):
-
-    class Meta:
-        name = "AgingReport"
-
-    Query: Type[AgingReportQuery] = AgingReportQuery
-
 #todo:BudgetSummaryReportQueryRq
 
 
@@ -2561,8 +2732,8 @@ class PayrollDetailReportQuery(ReportQueryMixin):
     class Meta:
         name = "PayrollDetailReportQuery"
 
-    payroll_detail_report_type: Optional[str] = field(
-        default=None,
+    payroll_detail_report_type: str = field(
+        default='PayrollTransactionDetail',
         metadata={
             "name": "PayrollDetailReportType",
             "type": "Element",
@@ -2578,12 +2749,11 @@ class PayrollDetailReportQuery(ReportQueryMixin):
             "valid_values": VALID_SUMMARIZE_ROWS_BY,
         },
     )
-    include_column: List[str] = field(
-        default_factory=list,
+    include_column: Optional[List[str]] = field(
+        default=None,
         metadata={
-            "name": "Includecolumn",
+            "name": "IncludeColumn",
             "type": "Element",
-            "valid_values": VALID_INCLUDE_COLUMN_VALUES,
         },
     )
     include_accounts: Optional[str] = field(
@@ -2626,21 +2796,13 @@ class PayrollSummaryReportQuery(ReportQueryMixin):
     class Meta:
         name = "PayrollSummaryReportQuery"
 
-    payroll_summary_report_type: Optional[str] = field(
-        default=None,
+    payroll_summary_report_type: str = field(
+        default='PayrollSummary',
         metadata={
             "name": "PayrollSummaryReportType",
             "type": "Element",
             "required": True,
             "valid_values": ["EmployeeEarningsSummary", "PayrollLiabilityBalances", "PayrollSummary"],
-        },
-    )
-    report_txn_type_filter: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ReportTxnTypeFilter",
-            "type": "Element",
-            "valid_values": VALID_REPORT_TXN_TYPE_VALUES,
         },
     )
     summarize_columns_by: Optional[str] = field(
@@ -2680,14 +2842,6 @@ class PayrollSummaryReportQuery(ReportQueryMixin):
             "name": "ReturnColumns",
             "type": "Element",
             "valid_values": VALID_RETURN_COLUMNS,
-        },
-    )
-    report_basis: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "ReportBasis",
-            "type": "Element",
-            "valid_values": VALID_REPORT_BASIS,
         },
     )
 

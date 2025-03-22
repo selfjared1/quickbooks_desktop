@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
+from decimal import Decimal
 from src.quickbooks_desktop.quickbooks_desktop import (
-    QuickbooksDesktop, GeneralSummaryReport, FromXmlMixin, ColDesc
+    QuickbooksDesktop, GeneralSummaryReport, FromXmlMixin, ColDesc, CustomDetailReport
 )
 from dataclasses import fields
 from typing import List
@@ -10,8 +11,7 @@ from typing import List
 
 class TestReports(unittest.TestCase):
     def setUp(self):
-        self.sample_bs_standard_response = """
-        <?xml version="1.0" ?>
+        self.sample_bs_standard_response = """<?xml version="1.0" ?>
             <QBXML>
                 <QBXMLMsgsRs>
                     <GeneralSummaryReportQueryRs requestID="1" statusCode="0" statusSeverity="Info" statusMessage="Status OK">
@@ -313,22 +313,89 @@ class TestReports(unittest.TestCase):
             </QBXML>
             """
 
-    def test_report_to_df(self):
-        # response_xml = et.fromstring(self.sample_bs_standard_response)
-        qb = QuickbooksDesktop()
-        bs_report = qb._process_response(self.sample_bs_standard_response, 'instances_dict')
-        # QBXMLMsgsRs = response_xml.find('QBXMLMsgsRs')
-        # bs_xml = QBXMLMsgsRs.find('GeneralSummaryReportQueryRs')
-        # bs_report = GeneralSummaryReport.from_xml(bs_xml)
-        print(bs_report)
+    # def test_report_creation(self):
+    #     qb = QuickbooksDesktop()
+    #     response_dict = qb._process_response(self.sample_bs_standard_response, 'instances_dict')
+    #     bs_report = response_dict['GeneralSummaryReport'][0]
+    #     self.assertEqual(bs_report.num_col_title_rows, 1)
+    #     self.assertEqual(bs_report.num_columns, 2)
+    #     self.assertEqual(bs_report.num_rows, 71)
+    #     self.assertEqual(bs_report.report_basis, 'Accrual')
+    #     self.assertIsNotNone(bs_report._report_data_xml)
+    #     self.assertTrue(len(bs_report.col_desc)==2)
+    #     self.assertIsNone(bs_report.col_desc[0].col_title[0].title_value)
+    #     self.assertEqual(bs_report.col_desc[1].col_title[0].title_value, 'Mar 20, 25')
 
-    # def test_parse_field_according_to_type(self):
-    #     init_args = {}
-    #     col_desc = ColDesc()
-    #     field = Field(name='col_title',type=List[str],default_factory=list,init=True,repr=True,hash=None,compare=True,metadata={'name': 'ColTitle', 'type': 'Element', 'min_occurs': 1},kw_only=False,)
-    #     field_type = List[str]
-    #     xml_element = et.fromstring('<ColTitle titleRow="1"/>\n')
-    #     init_args = FromXmlMixin._parse_field_according_to_type(init_args, field, field_type, xml_element)
+    # def test_get_report_column_headers(self):
+    #     qb = QuickbooksDesktop()
+    #     response_dict = qb._process_response(self.sample_bs_standard_response, 'instances_dict')
+    #     bs_report = response_dict['GeneralSummaryReport'][0]
+    #     columns = bs_report._get_report_column_headers()
+    #     expected_columns = ['Column01',"Mar 20, 25"]
+    #     self.assertEqual(columns, expected_columns)
+
+    # def test_get_report_rows(self):
+    #     qb = QuickbooksDesktop()
+    #     response_dict = qb._process_response(self.sample_bs_standard_response, 'instances_dict')
+    #     bs_report = response_dict['GeneralSummaryReport'][0]
+    #     columns = bs_report._get_report_column_headers(with_row_type=True)
+    #     rows = bs_report._get_report_rows(columns, with_row_type=True)
+    #     expected_first_rows = [
+    #         {'Column00': "TextRow", 'Column01': "ASSETS", "Mar 20, 25": None},
+    #         {'Column00': "TextRow", 'Column01': "Current Assets", "Mar 20, 25": None},
+    #         {'Column00': "TextRow", 'Column01': "Checking/Savings", "Mar 20, 25": None},
+    #         {'Column00': "account", 'Column01': "Cash Held in Bank", "Mar 20, 25": Decimal(16125000.00)},
+    #         {'Column00': "account", 'Column01': "Sample Ltd - Chase 3465", "Mar 20, 25": Decimal(994626.18)},
+    #         {'Column00': "account", 'Column01': "Sample Ltd - Chase 5617", "Mar 20, 25": Decimal(280596.15)},
+    #         {'Column00': "SubtotalRow", 'Column01': "Sample Ltd - Chase 3465", "Mar 20, 25": Decimal(17400222.33)},
+    #     ]
+    #
+    #     expected_last_row = [
+    #         {'Column00': "TotalRow", 'Column01': "TOTAL LIABILITIES &amp; EQUITY", "Mar 20, 25": Decimal(20794230.74)},
+    #     ]
+    #
+    #     test_rows = rows[:7]
+    #     self.assertEqual(expected_first_rows, test_rows)
+    #
+    #     last_row = rows[-1:]
+    #     self.assertEqual(expected_last_row, last_row)
+
+        # """<ReportData>
+        #     <TextRow rowNumber="1" value="ASSETS"/>
+        #     <TextRow rowNumber="2" value="Current Assets"/>
+        #     <TextRow rowNumber="3" value="Checking/Savings"/>
+        #     <DataRow rowNumber="4">
+        #         <RowData rowType="account" value="Cash Held in Bank"/>
+        #         <ColData colID="1" value="Cash Held in Bank"/>
+        #         <ColData colID="2" value="16125000.00"/>
+        #     </DataRow>
+        #     <DataRow rowNumber="5">
+        #         <RowData rowType="account" value="Sample Ltd - Chase 3465"/>
+        #         <ColData colID="1" value="Sample Ltd - Chase 3465"/>
+        #         <ColData colID="2" value="994626.18"/>
+        #     </DataRow>
+        #     <DataRow rowNumber="6">
+        #         <RowData rowType="account" value="Sample Ltd - Chase 5617"/>
+        #         <ColData colID="1" value="Sample Ltd - Chase 5617"/>
+        #         <ColData colID="2" value="280596.15"/>
+        #     </DataRow>
+        #     <SubtotalRow rowNumber="7">
+        #         <ColData colID="1" value="Total Checking/Savings"/>
+        #         <ColData colID="2" value="17400222.33"/>
+        #     </SubtotalRow>"""
+        #
+        # """<TotalRow rowNumber="71">
+        #         <ColData colID="1" value="TOTAL LIABILITIES &amp; EQUITY"/>
+        #         <ColData colID="2" value="20794230.74"/>
+        #     </TotalRow>"""
+
+    def test_report_to_df(self):
+        qb = QuickbooksDesktop()
+        response_dict = qb._process_response(self.sample_bs_standard_response, 'instances_dict')
+        bs_report = response_dict['GeneralSummaryReport'][0]
+        df = bs_report.to_dataframe()
+        print(df)
+
 
     # def test_get_report_file_open(self):
     #     """
@@ -338,6 +405,18 @@ class TestReports(unittest.TestCase):
     #     report_query = GeneralSummaryReport.Query()
     #     report_query.general_summary_report_type = 'BalanceSheetStandard'
     #     report_query_xml = report_query.to_xml_rq()
+    #     report_rs = qb.send_xml(report_query_xml)
+    #     print(report_rs)
+
+    # def test_get_detail_report_file_open(self):
+    #     """
+    #     Only run this test if a company file is open.
+    #     """
+    #     qb = QuickbooksDesktop()
+    #     report_query = CustomDetailReport.Query()
+    #     report_query.report_date_macro = 'ThisYear'
+    #     # report_query.include_column = []
+    #     report_query_xml = report_query.to_xml()
     #     report_rs = qb.send_xml(report_query_xml)
     #     print(report_rs)
 

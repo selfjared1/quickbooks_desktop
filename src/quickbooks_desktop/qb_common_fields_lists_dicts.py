@@ -206,6 +206,13 @@ VALID_PAYROLL_DETAIL_REPORT_TYPE_VALUES = [
     "PayrollTransactionDetail", "PayrollTransactionsByPayee"
 ]
 
+VALID_REPORT_DATE_MACRO_VALUES = [
+    "All", "Today", "ThisWeek", "ThisWeekToDate", "ThisMonth", "ThisMonthToDate",
+    "ThisQuarter", "ThisQuarterToDate", "ThisYear", "ThisYearToDate", "Yesterday",
+    "LastWeek", "LastWeekToDate", "LastMonth", "LastMonthToDate", "LastQuarter",
+    "LastQuarterToDate", "LastYear", "LastYearToDate", "NextWeek", "NextFourWeeks",
+    "NextMonth", "NextQuarter", "NextYear"
+]
 
 
 list_id: Optional[str] = field(
