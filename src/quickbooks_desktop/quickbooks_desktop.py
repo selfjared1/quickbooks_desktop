@@ -244,11 +244,9 @@ class QuickbooksDesktop():
 
         """
         if self.qbXMLRP is None:
-            if self.company_file is None:
-                self.qbXMLRP = win32com.client.Dispatch(self.dispatch_str)
-            else:
-                print("company file isn't an option right now")
-                #todo: make a way to connect to a specific file location
+            self.qbXMLRP = win32com.client.Dispatch(self.dispatch_str)
+        else:
+            pass
 
     def open_connection(self):
         """
@@ -275,19 +273,22 @@ class QuickbooksDesktop():
             where QuickBooks Desktop cannot be closed.
         """
         try:
-            if self.connection_open:
-                self.ticket = self.qbXMLRP.BeginSession("", 0)
-                self.session_begun = True
-            else:
+            if not self.connection_open:
                 self.open_connection()
-                self.ticket = self.qbXMLRP.BeginSession("", 0)
-                self.session_begun = True
+            else:
+                pass
+            file_path = self.company_file if self.company_file else ""
+
+            self.ticket = self.qbXMLRP.BeginSession(file_path, 0)
+            self.session_begun = True
+
         except:
             try:
-                self.ticket = self.qbXMLRP.BeginSession("", 1)
+                file_path = self.company_file if self.company_file else ""
+                self.ticket = self.qbXMLRP.BeginSession(file_path, 1)
                 self.session_begun = True
             except Exception as e:
-                print(e)
+                logger.debug(e)
 
     def open_qb(self, application_name='accountingpy'):
         """
