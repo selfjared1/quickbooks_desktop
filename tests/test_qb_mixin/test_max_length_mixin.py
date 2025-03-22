@@ -1,6 +1,6 @@
 import unittest
 from dataclasses import dataclass, field
-from src.quickbooks_desktop.quickbooks_desktop import MaxLengthMixin
+from src.quickbooks_desktop.qb_objects import MaxLengthMixin
 
 
 # Sample dataclass to test the mixin

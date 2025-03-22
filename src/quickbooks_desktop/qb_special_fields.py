@@ -1,7 +1,8 @@
-import re
 from lxml import etree as et
-from .qb_common_fields_lists_dicts import *
+from dataclasses import dataclass, field
+from typing import List, Dict, Union, Optional
 import datetime as dt
+import re
 from dateutil import parser
 from datetime import timedelta, datetime
 from .utilities import snake_to_camel

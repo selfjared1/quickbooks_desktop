@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, JournalEntry
+from src.quickbooks_desktop.qb_objects import JournalEntry
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
 
 
 class TestQuickbooksDesktop(unittest.TestCase):

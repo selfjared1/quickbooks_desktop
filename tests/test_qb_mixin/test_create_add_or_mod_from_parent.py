@@ -2,10 +2,11 @@ import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
 from decimal import Decimal
-from src.quickbooks_desktop.quickbooks_desktop import (
-    QuickbooksDesktop, JournalEntry, Estimate, QBDateTime, InventoryAdjustmentLine, InventoryAdjustmentLineAdd,
+from src.quickbooks_desktop.qb_objects import (
+    JournalEntry, Estimate, QBDateTime, InventoryAdjustmentLine, InventoryAdjustmentLineAdd,
     ItemRef, QuantityAdjustment, ValueAdjustment, SerialNumberAdjustment, LotNumberAdjustment
 )
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
 
 
 class TestCopyFromParent(unittest.TestCase):

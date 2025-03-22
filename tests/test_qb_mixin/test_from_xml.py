@@ -3,7 +3,9 @@ from decimal import Decimal
 from lxml import etree as et
 from dataclasses import dataclass, field
 from typing import Optional, List
-from src.quickbooks_desktop.quickbooks_desktop import (
+
+import src.quickbooks_desktop.qb_common.qb_common_fields
+from src.quickbooks_desktop.qb_objects import (
     FromXmlMixin, CustomerRef, Invoice, InvoiceLine, JournalEntry,
 )
 from datetime import datetime
@@ -67,8 +69,8 @@ class TestFromXmlMixin(unittest.TestCase):
         element = et.fromstring(xml_str)
         instance = CustomerRef.from_xml(element)
 
-        self.assertEqual(instance.list_id, "80000001-1326159291")
-        self.assertEqual(instance.full_name, "Netelco, Incorporated")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, "80000001-1326159291")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, "Netelco, Incorporated")
 
     def test_basic_from_xml_04(self):
         # Test case for a simple XML element matching defined fields
@@ -93,7 +95,7 @@ class TestFromXmlMixin(unittest.TestCase):
         instance = InvoiceLine.from_xml(element)
 
         self.assertEqual(instance.txn_line_id, "4-1326159535")
-        self.assertEqual(instance.amount, Decimal(100.00))
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.amount, Decimal(100.00))
 
 
     def test_basic_from_xml_05(self):
@@ -137,7 +139,7 @@ class TestFromXmlMixin(unittest.TestCase):
 
         self.assertEqual(len(instance.invoice_lines), 2)
         self.assertEqual(instance.invoice_lines[0].txn_line_id, "3-1326159535")
-        self.assertEqual(instance.invoice_lines[0].item_ref.full_name, "Estimating")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, "Estimating")
         self.assertEqual(instance.invoice_lines[1].desc, "Product Custom Description")
 
 
@@ -324,36 +326,36 @@ class TestFromXmlMixin(unittest.TestCase):
         self.assertFalse(instance.is_adjustment)
         self.assertFalse(instance.is_home_currency_adjustment)
         self.assertFalse(instance.is_amounts_entered_in_home_currency)
-        self.assertEqual(instance.currency_ref.list_id, '80000096-1622403877')
-        self.assertEqual(instance.currency_ref.full_name, 'US Dollar')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, '80000096-1622403877')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, 'US Dollar')
         self.assertEqual(instance.exchange_rate, 1)
 
         # Assertions for JournalCreditLine
         self.assertEqual(len(instance.journal_credit_lines), 1)
         self.assertEqual(instance.journal_credit_lines[0].txn_line_id, "19C73-1627671245")
-        self.assertEqual(instance.journal_credit_lines[0].account_ref.list_id, "80000015-1622404240")
-        self.assertEqual(instance.journal_credit_lines[0].account_ref.full_name, "Notes - Sample, Inc.")
-        self.assertEqual(instance.journal_credit_lines[0].amount, 210000.00)
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, "80000015-1622404240")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, "Notes - Sample, Inc.")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.amount, 210000.00)
         self.assertEqual(instance.journal_credit_lines[0].memo, "original purchase")
 
         # Assertions for JournalDebitLines
         self.assertEqual(len(instance.journal_debit_lines), 3)
 
         self.assertEqual(instance.journal_debit_lines[0].txn_line_id, "19C74-1627671245")
-        self.assertEqual(instance.journal_debit_lines[0].account_ref.list_id, "8000005D-1627666939")
-        self.assertEqual(instance.journal_debit_lines[0].account_ref.full_name, "Automobiles")
-        self.assertEqual(instance.journal_debit_lines[0].amount, 4500.00)
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, "8000005D-1627666939")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, "Automobiles")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.amount, 4500.00)
         self.assertEqual(instance.journal_debit_lines[0].memo, "original purchase")
 
         self.assertEqual(instance.journal_debit_lines[1].txn_line_id, "19C75-1627671245")
-        self.assertEqual(instance.journal_debit_lines[1].account_ref.list_id, "8000005E-1627666939")
-        self.assertEqual(instance.journal_debit_lines[1].account_ref.full_name, "Furniture & Fixtures")
-        self.assertEqual(instance.journal_debit_lines[1].amount, 2000.00)
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, "8000005E-1627666939")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, "Furniture & Fixtures")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.amount, 2000.00)
         self.assertEqual(instance.journal_debit_lines[1].memo, "original purchase")
 
         self.assertEqual(instance.journal_debit_lines[2].txn_line_id, "19C76-1627671245")
-        self.assertEqual(instance.journal_debit_lines[2].account_ref.list_id, "8000005C-1627666939")
-        self.assertEqual(instance.journal_debit_lines[2].account_ref.full_name, "Inventory")
-        self.assertEqual(instance.journal_debit_lines[2].amount, 203500.00)
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, "8000005C-1627666939")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, "Inventory")
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.amount, 203500.00)
         self.assertEqual(instance.journal_debit_lines[2].memo, "original purchase")
 

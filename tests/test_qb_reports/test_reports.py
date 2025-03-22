@@ -3,8 +3,7 @@ import pandas as pd
 import numpy as np
 from decimal import Decimal, ROUND_HALF_UP
 from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
-
-
+from src.quickbooks_desktop.qb_objects import GeneralSummaryReport
 
 
 class TestReports(unittest.TestCase):
@@ -397,16 +396,3 @@ class TestReports(unittest.TestCase):
     #     report_rs = qb.send_xml(report_query_xml)
     #     print(report_rs)
 
-# class TestXMLParsing(unittest.TestCase):
-#     def test_parse_field_according_to_type(self):
-#         init_args = {}
-#
-#         col_desc_fields = {field.metadata["name"]: field for field in fields(ColDesc)}
-#         test_field = col_desc_fields["ColTitle"]  # Retrieve the correct field
-#         field_type = FromXmlMixin._get_field_type(test_field)  # Get the proper field type
-#
-#         xml_element = et.fromstring('<ColTitle>Title 1</ColTitle>')
-#
-#         init_args = FromXmlMixin._parse_field_according_to_type(init_args, test_field, field_type, xml_element)
-#
-#         self.assertEqual(init_args["col_title"], ["Title 1"])  # Expected output

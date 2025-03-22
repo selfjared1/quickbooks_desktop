@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from lxml import etree as et
+from src.quickbooks_desktop.qb_objects import GeneralSummaryReport
 from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
 
 
@@ -14,16 +15,6 @@ class TestQuickbooksDesktop(unittest.TestCase):
         # Check that Dispatch was called
         mock_dispatch.assert_called_once_with("QBXMLRP2.RequestProcessor")
         self.assertIsNotNone(qb_desktop.qbXMLRP)
-
-    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
-    def test_dispatch_with_company_file(self, mock_dispatch):
-        qb_desktop = QuickbooksDesktop(company_file="path/to/company.qbw")
-        qb_desktop.dispatch()
-
-        # Since the company file functionality is not implemented, test that the output is "company file isn't an option right now"
-        with patch('builtins.print') as mocked_print:
-            qb_desktop.dispatch()
-            mocked_print.assert_called_once_with("company file isn't an option right now")
 
     @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_open_connection(self, mock_dispatch):
@@ -117,4 +108,14 @@ class TestQuickbooksDesktop(unittest.TestCase):
         mock_qbXMLRP.CloseConnection.assert_called_once()
         self.assertFalse(qb_desktop.session_begun)
         self.assertFalse(qb_desktop.connection_open)
+
+
+    #only uncomment if you actually plan on opening a company file
+    # def test_open_company_file(self):
+    #     qb = QuickbooksDesktop(company_file=r"C:\Users\JaredSelf\OneDrive - Partner In Accounting\Documents\QBW\Impladent\14Impladent LTD..QBW")
+    #     report_query = GeneralSummaryReport.Query()
+    #     report_query.general_summary_report_type = 'BalanceSheetStandard'
+    #     report_query_xml = report_query.to_xml_rq()
+    #     report_rs = qb.send_xml(report_query_xml)
+    #     print(report_rs)
 

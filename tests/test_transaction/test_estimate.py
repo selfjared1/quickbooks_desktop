@@ -3,7 +3,11 @@ from unittest.mock import patch, MagicMock
 from lxml import etree as et
 from decimal import Decimal
 from datetime import datetime
-from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop, Estimate, EstimateLine, QBDateTime
+
+import src.quickbooks_desktop.qb_common.qb_common_fields
+from src.quickbooks_desktop.qb_objects import Estimate, EstimateLine, QBDateTime
+from src.quickbooks_desktop.quickbooks_desktop import QuickbooksDesktop
+
 
 class TestCreateEstimate(unittest.TestCase):
 
@@ -391,13 +395,13 @@ class TestCreateEstimate(unittest.TestCase):
 
         # Nested CustomerRef
         self.assertIsNotNone(estimate.customer_ref)
-        self.assertEqual(estimate.customer_ref.list_id, '80004587-1623722347')
-        self.assertEqual(estimate.customer_ref.full_name, 'Sample Customer 1')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, '80004587-1623722347')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, 'Sample Customer 1')
 
         # Nested TemplateRef
         self.assertIsNotNone(estimate.template_ref)
-        self.assertEqual(estimate.template_ref.list_id, '80000047-1644348521')
-        self.assertEqual(estimate.template_ref.full_name, 'Sample Quote 1')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, '80000047-1644348521')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, 'Sample Quote 1')
 
         # DataExtRet checks
         self.assertEqual(len(estimate.data_ext), 10)
@@ -414,10 +418,10 @@ class TestCreateEstimate(unittest.TestCase):
         # Check EstimateLineRet and DataExt within it
         self.assertEqual(len(estimate.estimate_lines), 10)
         self.assertEqual(estimate.estimate_lines[0].txn_line_id, 'DCEF1-1675796632')
-        self.assertEqual(estimate.estimate_lines[0].item_ref.list_id, '800016D0-1623185743')
-        self.assertEqual(estimate.estimate_lines[0].item_ref.full_name, 'Y1002892')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.list_id, '800016D0-1623185743')
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.full_name, 'Y1002892')
         self.assertEqual(estimate.estimate_lines[0].quantity, 2)
         self.assertEqual(estimate.estimate_lines[0].rate, Decimal('891'))
-        self.assertEqual(estimate.estimate_lines[0].amount, Decimal('1782.00'))
+        self.assertEqual(src.quickbooks_desktop.qb_common.qb_common_fields.amount, Decimal('1782.00'))
         self.assertEqual(estimate.estimate_lines[0].data_ext[0].data_ext_name, 'Discount Code')
         self.assertEqual(estimate.estimate_lines[0].data_ext[0].data_ext_value, 'N')

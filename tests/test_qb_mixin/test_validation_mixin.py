@@ -1,7 +1,7 @@
 import unittest
 from dataclasses import dataclass, field
 from typing import List, Optional
-from src.quickbooks_desktop.quickbooks_desktop import ValidationMixin
+from src.quickbooks_desktop.qb_objects import ValidationMixin
 
 # Re-defining ValidationMixin after kernel reset
 
