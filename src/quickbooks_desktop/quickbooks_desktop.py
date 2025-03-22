@@ -21,6 +21,23 @@ logger.addHandler(logging.NullHandler())
 
 # region Connection To Desktop And Utilities
 
+COL_DATA_TYPE_MAP = {
+    "IDTYPE": str,
+    "GUIDTYPE": str,
+    "STRTYPE": str,
+    "BOOLTYPE": bool,
+    "DATETYPE": QBDates,
+    "DATETIMETYPE": QBDateTime,
+    "TIMEINTERVALTYPE": QBTime,
+    "AMTTYPE": Decimal,
+    "PRICETYPE": Decimal,
+    "QUANTYPE": float,
+    "PERCENTTYPE": float,
+    "ENUMTYPE": str,
+    "INTTYPE": int,
+}
+
+
 
 @dataclass
 class ErrorRecovery:
@@ -402,7 +419,7 @@ class QuickbooksDesktop():
         return instances
 
     def _break_response_into_single_instances(self, responses):
-        print('Begun _break_response_into_single_instances')
+        logger.debug('Begun _break_response_into_single_instances')
         instances = {}
         for response in responses:
             class_name = self._get_class_name_from_response_tag(response.tag)
@@ -1917,18 +1934,18 @@ class ColDesc(FromXmlMixin, ReprMixin):
             "required": True,
         },
     )
-    # data_type: Optional[ColDescDataType] = field(
-    #     default=None,
-    #     metadata={
-    #         "name": "dataType",
-    #         "type": "Attribute",
-    #         "required": True,
-    #     },
-    # )
+    data_type: Optional[Type] = field(
+        default=None,
+        metadata={
+            "name": "dataType",
+            "type": "Attribute",
+        },
+    )
     @classmethod
     def from_xml(cls, element):
         instance = super().from_xml(element)
         instance.col_id = int(element.get("colID"))
+        instance.data_type = COL_DATA_TYPE_MAP[element.get('dataType')]
         return instance
 
 
@@ -2222,24 +2239,6 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             return ReportData.from_xml(self._report_data_xml)
         return None
 
-    def _convert_data_type(value, data_type):
-        if value is None:
-            return None
-        try:
-            if data_type in {"AMTTYPE", "PRICETYPE"}:
-                return Decimal(value)
-            elif data_type in {"DATETYPE", "DATETIMETYPE"}:
-                qb_date = QBDates(value)
-                return qb_date.date
-            elif data_type in {"INTTYPE"}:
-                return int(value)
-            elif data_type in {"BOOLTYPE"}:
-                return value.lower() == "true"
-            else:
-                return value  # Default to string
-        except Exception:
-            return value  # Fallback if conversion fails
-
     def _get_report_column_headers(self, with_row_type=False):
         title_rows = {}
         for col in self.col_desc:
@@ -2267,13 +2266,42 @@ class ReportMixin(FromXmlMixin, ReprMixin):
 
     def _create_data_row(self, col_headers, row, with_row_type):
         if with_row_type:
-            row_dict = {'Column00': 'RowData'}
+            row_data = row.find('RowData')
+            if row_data is not None:
+                row_type = row_data.get('rowType')
+            else:
+                row_type = row.find('ColData').get('value')
+            row_dict = {'Column00': row_type}
+            col_desc = [ColDesc(data_type=str)] + self.col_desc
         else:
             row_dict = {}
-        for data in row.findall('ColData'):
-            pass
-            # todo: loop through coldata and add each to row_dict
-        # row_dict = {'Column00': 'RowData', col_headers[1]: row.get('value')}
+            col_desc = self.col_desc
+
+        for col_data in row.findall('ColData'):
+            col_index = int(col_data.get('colID')) - (not(with_row_type))
+            col_header = col_headers[col_index]
+            data_type = col_desc[col_index].data_type
+            if data_type == Decimal:
+                col_value = data_type(col_data.get('value'))
+                col_value = col_value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            else:
+                col_value = data_type(col_data.get('value'))
+            row_dict[col_header] = col_value
+        return row_dict
+
+    def _create_total_row(self, col_headers, row, with_row_type):
+        if with_row_type:
+            row_dict = {'Column00': row.tag}
+            col_desc = [ColDesc(data_type=str)] + self.col_desc
+        else:
+            row_dict = {}
+            col_desc = self.col_desc
+
+        for col_data in row.findall('ColData'):
+            col_index = int(col_data.get('colID')) - (not(with_row_type))
+            col_header = col_headers[col_index]
+            col_value = col_desc[col_index].data_type(col_data.get('value'))
+            row_dict[col_header] = col_value
         return row_dict
 
     def _get_report_rows(self, col_headers, with_row_type=False):
@@ -2290,9 +2318,9 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             elif row.tag == 'TextRow':
                 row_dict = {col_headers[0]: row.get('value')}
             elif row.tag == 'SubtotalRow':
-                pass
+                row_dict = self._create_total_row(col_headers, row, with_row_type)
             elif row.tag == 'TotalRow':
-                pass
+                row_dict = self._create_total_row(col_headers, row, with_row_type)
             else:
                 # What else is there?
                 pass

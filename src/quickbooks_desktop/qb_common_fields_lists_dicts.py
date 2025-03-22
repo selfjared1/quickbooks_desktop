@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, fields, is_dataclass, MISSING
 from typing import Optional, Union, Dict, Type, Any, get_origin, get_args, List, TypeVar
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 import re
 
 
@@ -213,6 +213,7 @@ VALID_REPORT_DATE_MACRO_VALUES = [
     "LastQuarterToDate", "LastYear", "LastYearToDate", "NextWeek", "NextFourWeeks",
     "NextMonth", "NextQuarter", "NextYear"
 ]
+
 
 
 list_id: Optional[str] = field(
