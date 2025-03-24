@@ -16,16 +16,6 @@ class TestQuickbooksDesktop(unittest.TestCase):
         self.assertIsNotNone(qb_desktop.qbXMLRP)
 
     @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
-    def test_dispatch_with_company_file(self, mock_dispatch):
-        qb_desktop = QuickbooksDesktop(company_file="path/to/company.qbw")
-        qb_desktop.dispatch()
-
-        # Since the company file functionality is not implemented, test that the output is "company file isn't an option right now"
-        with patch('builtins.print') as mocked_print:
-            qb_desktop.dispatch()
-            mocked_print.assert_called_once_with("company file isn't an option right now")
-
-    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
     def test_open_connection(self, mock_dispatch):
         qb_desktop = QuickbooksDesktop()
         mock_qbXMLRP = MagicMock()

@@ -2,7 +2,6 @@ import win32com.client
 import threading
 import time
 import logging
-import easygui
 import html
 from dataclasses import field
 from collections import defaultdict
@@ -345,7 +344,14 @@ class QuickbooksDesktop():
         else:
             raise TypeError(f"requestXML is {type(requestXML)} type but it must be either a string, xml.etree.ElementTree.Element, lxml.etree.Element, or a list of these types")
 
-
+    def _ensure_rq_structure(self, requestXML):
+        if requestXML.tag[-5:] == 'Query':
+            requestXML.tag = requestXML.tag + 'Rq'
+            return requestXML
+        else:
+            Rq = et.Element(requestXML.tag + 'Rq')
+            Rq.append(requestXML)
+            return Rq
 
     def _ensure_qbxml_structure(self, requestXML):
         """
@@ -359,6 +365,7 @@ class QuickbooksDesktop():
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
             for element in requestXML:
+                rq = self._ensure_rq_structure(element)
                 QBXMLMsgsRq.append(element)
         elif requestXML.tag == 'QBXML':
             QBXML = requestXML
@@ -371,16 +378,11 @@ class QuickbooksDesktop():
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
             QBXMLMsgsRq.append(requestXML)
-        elif requestXML.tag[-5:] == 'Query':
-            requestXML.tag = requestXML.tag + 'Rq'
-            QBXML = et.Element('QBXML')
-            QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
-            QBXMLMsgsRq.append(requestXML)
         else:
             # Neither QBXML nor QBXMLMsgsRq is the root, and the tag does not ends in Rq
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
-            Rq = et.SubElement(QBXMLMsgsRq, requestXML.tag + 'Rq')
+            Rq = self._ensure_rq_structure(requestXML)
             Rq.append(requestXML)
 
         return QBXML, QBXMLMsgsRq
@@ -592,15 +594,19 @@ class QuickbooksDesktop():
 
         logger.debug(f'Opening connection to QuickBooks')
         if not self.qbXMLRP:
-            self.qbXMLRP = self.dispatch()
-            self.open_connection()
-            self.begin_session()
-        elif not self.session_begun:
-            self.begin_session()
-            print('open session')
+            self.dispatch()
         else:
+            pass
+
+        if not self.connection_open:
             self.open_connection()
+        else:
+            pass
+
+        if not self.session_begun:
             self.begin_session()
+        else:
+            pass
 
         logger.debug(f'Connection to QuickBooks is open')
         try:
