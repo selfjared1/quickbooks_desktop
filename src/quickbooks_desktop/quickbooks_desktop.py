@@ -293,8 +293,11 @@ class QuickbooksDesktop():
         """
         The purpose of this is to combine open_connection and begin_session into a single command.
         """
-
-        self.open_connection(application_name)
+        if self.application_name != 'accountingpy':
+            pass
+        else:
+            self.application_name = application_name
+        self.open_connection()
         self.begin_session()
 
     def _convert_to_lxml(self, requestXML):
@@ -383,7 +386,7 @@ class QuickbooksDesktop():
             QBXML = et.Element('QBXML')
             QBXMLMsgsRq = et.SubElement(QBXML, 'QBXMLMsgsRq', onError=self.on_error)
             Rq = self._ensure_rq_structure(requestXML)
-            Rq.append(requestXML)
+            QBXMLMsgsRq.append(Rq)
 
         return QBXML, QBXMLMsgsRq
 
@@ -592,6 +595,7 @@ class QuickbooksDesktop():
         else:
             full_request = requestXML
 
+        logger.debug(f'Full Request = {full_request}')
         logger.debug(f'Opening connection to QuickBooks')
         if not self.qbXMLRP:
             self.dispatch()
@@ -612,14 +616,14 @@ class QuickbooksDesktop():
         try:
             responseXML = self.qbXMLRP.ProcessRequest(self.ticket, full_request)
         except Exception as e:
-            easygui.msgbox(f"There was an error trying to send data to QuickBooks. Error: {e}", title="Error")
             if self.keep_session_open:
                 pass
             elif self.keep_connection_open:
                 self.qbXMLRP.EndSession()
             else:
                 self.close_qb()
-            logger.debug(e)
+            logger.debug(f"There was an error trying to send data to QuickBooks. Error: {e}", title="Error")
+            raise(f"There was an error trying to send data to QuickBooks. Error: {e}")
             return e
 
         if self.keep_session_open:
@@ -33850,7 +33854,7 @@ class TransactionDateRangeFilter(QBMixin):
     ]
 
     class Meta:
-        name = "TransactionDateRangeFilter"
+        name = "TxnDateRangeFilter"
 
     from_txn_date: Optional[QBDates] = field(
         default=None,
