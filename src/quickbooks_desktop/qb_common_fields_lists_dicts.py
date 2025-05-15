@@ -214,6 +214,22 @@ VALID_REPORT_DATE_MACRO_VALUES = [
     "NextMonth", "NextQuarter", "NextYear"
 ]
 
+VALID_TXN_DISPLAY_ADD_TYPE_VALUES = [
+    "Bill", "BillPayment", "BuildAssembly", "Charge", "Check",
+    "CreditCardCharge", "CreditCardCredit", "CreditMemo", "Deposit", "Estimate",
+    "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry", "PurchaseOrder",
+    "ReceivePayment", "SalesOrder", "SalesReceipt", "SalesTaxPaymentCheck", "VendorCredit"
+]
+
+VALID_TXN_DISPLAY_MOD_TYPE_VALUES = [
+    "Bill", "BillPaymentCheck", "BillPaymentCreditCard", "BuildAssembly",
+    "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
+    "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment",
+    "Invoice", "ItemReceipt", "JournalEntry", "PurchaseOrder",
+    "ReceivePayment", "SalesOrder", "SalesReceipt", "SalesTaxPaymentCheck",
+    "VendorCredit"
+]
+
 
 
 list_id: Optional[str] = field(

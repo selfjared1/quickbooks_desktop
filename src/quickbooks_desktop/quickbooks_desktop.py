@@ -215,6 +215,7 @@ class QBRequests:
         return instance
 
 
+
 class QuickbooksDesktop():
     """
     You'll need to run this in 32 Bit Python to work.
@@ -666,6 +667,30 @@ class QuickbooksDesktop():
        """
         self.end_session()
         self.close_connection()
+
+    def open_transaction(self, txn_type: str, txn_id: str):
+        """
+        Opens a transaction in QuickBooks Desktop using TxnDisplayAdd.
+
+        :param txn_type: A string such as 'Invoice', 'ReceivePayment', etc.
+        :param txn_id: The TxnID of the transaction to open.
+        """
+        logger.debug(f"[QuickbooksDesktop] Attempting to open {txn_type} with TxnID={txn_id}")
+
+        if not txn_type or not txn_id:
+            raise ValueError("Both txn_type and txn_id must be provided.")
+
+        # Build the request using your dataclass
+        txn_display_add = TxnDisplayAdd(
+            txn_display_add_type=txn_type,
+            entity_ref=EntityRef(list_id=txn_id)
+        )
+        request_xml = txn_display_add.to_xml_rq()
+
+        # Send to QuickBooks
+        logger.debug(f"[QuickbooksDesktop] Sending TxnDisplayAdd for type {txn_type} and ID {txn_id}")
+        self.send_xml(request_xml, response_type="none")
+        logger.info(f"[QuickbooksDesktop] Successfully requested QuickBooks to display {txn_type}: {txn_id}")
 
 
 class EasyGuiPopup:
@@ -2899,6 +2924,11 @@ class PayrollSummaryReport(ReportMixin):
 
 
 # region Refs
+
+@dataclass
+class EntityRef(QBRefMixin):
+    class Meta:
+        name = "EntityRef"
 
 
 @dataclass
@@ -21623,6 +21653,52 @@ class Vendors(PluralMixin, PluralListMixin):
 
 
 # region Transactions
+
+@dataclass
+class TxnDisplayAdd(QBAddRqMixin):
+    class Meta:
+        name = "TxnDisplayAdd"
+
+    txn_display_add_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnDisplayAddType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_TXN_DISPLAY_ADD_TYPE_VALUES,
+        },
+    )
+    entity_ref: Optional[EntityRef] = field(
+        default=None,
+        metadata={
+            "name": "EntityRef",
+            "type": "Element",
+        },
+    )
+
+@dataclass
+class TxnDisplayMod(QBModRqMixin):
+
+    class Meta:
+        name = "TxnDisplayMod"
+
+    txn_display_mod_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnDisplayModType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_TXN_DISPLAY_MOD_TYPE_VALUES
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
 
 
 @dataclass
