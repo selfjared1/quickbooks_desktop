@@ -1,13 +1,10 @@
 import win32com.client
-import threading
-import time
 import logging
 import html
 from dataclasses import field
 from collections import defaultdict
 import xml.etree.ElementTree as ETree
-from xml.sax.saxutils import unescape, escape
-from lxml import etree as et
+from xml.sax.saxutils import unescape
 from .qb_special_fields import *
 from .utilities import encode_special_characters
 from functools import cached_property
@@ -215,7 +212,6 @@ class QBRequests:
         return instance
 
 
-
 class QuickbooksDesktop():
     """
     You'll need to run this in 32 Bit Python to work.
@@ -290,16 +286,18 @@ class QuickbooksDesktop():
             except Exception as e:
                 logger.debug(e)
 
-    def open_qb(self, application_name='accountingpy'):
+    def open_qb(self, application_name='accountingpy', keep_open=False):
         """
         The purpose of this is to combine open_connection and begin_session into a single command.
         """
-        if self.application_name != 'accountingpy':
-            pass
-        else:
-            self.application_name = application_name
+        self.application_name = application_name
         self.open_connection()
         self.begin_session()
+        if keep_open:
+            self.keep_connection_open = True
+            self.keep_session_open = True
+        else:
+            pass
 
     def _convert_to_lxml(self, requestXML):
         """
@@ -430,6 +428,10 @@ class QuickbooksDesktop():
         instances = {}
         for response in responses:
             class_name = self._get_class_name_from_response_tag(response.tag)
+            if class_name == 'Class':
+                class_name = 'ClassInQB'
+            else:
+                pass
             try:
                 cls = globals().get(class_name)
                 elements = response.getchildren()
@@ -447,31 +449,32 @@ class QuickbooksDesktop():
                     instance_list.append(single_instance)
                     i += 1
                     # print(i)
-                instances[class_name] = instance_list
+                if len(instances) and class_name in instances.keys():
+                    instances[class_name].extend(instance_list)
+                else:
+                    instances[class_name] = instance_list
             except (ModuleNotFoundError, AttributeError) as e:
                 logger.debug(f"Error loading class for {class_name}: {e}")
         logger.debug('Finished _break_response_into_single_instances')
         return instances
 
-    def _break_response_into_plural_instances(self, responses):
-        print('begin _break_response_into_plural_instances')
+    def _break_response_into_batch_instances(self, responses):
+        logger.debug('begin _break_response_into_batch_instances')
         instances = self._break_response_into_single_instances(responses)
-        plural_instances = []
+        batch_instances = []
         for class_name, list_of_instances in instances.items():
             try:
                 cls = globals().get(class_name)
-                plural_cls = globals().get(cls.Meta.plural_class_name)
-                print(f'creating plural_instance {class_name}')
-                plural_instance = plural_cls.from_list(list_of_instances)
-                print(f'Finished creating plural_instance {class_name}')
-                if len(plural_instance):
-                    plural_instances.append(plural_instance)
+                batch_cls = globals().get(cls.Meta.batch_class_name)
+                batch_instance = batch_cls.from_list(list_of_instances)
+                if len(batch_instance):
+                    batch_instances.append(batch_instance)
                 else:
                     pass
             except Exception as e:
-                print(f"Error loading class for {class_name}: {e}")
-        print('end _break_response_into_plural_instances')
-        return plural_instances
+                logger.error(f"Error loading class for {class_name}: {e}")
+        logger.debug('end _break_response_into_batch_instances')
+        return batch_instances
 
     def _create_full_request(self, requestXML, encoding="ISO-8859-1"):
         """
@@ -522,6 +525,9 @@ class QuickbooksDesktop():
         #todo:
         # validate_qbxml(full_request, self.SDK_version)
 
+        #todo:
+        # <ClassInQBQueryRq requestID="1"/> is coming across instead of ClassQuery
+
         logger.debug(f'full_request to go to qb: {full_request}')
         return full_request
 
@@ -530,16 +536,15 @@ class QuickbooksDesktop():
         valid_response types can be one of the following:
             'raw_str' -> unedited response and the default response
             'response_list' -> a list of lxml.etree.Element objects representing the responses.
-            'plural' -> a list of plural class instances
+            'batch' -> a list of batch class instances
             'response_dict' -> a dictionary with the key being the request_id and the value being another dictionary with:
                     'status_code'
                     'status_severity'
                     'status_message'
-                    'plural_list'
+                    'batch_list'
             'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
             'none' -> response won't be returned
         """
-
         if response_type == 'raw_str':
             return responseXML
         elif response_type == 'none':
@@ -549,6 +554,7 @@ class QuickbooksDesktop():
                 responseXML = responseXML.encode('ISO-8859-1')
             else:
                 pass
+            logger.debug(responseXML)
             QBXML = et.fromstring(responseXML)
             QBXMLMsgsRs = QBXML.find('QBXMLMsgsRs')
             logger.debug('QBXMLMsgsRs found')
@@ -562,9 +568,9 @@ class QuickbooksDesktop():
                 elif response_type == 'instances_dict':
                     instances = self._break_response_into_single_instances(responses)
                     return instances
-                elif response_type == 'plural_list':
-                    plural_instances = self._break_response_into_plural_instances(responses)
-                    return plural_instances
+                elif response_type == 'batch_list':
+                    batch_instances = self._break_response_into_batch_instances(responses)
+                    return batch_instances
                 else:
                     return None
             else:
@@ -581,7 +587,7 @@ class QuickbooksDesktop():
                     'statusMessage'
                     'response_list'
             'instances_dict' -> a dict with the key being the main class and the value being a list of initialized classes.
-            'plural_list' -> a list of plural class instances
+            'batch_list' -> a list of batch class instances
             'none' -> response won't be returned
         This method
             1. finishes the XML build
@@ -623,7 +629,7 @@ class QuickbooksDesktop():
                 self.qbXMLRP.EndSession()
             else:
                 self.close_qb()
-            logger.debug(f"There was an error trying to send data to QuickBooks. Error: {e}", title="Error")
+            logger.debug(f"There was an error trying to send data to QuickBooks. Error: {e}")
             raise(f"There was an error trying to send data to QuickBooks. Error: {e}")
             return e
 
@@ -667,51 +673,6 @@ class QuickbooksDesktop():
        """
         self.end_session()
         self.close_connection()
-
-    def open_transaction(self, txn_type: str, txn_id: str):
-        """
-        Opens a transaction in QuickBooks Desktop using TxnDisplayAdd.
-
-        :param txn_type: A string such as 'Invoice', 'ReceivePayment', etc.
-        :param txn_id: The TxnID of the transaction to open.
-        """
-        logger.debug(f"[QuickbooksDesktop] Attempting to open {txn_type} with TxnID={txn_id}")
-
-        if not txn_type or not txn_id:
-            raise ValueError("Both txn_type and txn_id must be provided.")
-
-        # Build the request using your dataclass
-        txn_display_add = TxnDisplayAdd(
-            txn_display_add_type=txn_type,
-            entity_ref=EntityRef(list_id=txn_id)
-        )
-        request_xml = txn_display_add.to_xml_rq()
-
-        # Send to QuickBooks
-        logger.debug(f"[QuickbooksDesktop] Sending TxnDisplayAdd for type {txn_type} and ID {txn_id}")
-        self.send_xml(request_xml, response_type="none")
-        logger.info(f"[QuickbooksDesktop] Successfully requested QuickBooks to display {txn_type}: {txn_id}")
-
-
-class EasyGuiPopup:
-    def __init__(self, message, title="Message"):
-        self.message = message
-        self.title = title
-        self.stop_thread = False
-        self.thread = threading.Thread(target=self.show)
-
-    def show(self):
-        while not self.stop_thread:
-            easygui.msgbox(self.message, self.title)
-            time.sleep(0.1)
-
-    def start(self):
-        self.thread.start()
-
-    def stop(self):
-        self.stop_thread = True
-        # Give some time for the thread to stop
-        time.sleep(0.2)
 
 
 def create_address(dataclass_instance):
@@ -801,7 +762,7 @@ class ToXmlMixin:
             root = self.to_xml()
         except Exception as e:
             logger.debug(e)
-        if self.Meta.name[-5:] == "Query":
+        if self.Meta.name[-5:] == "Query" or self.Meta.name in ['TxnDisplayMod', 'TxnDel']:
             root.tag = str(self.Meta.name) + "Rq"
             if request_id:
                 root.attrib['requestID'] = request_id
@@ -1199,6 +1160,23 @@ class CreateAddOrModFromParentMixin:
             #todo: raise exception
             pass
 
+    def _handle_attr_value_from_parent(self, attr, value, add_or_mod, keep_ids):
+        if value is None:
+            return
+        elif attr.endswith('_lines') and attr not in ['journal_debit_lines', 'journal_credit_lines']:
+            attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
+            self._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
+        elif attr in ['journal_debit_lines', 'journal_credit_lines'] and add_or_mod == 'Mod':
+            self._handle_list_sub_instance('journal_line_mod', value, add_or_mod, keep_ids)
+        elif attr in ['applied_to_txns']:
+            attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
+            self._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
+        elif hasattr(self, attr):
+            if isinstance(value, list):
+                self._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
+            else:
+                self._handle_regular_sub_value(attr, value, keep_ids)
+
 
     @classmethod
     def create_add_or_mod_from_parent(cls, parent, add_or_mod, keep_ids=True):
@@ -1215,20 +1193,7 @@ class CreateAddOrModFromParentMixin:
             instance._create_inventory_adjustment_line_add(parent)
         else:
             for attr, value in parent.__dict__.items():
-                if value is None:
-                    pass
-                elif attr[-6:] == '_lines' and attr not in ['journal_debit_lines', 'journal_credit_lines']:
-                    attr_to_use = attr[:-1] + '_' + str(add_or_mod).lower()
-                    instance._handle_list_sub_instance(attr_to_use, value, add_or_mod, keep_ids)
-                elif attr in ['journal_debit_lines', 'journal_credit_lines'] and add_or_mod == 'Mod':
-                    instance._handle_list_sub_instance('journal_line_mod', value, add_or_mod, keep_ids)
-                elif hasattr(instance, attr):
-                    if isinstance(value, list):
-                        instance._handle_list_sub_instance(attr, value, add_or_mod, keep_ids)
-                    else:
-                        instance._handle_regular_sub_value(attr, value, keep_ids)
-                else:
-                    pass
+                instance._handle_attr_value_from_parent(attr, value, add_or_mod, keep_ids)
             if getattr(instance, 'validate', False):
                 instance.validate()
             else:
@@ -1293,21 +1258,69 @@ class SaveMixin:
 
     def save_as_new(self, qb):
         add_xml = self._get_add_rq_xml()
-        response = qb.send_xml(add_xml)
-        return response
+        batch = qb.send_xml(add_xml, response_type='batch_list')[0]
+        instance = batch[0]
+        return instance
+
+    def save_existing(self, qb):
+        mod_xml = self._get_mod_rq_xml()
+        batch = qb.send_xml(mod_xml, response_type='batch_list')[0]
+        instance = batch[0]
+        return instance
 
     def save(self, qb):
         if hasattr(self, 'list_id') and self.list_id is not None:
-            mod_xml = self._get_mod_rq_xml()
-            response = qb.send_xml(mod_xml)
-            return response
+            instance = self.save_existing(qb)
+            return instance
         elif hasattr(self, 'txn_id') and self.txn_id is not None:
-            mod_xml = self._get_mod_rq_xml()
-            response = qb.send_xml(mod_xml)
-            return response
+            instance = self.save_existing(qb)
+            return instance
         else:
-            response = self.save_as_new(qb)
-            return response
+            instance = self.save_as_new(qb)
+            return instance
+
+class DelMixin:
+
+    def _get_del_instance(self):
+        if hasattr(self, "txn_id") and self.txn_id:
+            return TxnDel(txn_del_type=self.Meta.name, txn_id=self.txn_id)
+        elif hasattr(self, "list_id") and self.list_id:
+            return ListDel(list_del_type=self.Meta.name, list_id=self.list_id)
+        else:
+            raise ValueError("Neither txn_id nor list_id present for deletion.")
+
+    def get_del_xml(self):
+        del_instance = self._get_del_instance()
+        return del_instance.to_xml_rq()
+
+    def send_del_xml(self, qb):
+        del_xml = self.get_del_xml()
+        return qb.send_xml(del_xml)
+
+    def process_del_rs(self, del_rs) -> tuple[str, str]:
+        """
+        Processes a single <TxnDelRs> or <ListDelRs> element.
+        Returns a (statusSeverity, statusMessage) tuple.
+        """
+        severity = del_rs.get("statusSeverity", "")
+        message = del_rs.get("statusMessage", "")
+        return severity, message
+
+    def process_del_response(self, response: str) -> tuple[str, str]:
+        """
+        Processes a single-entry QBXML delete response.
+        Returns a single (statusSeverity, statusMessage) tuple.
+        """
+        root = et.fromstring(response)
+        del_rs = root.find(".//TxnDelRs") or root.find(".//ListDelRs")
+        if del_rs is None:
+            raise ValueError("No TxnDelRs or ListDelRs element found in response.")
+
+        return self.process_del_rs(del_rs)
+
+    def delete(self, qb):
+        response = self.send_del_xml(qb)
+        return self.process_del_response(response)
 
 
 class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin, CreateAddOrModFromParentMixin, ReprMixin):
@@ -1316,18 +1329,18 @@ class QBMixin(MaxLengthMixin, ToXmlMixin, FromXmlMixin, ValidationMixin, CreateA
         super().__init_subclass__(**kwargs)
 
 
-class QBMixinWithSave(QBMixin, SaveMixin):
+class QBMixinWithSaveAndDel(QBMixin, SaveMixin, DelMixin):
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
 
-class PluralMixin:
+class BatchQBMixin:
 
     class Meta:
         name = ''
-        plural_of = ''
-        plural_of_db_model = ''
+        batch_of = ''
+        batch_of_db_model = ''
 
     def __init__(self):
         self._items = []
@@ -1357,6 +1370,12 @@ class PluralMixin:
     def to_list(self):
         return self._items
 
+    def find_by_attr(self, attr_name, value):
+        for item in self._items:
+            if hasattr(item, attr_name) and getattr(item, attr_name) == value:
+                return item
+        return None
+
     @classmethod
     def from_xml(cls, list_of_ret):
         """A Ret should be passed in but it's sometimes not."""
@@ -1365,29 +1384,30 @@ class PluralMixin:
             logger.debug(f'list_of_ret is {list_of_ret}')
             raise TypeError(f'Ret must be an instance of lxml.etree._Element. Your Ret is type {type(list_of_ret)}')
         elif not len(list_of_ret):
-            plural_instance = cls()
-            return plural_instance
+            batch_instance = cls()
+            return batch_instance
         elif list_of_ret[0].tag[-3:] != 'Ret':
             raise ValueError(f"Invalid tag: {list_of_ret[0].tag}. Must end with 'Ret' (as in RETurn from Quickbooks).")
         else:
-            plural_instance = cls()
+            batch_instance = cls()
             for instance_xml in list_of_ret:
-                plural_of_class = cls.Meta.plural_of
-                plural_of_instance = plural_of_class.from_xml(instance_xml)
-                plural_instance.add_item(plural_of_instance)
-            return plural_instance
+                batch_of_class = cls.Meta.batch_of
+                batch_of_instance = batch_of_class.from_xml(instance_xml)
+                batch_instance.add_item(batch_of_instance)
+            return batch_instance
+
 
     @classmethod
     def get_by_last_time_modified(cls, qb_max_time_modified, qb):
-        plural_instance = cls()
-        query = plural_instance.Meta.plural_of.Query()
+        batch_instance = cls()
+        query = batch_instance.Meta.batch_of.Query()
         query.from_modified_date = qb_max_time_modified
         query_xml = query.to_xml()
         QueryRs = qb.send_xml(query_xml)
         for Ret in QueryRs:
-            obj = plural_instance.Meta.plural_of.from_xml(Ret)
-            plural_instance._items.append(obj)
-        return plural_instance
+            obj = batch_instance.Meta.batch_of.from_xml(Ret)
+            batch_instance._items.append(obj)
+        return batch_instance
 
     def get_by_id(self, id_value):
         if len(self._items):
@@ -1407,28 +1427,20 @@ class PluralMixin:
         else:
             return None
 
-    # @classmethod
-    # def update_db(cls, qb, session):
-    #     qb_max_time_modified = cls.__get_last_time_modified_from_db(session)
-    #     plural_instance = cls.__get_last_time_modified(qb_max_time_modified, qb)
-    #     plural_instance.to_db(session)
-    #
-    # @classmethod
-    # def populate_db(cls, qb, session):
-    #     instances = cls.get_all_from_qb(qb)
-    #     instances.to_db(session)
-    #
-    # @classmethod
-    # def populate_or_update_db(cls, qb, session):
-    #     qb_max_time_modified = cls.__get_last_time_modified_from_db(session)
-    #     if qb_max_time_modified:
-    #         cls.update_db(qb, session)
-    #     else:
-    #         cls.populate_db(qb, session)
+
+    @classmethod
+    def _get_from_qb_since_last_time_modified(cls, qb_max_time_modified, qb):
+        batch_instance = cls()
+        query = batch_instance.Meta.batch_of.Query()
+        query.from_modified_date = qb_max_time_modified
+        query_xml = query.to_xml()
+        batch = qb.send_xml(query_xml, response_type='batch_list')[0]
+        return batch
+
 
     def to_xml(self):
         """
-        Converts all items in the plural mixin into a list of lxml elements
+        Converts all items in the batch mixin into a list of lxml elements
         by calling each child's `to_xml` method.
         """
         xml_elements = []
@@ -1439,7 +1451,7 @@ class PluralMixin:
 
     def to_add_xml(self, first_request_id=None, keep_ids=False):
         """
-        Converts all items in the plural mixin into a list of add lxml elements
+        Converts all items in the batch mixin into a list of add lxml elements
         by calling each child's `to_xml` method.
         """
         xml_elements = []
@@ -1475,7 +1487,7 @@ class PluralMixin:
 
     def to_xml_file(self, file_path: str) -> None:
         """
-        Generates an XML file with the plural objects.
+        Generates an XML file with the batch objects.
         Creates a root element based on the Meta class name, appends all items, and writes to the file path.
 
         Args:
@@ -1499,8 +1511,103 @@ class PluralMixin:
                 print(xml_str)
         logger.debug('Finished to_xml_file')
 
+class DelBatchMixin:
 
-class PluralListMixin:
+    def get_batch_del_xml(self) -> dict[str, et._Element]:
+        """
+        Loops through `self` (a BatchQBMixin) and builds a mapping of
+        requestID -> <TxnDelRq> or <ListDelRq> elements.
+        """
+        request_elements = {}
+
+        for i, item in enumerate(self, start=1):
+            if not hasattr(item, "get_del_xml"):
+                raise TypeError(f"{item} must implement get_del_xml() from DelMixin")
+
+            del_rq = item.get_del_xml()
+            request_id = str(i)
+            del_rq.set("requestID", request_id)
+            request_elements[request_id] = del_rq
+
+        return request_elements
+
+    def send_batch_del_xml(self, qb, request_elements: dict[str, et._Element]) -> str:
+        """
+        Sends a batch of delete XMLs using QuickBooks transport.
+        Assumes QBXMLMsgsRq is handled inside `qb.send_xml()`.
+        """
+        return qb.send_xml(list(request_elements.values()))
+
+    def process_batch_del_response(self, response: str) -> list[tuple[str, str, str]]:
+        """
+        Processes response and returns (requestID, statusSeverity, statusMessage).
+        """
+        root = et.fromstring(response)
+        results = []
+
+        for del_rs in root.xpath(".//TxnDelRs") + root.xpath(".//ListDelRs"):
+            request_id = del_rs.get("requestID", "")
+            severity, message = self.process_del_rs(del_rs)
+            results.append((request_id, severity, message))
+
+        return results
+
+    def process_del_rs(self, del_rs) -> tuple[str, str]:
+        """
+        Extracts (statusSeverity, statusMessage) from a single <TxnDelRs> or <ListDelRs>.
+        """
+        severity = del_rs.get("statusSeverity", "")
+        message = del_rs.get("statusMessage", "")
+        return severity, message
+
+    def delete_batch(self, qb) -> list[tuple[str, str, str]]:
+        """
+        Complete batch delete flow:
+        - builds request dict from self
+        - sends it via qb
+        - returns list of (requestID, severity, message)
+        """
+        request_elements = self.get_batch_del_xml()
+        response = self.send_batch_del_xml(qb, request_elements)
+        return self.process_batch_del_response(response)
+    
+class SaveBatchMixin:
+    def save_all(self, qb):
+        """
+        Save all items in the batch by sending Add or Mod requests.
+        Returns a batch list from QuickBooks.
+        """
+        request_elements = []
+
+        for item in self:
+            if hasattr(item, "list_id") and item.list_id:
+                mod_xml = item._get_mod_rq_xml()
+                request_elements.append(mod_xml)
+            elif hasattr(item, "txn_id") and item.txn_id:
+                mod_xml = item._get_mod_rq_xml()
+                request_elements.append(mod_xml)
+            else:
+                add_xml = item._get_add_rq_xml()
+                request_elements.append(add_xml)
+
+        # Assumes qb.send_xml handles wrapping in QBXMLMsgsRq
+        response = qb.send_xml(request_elements, response_type='batch_list')
+        return response[0] if response else None
+
+    def add_all(self, qb, raw_response=False):
+        """
+        Sends Add requests for all items in the batch.
+        """
+        request_elements = []
+        for item in self:
+            add_xml = item._get_add_rq_xml()
+            request_elements.append(add_xml)
+
+        response = qb.send_xml(request_elements, response_type=raw_response)
+        return response
+
+
+class BatchListMixin(BatchQBMixin, SaveBatchMixin, DelBatchMixin):
 
     @classmethod
     def get_all_from_qb(cls, qb, active_status='ActiveOnly', include_custom_fields=False):
@@ -1523,31 +1630,14 @@ class PluralListMixin:
         else:
             pass
 
-        plural_instance = qb.send_xml(QueryRq, response_type='plural_list')
-        return plural_instance
-
-    def save_all(self, qb, raw_response=False):
-        xml_requests = []
-        for item in self:
-            if item.list_id is not None:
-                mod_xml = item._get_mod_rq_xml()
-                xml_requests.append(mod_xml)
-            else:
-                add_xml = item._get_add_rq_xml()
-                xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, response_type=raw_response)
-        return response
-
-    def add_all(self, qb, raw_response=False):
-        xml_requests = []
-        for item in self:
-            add_xml = item._get_add_rq_xml()
-            xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, response_type=raw_response)
-        return response
+        batch_instance = qb.send_xml(QueryRq, response_type='batch_list')
+        if len(batch_instance):
+            return batch_instance[0]
+        else:
+            return False
 
 
-class PluralTrxnMixin:
+class BatchTrxnMixin(BatchQBMixin, SaveBatchMixin, DelBatchMixin):
 
     @classmethod
     def get_all_from_qb(cls, qb, include_custom_fields=False, include_line_items=False, include_linked_txns=False):
@@ -1573,11 +1663,11 @@ class PluralTrxnMixin:
         QueryRs_list = qb.send_xml(QueryRq)
         if type(QueryRs_list) == list and len(QueryRs_list) == 1:
             QueryRs = QueryRs_list[0]
-            plural_instance = cls()
+            batch_instance = cls()
             for Ret in QueryRs:
-                obj = plural_instance.Meta.plural_of.from_xml(Ret)
-                plural_instance._items.append(obj)
-            return plural_instance
+                obj = batch_instance.Meta.batch_of.from_xml(Ret)
+                batch_instance._items.append(obj)
+            return batch_instance
         else:
             logger.debug(f"QueryRs_list is of type {type(QueryRs_list)} instead of list type")
 
@@ -1624,46 +1714,6 @@ class PluralTrxnMixin:
                         setattr(obj, attr_name, None)
                     else:
                         pass
-
-    # def _index_data_ext(self):
-    #     data_ext_dict = {}
-    #     for txn in self:
-    #         if hasattr(txn, 'data_ext') and len(txn.data_ext):
-    #             data_ext_dict[txn] = {index: ext for index, ext in enumerate(txn.data_ext, start=1)}
-    #     return data_ext_dict
-    #
-    # def _create_data_ext_mod_requests(self, response):
-    #     data_ext_dict = self._index_data_ext()
-    #
-    #
-    # def _handle_data_ext_with_add_request(self, response, qb):
-    #     data_ext_mod_request = self._create_data_ext_mod_requests(response)
-    #     data_ext_mod_response = qb.send_xml(data_ext_mod_request, response_type='raw_response')
-
-    def save_all(self, qb, raw_response=False):
-        xml_requests = []
-        for txn in self:
-            if txn.txn_id is not None:
-                mod_xml = txn._get_mod_rq_xml()
-                xml_requests.append(mod_xml)
-            else:
-                add_xml = txn._get_add_rq_xml()
-                xml_requests.append(add_xml)
-        response = qb.send_xml(xml_requests, response_type=raw_response)
-        return response
-
-    def add_all(self, qb, raw_response=False):
-        xml_requests = []
-        for txn in self:
-            add_xml = txn._get_add_rq_xml()
-            xml_requests.append(add_xml)
-
-        response = qb.send_xml(xml_requests, response_type='')
-        self._handle_data_ext_with_add_request(response, qb)
-        return response
-
-
-
 
 
 @dataclass
@@ -2924,11 +2974,6 @@ class PayrollSummaryReport(ReportMixin):
 
 
 # region Refs
-
-@dataclass
-class EntityRef(QBRefMixin):
-    class Meta:
-        name = "EntityRef"
 
 
 @dataclass
@@ -4898,6 +4943,13 @@ class AppliedToTxnMod(QBMixin):
 
 @dataclass
 class AppliedToTxn(QBMixin):
+    class Meta:
+        name = "AppliedToTxn"
+        # batch_class_name = "AppliedToTxns" Not sure if this really applies
+
+    Add: Type[AppliedToTxnAdd] = AppliedToTxnAdd
+    Mod: Type[AppliedToTxnMod] = AppliedToTxnMod
+
     FIELD_ORDER = [
         "TxnID", "TxnType", "TxnDate", "RefNumber", "BalanceRemaining",
         "Amount", "DiscountAmount", "DiscountAccountRef",
@@ -8311,18 +8363,6 @@ class InvoiceLineAdd(QBAddMixin):
         super().validate()
         self.rate_percent = None if self.rate is not None else self.rate_percent
         self.rate = None if self.quantity is not None else self.rate
-        # todo: remove this because it's client specific:
-        if self.item_ref.full_name in ['Amount Subtotal', 'Reimb Subt']:
-            self.amount = None
-            self.unit_of_measure = None
-        elif self.item_ref is not None and self.item_ref.full_name in ['eBay', 'Exempt', 'Government']:
-            self.rate = None
-            self.rate_percent = None
-        elif self.item_ref is not None and 'tax' in str(self.item_ref.full_name).lower():
-            self.rate = None
-            self.rate_percent = None
-        else:
-            pass
 
         if self.serial_number is not None:
             if self.inventory_site_ref is None:
@@ -11227,6 +11267,34 @@ class SalesReceiptLineGroup(QBMixin):
 
 
 @dataclass
+class ListDel(QBMixin):
+    FIELD_ORDER = [
+        "ListDelType", "ListID"
+    ]
+
+    class Meta:
+        name = "ListDel"
+
+    list_del_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListDelType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_LIST_DEL_TYPE_VALUES
+        },
+    )
+    list_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "ListID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+
+@dataclass
 class TaxLineInfo(QBMixin):
     class Meta:
         name = "TaxLineInfo"
@@ -11497,10 +11565,10 @@ class AccountMod(AccountBase, QBModRqMixin):
 
 
 @dataclass
-class Account(AccountBase, QBMixinWithSave):
+class Account(AccountBase, QBMixinWithSaveAndDel):
     class Meta:
         name = "Account"
-        plural_class_name = "Accounts"
+        batch_class_name = "Accounts"
 
     Query: Type[AccountQuery] = AccountQuery
     Add: Type[AccountAdd] = AccountAdd
@@ -11622,10 +11690,10 @@ class Account(AccountBase, QBMixinWithSave):
 
 
 @dataclass
-class Accounts(PluralMixin, PluralListMixin):
+class Accounts(BatchListMixin):
     class Meta:
         name = "Account"
-        plural_of = Account
+        batch_of = Account
 
     def __init__(self):
         super().__init__()
@@ -11785,7 +11853,7 @@ class BillingRateAdd(QBAddRqMixin):
 class BillingRate(QBMixin):
     class Meta:
         name = "BillingRate"
-        plural_class_name = "BillingRates"
+        batch_class_name = "BillingRates"
 
     Query: Type[BillingRateQuery] = BillingRateQuery
     Add: Type[BillingRateAdd] = BillingRateAdd
@@ -11847,11 +11915,11 @@ class BillingRate(QBMixin):
 
 
 @dataclass
-class BillingRates(PluralMixin, PluralListMixin):
+class BillingRates(BatchListMixin):
 
     class Meta:
         name = "BillingRate"
-        plural_of = BillingRate
+        batch_of = BillingRate
 
     def __init__(self):
         super().__init__()
@@ -12015,10 +12083,10 @@ class ClassInQBMod(QBModRqMixin):
 
 
 @dataclass
-class ClassInQB(QBMixinWithSave):
+class ClassInQB(QBMixinWithSaveAndDel):
     class Meta:
         name = "Class"
-        plural_class_name = "ClassesInQB"
+        batch_class_name = "ClassesInQB"
 
     Query: Type[ClassInQBQuery] = ClassInQBQuery
     Add: Type[ClassInQBAdd] = ClassInQBAdd
@@ -12087,10 +12155,10 @@ class ClassInQB(QBMixinWithSave):
 
 
 @dataclass
-class ClassesInQB(PluralMixin, PluralListMixin):
+class ClassesInQB(BatchListMixin):
     class Meta:
         name = "Class"
-        plural_of = ClassInQB
+        batch_of = ClassInQB
 
     def __init__(self):
         super().__init__()
@@ -12307,10 +12375,10 @@ class CurrencyMod(QBModRqMixin):
 
 
 @dataclass
-class Currency(QBMixinWithSave):
+class Currency(QBMixinWithSaveAndDel):
     class Meta:
         name = "Currency"
-        plural_class_name = "Currencies"
+        batch_class_name = "Currencies"
 
     Query: Type[CurrencyQuery] = CurrencyQuery
     Add: Type[CurrencyAdd] = CurrencyAdd
@@ -12393,10 +12461,10 @@ class Currency(QBMixinWithSave):
 
 
 @dataclass
-class Currencies(PluralMixin, PluralListMixin):
+class Currencies(BatchListMixin):
     class Meta:
         name = "Currency"
-        plural_of = Currency
+        batch_of = Currency
 
     def __init__(self):
         super().__init__()
@@ -12503,11 +12571,11 @@ class CustomerMsgAdd(QBAddRqMixin):
 
 
 @dataclass
-class CustomerMsg(QBMixinWithSave):
+class CustomerMsg(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "CustomerMsg"
-        plural_class_name = "CustomerMsgs"
+        batch_class_name = "CustomerMsgs"
 
     Query: Type[CustomerMsgQuery] = CustomerMsgQuery
     Add: Type[CustomerMsgAdd] = CustomerMsgAdd
@@ -12555,11 +12623,11 @@ class CustomerMsg(QBMixinWithSave):
 
 
 @dataclass
-class CustomerMsgs(PluralMixin, PluralListMixin):
+class CustomerMsgs(BatchListMixin):
 
     class Meta:
         name = "CustomerMsg"
-        plural_of = CustomerMsg
+        batch_of = CustomerMsg
 
     def __init__(self):
         super().__init__()
@@ -13464,10 +13532,10 @@ class CustomerMod(QBModRqMixin):
 
 
 @dataclass
-class Customer(QBMixinWithSave):
+class Customer(QBMixinWithSaveAndDel):
     class Meta:
         name = "Customer"
-        plural_class_name = "Customers"
+        batch_class_name = "Customers"
 
     Query: Type[CustomerQuery] = CustomerQuery
     Add: Type[CustomerAdd] = CustomerAdd
@@ -13925,11 +13993,10 @@ class Customer(QBMixinWithSave):
 
 
 @dataclass
-class Customers(PluralMixin, PluralListMixin):
-
+class Customers(BatchListMixin):
     class Meta:
         name = "Customer"
-        plural_of = Customer
+        batch_of = Customer
 
     def __init__(self):
         super().__init__()
@@ -14254,10 +14321,10 @@ class EmployeeQuery(QBQueryMixin):
 
 
 @dataclass
-class Employee(QBMixinWithSave):
+class Employee(QBMixinWithSaveAndDel):
     class Meta:
         name = "Employee"
-        plural_class_name = "Employees"
+        batch_class_name = "Employees"
 
     class Query(EmployeeQuery):
         pass
@@ -14669,12 +14736,12 @@ class Employee(QBMixinWithSave):
 
 
 @dataclass
-class Employees(PluralMixin, PluralListMixin):
+class Employees(BatchListMixin):
 
     class Meta:
         name = "Employee"
-        plural_of = Employee
-        # plural_of_db_model = DBEmployee
+        batch_of = Employee
+        # batch_of_db_model = DBEmployee
 
     def __init__(self):
         super().__init__()
@@ -14957,11 +15024,11 @@ class InventorySiteMod(QBModRqMixin):
 
 
 @dataclass
-class InventorySite(QBMixinWithSave):
+class InventorySite(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "InventorySite"
-        plural_class_name = "InventorySites"
+        batch_class_name = "InventorySites"
 
     Query: Type[InventorySiteQuery] = InventorySiteQuery
     Add: Type[InventorySiteAdd] = InventorySiteAdd
@@ -15076,10 +15143,10 @@ class InventorySite(QBMixinWithSave):
 
 
 @dataclass
-class InventorySites(PluralMixin, PluralListMixin):
+class InventorySites(BatchListMixin):
     class Meta:
         name = "InventorySite"
-        plural_of = InventorySite
+        batch_of = InventorySite
 
     def __init__(self):
         super().__init__()
@@ -16807,10 +16874,10 @@ class ItemWithClassAndTaxMixin(ItemMixin):
 
 
 @dataclass
-class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSave):
+class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemDiscount"
-        plural_class_name = "ItemDiscounts"
+        batch_class_name = "ItemDiscounts"
 
     Query: Type[ItemDiscountQuery] = ItemDiscountQuery
     Add: Type[ItemDiscountAdd] = ItemDiscountAdd
@@ -16869,21 +16936,21 @@ class ItemDiscount(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemDiscounts(PluralMixin, PluralListMixin):
+class ItemDiscounts(BatchListMixin):
 
     class Meta:
         name = "ItemDiscount"
-        plural_of = ItemDiscount
+        batch_of = ItemDiscount
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
+class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemGroup"
-        plural_class_name = "ItemGroups"
+        batch_class_name = "ItemGroups"
 
     Query: Type[ItemGroupQuery] = ItemGroupQuery
     Add: Type[ItemGroupAdd] = ItemGroupAdd
@@ -16943,21 +17010,21 @@ class ItemGroup(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemGroups(PluralMixin, PluralListMixin):
+class ItemGroups(BatchListMixin):
 
     class Meta:
         name = "ItemGroup"
-        plural_of = ItemGroup
+        batch_of = ItemGroup
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
+class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemInventory"
-        plural_class_name = "ItemInventories"
+        batch_class_name = "ItemInventories"
 
     Query: Type[ItemInventoryQuery] = ItemInventoryQuery
     Add: Type[ItemInventoryAdd] = ItemInventoryAdd
@@ -17123,21 +17190,21 @@ class ItemInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemInventories(PluralMixin, PluralListMixin):
+class ItemInventories(BatchListMixin):
 
     class Meta:
         name = "ItemInventory"
-        plural_of = ItemInventory
+        batch_of = ItemInventory
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
+class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemInventoryAssembly"
-        plural_class_name = "ItemInventoryAssemblies"
+        batch_class_name = "ItemInventoryAssemblies"
 
     Query: Type[ItemInventoryAssemblyQuery] = ItemInventoryAssemblyQuery
     Add: Type[ItemInventoryAssemblyAdd] = ItemInventoryAssemblyAdd
@@ -17310,21 +17377,21 @@ class ItemInventoryAssembly(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemInventoryAssemblies(PluralMixin, PluralListMixin):
+class ItemInventoryAssemblies(BatchListMixin):
 
     class Meta:
         name = "ItemInventoryAssembly"
-        plural_of = ItemInventoryAssembly
+        batch_of = ItemInventoryAssembly
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
+class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemNonInventory"
-        plural_class_name = "ItemInventories"
+        batch_class_name = "ItemInventories"
 
     Query: Type[ItemNonInventoryQuery] = ItemNonInventoryQuery
     Add: Type[ItemNonInventoryAdd] = ItemNonInventoryAdd
@@ -17397,21 +17464,21 @@ class ItemNonInventory(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemNonInventories(PluralMixin, PluralListMixin):
+class ItemNonInventories(BatchListMixin):
 
     class Meta:
         name = "ItemNonInventory"
-        plural_of = ItemNonInventory
+        batch_of = ItemNonInventory
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
+class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemOtherCharge"
-        plural_class_name = "ItemOtherCharges"
+        batch_class_name = "ItemOtherCharges"
 
     Query: Type[ItemOtherChargeQuery] = ItemOtherChargeQuery
     Add: Type[ItemOtherChargeAdd] = ItemOtherChargeAdd
@@ -17477,21 +17544,21 @@ class ItemOtherCharge(ItemWithClassAndTaxMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemOtherCharges(PluralMixin, PluralListMixin):
+class ItemOtherCharges(BatchListMixin):
 
     class Meta:
         name = "ItemOtherCharge"
-        plural_of = ItemOtherCharge
+        batch_of = ItemOtherCharge
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemPayment(ItemMixin, QBMixinWithSave):
+class ItemPayment(ItemMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemPayment"
-        plural_class_name = "ItemPayments"
+        batch_class_name = "ItemPayments"
 
     Query: Type[ItemPaymentQuery] = ItemPaymentQuery
     Add: Type[ItemPaymentAdd] = ItemPaymentAdd
@@ -17536,21 +17603,21 @@ class ItemPayment(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemPayments(PluralMixin, PluralListMixin):
+class ItemPayments(BatchListMixin):
 
     class Meta:
         name = "ItemPayment"
-        plural_of = ItemPayment
+        batch_of = ItemPayment
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemSalesTax(ItemMixin, QBMixinWithSave):
+class ItemSalesTax(ItemMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemSalesTax"
-        plural_class_name = "ItemSalesTaxes"
+        batch_class_name = "ItemSalesTaxes"
 
     Query: Type[ItemSalesTaxQuery] = ItemSalesTaxQuery
     Add: Type[ItemSalesTaxAdd] = ItemSalesTaxAdd
@@ -17609,21 +17676,21 @@ class ItemSalesTax(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemSalesTaxes(PluralMixin, PluralListMixin):
+class ItemSalesTaxes(BatchListMixin):
 
     class Meta:
         name = "ItemSalesTax"
-        plural_of = ItemSalesTax
+        batch_of = ItemSalesTax
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
+class ItemSalesTaxGroup(ItemMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemSalesTaxGroup"
-        plural_class_name = "ItemSalesTaxGroups"
+        batch_class_name = "ItemSalesTaxGroups"
 
     Query: Type[ItemSalesTaxGroupQuery] = ItemSalesTaxGroupQuery
     Add: Type[ItemSalesTaxGroupAdd] = ItemSalesTaxGroupAdd
@@ -17661,21 +17728,21 @@ class ItemSalesTaxGroup(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemSalesTaxGroups(PluralMixin, PluralListMixin):
+class ItemSalesTaxGroups(BatchListMixin):
 
     class Meta:
         name = "ItemSalesTaxGroup"
-        plural_of = ItemSalesTaxGroup
+        batch_of = ItemSalesTaxGroup
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemService(ItemMixin, QBMixinWithSave):
+class ItemService(ItemMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemService"
-        plural_class_name = "ItemServices"
+        batch_class_name = "ItemServices"
 
     Query: Type[ItemServiceQuery] = ItemServiceQuery
     Add: Type[ItemServiceAdd] = ItemServiceAdd
@@ -17741,21 +17808,20 @@ class ItemService(ItemMixin, QBMixinWithSave):
 
 
 @dataclass
-class ItemServices(PluralMixin, PluralListMixin):
-
+class ItemServices(BatchListMixin):
     class Meta:
         name = "ItemService"
-        plural_of = ItemService
+        batch_of = ItemService
 
     def __init__(self):
         super().__init__()
 
 
 @dataclass
-class ItemSubtotal(ItemMixin, QBMixinWithSave):
+class ItemSubtotal(ItemMixin, QBMixinWithSaveAndDel):
     class Meta:
         name = "ItemSubtotal"
-        plural_class_name = "ItemSubtotals"
+        batch_class_name = "ItemSubtotals"
 
     Query: Type[ItemSubtotalQuery] = ItemSubtotalQuery
     Add: Type[ItemSubtotalAdd] = ItemSubtotalAdd
@@ -17792,11 +17858,11 @@ class ItemSubtotal(ItemMixin, QBMixinWithSave):
     )
 
 @dataclass
-class ItemSubtotals(PluralMixin, PluralListMixin):
+class ItemSubtotals(BatchListMixin):
 
     class Meta:
         name = "ItemSubtotal"
-        plural_of = ItemSubtotal
+        batch_of = ItemSubtotal
 
     def __init__(self):
         super().__init__()
@@ -17918,11 +17984,11 @@ class JobTypeAdd(QBAddRqMixin):
 
 
 @dataclass
-class JobType(QBMixinWithSave):
+class JobType(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "JobType"
-        plural_class_name = "JobTypes"
+        batch_class_name = "JobTypes"
 
     Query: Type[JobTypeQuery] = JobTypeQuery
     Add: Type[JobTypeAdd] = JobTypeAdd
@@ -17984,10 +18050,10 @@ class JobType(QBMixinWithSave):
     )
 
 @dataclass
-class JobTypes(PluralMixin, PluralListMixin):
+class JobTypes(BatchListMixin):
     class Meta:
         name = "JobType"
-        plural_of = JobType
+        batch_of = JobType
 
     def __init__(self):
         super().__init__()
@@ -18371,10 +18437,10 @@ class OtherNameMod(QBModRqMixin):
 
 
 @dataclass
-class OtherName(QBMixinWithSave):
+class OtherName(QBMixinWithSaveAndDel):
     class Meta:
         name = "OtherName"
-        plural_class_name = "OtherNames"
+        batch_class_name = "OtherNames"
 
     Query: Type[OtherNameQuery] = OtherNameQuery
     Add: Type[OtherNameAdd] = OtherNameAdd
@@ -18552,11 +18618,11 @@ class OtherName(QBMixinWithSave):
     )
 
 @dataclass
-class OtherNames(PluralMixin, PluralListMixin):
+class OtherNames(BatchListMixin):
 
     class Meta:
         name = "OtherName"
-        plural_of = OtherName
+        batch_of = OtherName
 
     def __init__(self):
         super().__init__()
@@ -18693,10 +18759,10 @@ class PaymentMethodAdd(QBAddRqMixin):
 
 
 @dataclass
-class PaymentMethod(QBMixinWithSave):
+class PaymentMethod(QBMixinWithSaveAndDel):
     class Meta:
         name = "PaymentMethod"
-        plural_class_name = "PaymentMethods"
+        batch_class_name = "PaymentMethods"
 
     Query: Type[PaymentMethodQuery] = PaymentMethodQuery
     Add: Type[PaymentMethodAdd] = PaymentMethodAdd
@@ -18754,10 +18820,10 @@ class PaymentMethod(QBMixinWithSave):
 
 
 @dataclass
-class PaymentMethods(PluralMixin, PluralListMixin):
+class PaymentMethods(BatchListMixin):
     class Meta:
         name = "PaymentMethod"
-        plural_of = PaymentMethod
+        batch_of = PaymentMethod
 
     def __init__(self):
         super().__init__()
@@ -19101,11 +19167,11 @@ class PriceLevelMod(QBModRqMixin):
 
 
 @dataclass
-class PriceLevel(QBMixinWithSave):
+class PriceLevel(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "PriceLevel"
-        plural_class_name = "PriceLevels"
+        batch_class_name = "PriceLevels"
 
     Query: Type[PriceLevelQuery] = PriceLevelQuery
     Add: Type[PriceLevelAdd] = PriceLevelAdd
@@ -19181,10 +19247,10 @@ class PriceLevel(QBMixinWithSave):
 
 
 @dataclass
-class PriceLevels(PluralMixin, PluralListMixin):
+class PriceLevels(BatchListMixin):
     class Meta:
         name = "PriceLevel"
-        plural_of = PriceLevel
+        batch_of = PriceLevel
 
     def __init__(self):
         super().__init__()
@@ -19351,11 +19417,11 @@ class SalesRepMod(QBModRqMixin):
 
 
 @dataclass
-class SalesRep(QBMixinWithSave):
+class SalesRep(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "SalesRep"
-        plural_class_name = "SalesReps"
+        batch_class_name = "SalesReps"
 
     Query: Type[SalesRepQuery] = SalesRepQuery
     Add: Type[SalesRepAdd] = SalesRepAdd
@@ -19409,10 +19475,10 @@ class SalesRep(QBMixinWithSave):
 
 
 @dataclass
-class SalesReps(PluralMixin, PluralListMixin):
+class SalesReps(BatchListMixin):
     class Meta:
         name = "SalesRep"
-        plural_of = SalesRep
+        batch_of = SalesRep
 
     def __init__(self):
         super().__init__()
@@ -19623,10 +19689,10 @@ class SalesTaxCodeMod(QBModRqMixin):
 
 
 @dataclass
-class SalesTaxCode(QBMixinWithSave):
+class SalesTaxCode(QBMixinWithSaveAndDel):
     class Meta:
         name = "SalesTaxCode"
-        plural_class_name = "SalesTaxCodes"
+        batch_class_name = "SalesTaxCodes"
 
     Query: Type[SalesTaxCodeQuery] = SalesTaxCodeQuery
     Add: Type[SalesTaxCodeAdd] = SalesTaxCodeAdd
@@ -19702,10 +19768,10 @@ class SalesTaxCode(QBMixinWithSave):
 
 
 @dataclass
-class SalesTaxCodes(PluralMixin, PluralListMixin):
+class SalesTaxCodes(BatchListMixin):
     class Meta:
         name = "SalesTaxCode"
-        plural_of = SalesTaxCode
+        batch_of = SalesTaxCode
 
     def __init__(self):
         super().__init__()
@@ -19826,10 +19892,10 @@ class ShipMethodAdd(QBAddRqMixin):
 
 
 @dataclass
-class ShipMethod(QBMixinWithSave):
+class ShipMethod(QBMixinWithSaveAndDel):
     class Meta:
         name = "ShipMethod"
-        plural_class_name = "ShipMethods"
+        batch_class_name = "ShipMethods"
 
     Query: Type[ShipMethodQuery] = ShipMethodQuery
     Add: Type[ShipMethodAdd] = ShipMethodAdd
@@ -19876,10 +19942,10 @@ class ShipMethod(QBMixinWithSave):
 
 
 @dataclass
-class ShipMethods(PluralMixin, PluralListMixin):
+class ShipMethods(BatchListMixin):
     class Meta:
         name = "ShipMethod"
-        plural_of = ShipMethod
+        batch_of = ShipMethod
 
     def __init__(self):
         super().__init__()
@@ -20015,10 +20081,10 @@ class StandardTermsAdd(QBAddRqMixin):
 
 
 @dataclass
-class StandardTerm(QBMixinWithSave):
+class StandardTerm(QBMixinWithSaveAndDel):
     class Meta:
         name = "StandardTerms"
-        plural_class_name = "StandardTerms"
+        batch_class_name = "StandardTerms"
 
     Query: Type[StandardTermsQuery] = StandardTermsQuery
     Add: Type[StandardTermsAdd] = StandardTermsAdd
@@ -20086,10 +20152,10 @@ class StandardTerm(QBMixinWithSave):
 
 
 @dataclass
-class StandardTerms(PluralMixin, PluralListMixin):
+class StandardTerms(BatchListMixin):
     class Meta:
         name = "StandardTerms"
-        plural_of = StandardTerm
+        batch_of = StandardTerm
 
     def __init__(self):
         super().__init__()
@@ -20322,11 +20388,11 @@ class UnitOfMeasureSetAdd(QBAddRqMixin):
 
 
 @dataclass
-class UnitOfMeasureSet(QBMixinWithSave):
+class UnitOfMeasureSet(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "UnitOfMeasureSet"
-        plural_class_name = "UnitOfMeasureSets"
+        batch_class_name = "UnitOfMeasureSets"
 
     Query: Type[UnitOfMeasureSetQuery] = UnitOfMeasureSetQuery
     Add: Type[UnitOfMeasureSetAdd] = UnitOfMeasureSetAdd
@@ -20402,11 +20468,11 @@ class UnitOfMeasureSet(QBMixinWithSave):
 
 
 @dataclass
-class UnitOfMeasureSets(PluralMixin, PluralListMixin):
+class UnitOfMeasureSets(BatchListMixin):
 
     class Meta:
         name = "UnitOfMeasureSet"
-        plural_of = UnitOfMeasureSet
+        batch_of = UnitOfMeasureSet
 
     def __init__(self):
         super().__init__()
@@ -20528,10 +20594,10 @@ class VendorTypeAdd(QBAddRqMixin):
 
 
 @dataclass
-class VendorType(QBMixinWithSave):
+class VendorType(QBMixinWithSaveAndDel):
     class Meta:
         name = "VendorType"
-        plural_class_name = "VendorTypes"
+        batch_class_name = "VendorTypes"
 
     Query: Type[VendorTypeQuery] = VendorTypeQuery
     Add: Type[VendorTypeAdd] = VendorTypeAdd
@@ -20593,10 +20659,10 @@ class VendorType(QBMixinWithSave):
 
 
 @dataclass
-class VendorTypes(PluralMixin, PluralListMixin):
+class VendorTypes(BatchListMixin):
     class Meta:
         name = "VendorType"
-        plural_of = VendorType
+        batch_of = VendorType
 
     def __init__(self):
         super().__init__()
@@ -21303,11 +21369,11 @@ class VendorMod(QBModRqMixin):
 
 
 @dataclass
-class Vendor(QBMixinWithSave):
+class Vendor(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "Vendor"
-        plural_class_name = "Vendors"
+        batch_class_name = "Vendors"
 
     Query: Type[VendorQuery] = VendorQuery
     Add: Type[VendorAdd] = VendorAdd
@@ -21640,10 +21706,10 @@ class Vendor(QBMixinWithSave):
     )
 
 @dataclass
-class Vendors(PluralMixin, PluralListMixin):
+class Vendors(BatchListMixin):
     class Meta:
         name = "Vendor"
-        plural_of = Vendor
+        batch_of = Vendor
 
     def __init__(self):
         super().__init__()
@@ -21653,28 +21719,6 @@ class Vendors(PluralMixin, PluralListMixin):
 
 
 # region Transactions
-
-@dataclass
-class TxnDisplayAdd(QBAddRqMixin):
-    class Meta:
-        name = "TxnDisplayAdd"
-
-    txn_display_add_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnDisplayAddType",
-            "type": "Element",
-            "required": True,
-            "valid_values": VALID_TXN_DISPLAY_ADD_TYPE_VALUES,
-        },
-    )
-    entity_ref: Optional[EntityRef] = field(
-        default=None,
-        metadata={
-            "name": "EntityRef",
-            "type": "Element",
-        },
-    )
 
 @dataclass
 class TxnDisplayMod(QBModRqMixin):
@@ -21689,6 +21733,33 @@ class TxnDisplayMod(QBModRqMixin):
             "type": "Element",
             "required": True,
             "valid_values": VALID_TXN_DISPLAY_MOD_TYPE_VALUES
+        },
+    )
+    txn_id: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnID",
+            "type": "Element",
+            "required": True,
+        },
+    )
+
+@dataclass
+class TxnDel(QBMixin):
+    FIELD_ORDER = [
+        "TxnDelType", "TxnID"
+    ]
+
+    class Meta:
+        name = "TxnDel"
+
+    txn_del_type: Optional[str] = field(
+        default=None,
+        metadata={
+            "name": "TxnDelType",
+            "type": "Element",
+            "required": True,
+            "valid_values": VALID_TXN_DEL_TYPE_VALUES,
         },
     )
     txn_id: Optional[str] = field(
@@ -21916,10 +21987,10 @@ class ARRefundCreditCardAdd(QBAddRqMixin):
     )
 
 @dataclass
-class ARRefundCreditCard(QBMixinWithSave):
+class ARRefundCreditCard(QBMixinWithSaveAndDel):
     class Meta:
         name = "ARRefundCreditCard"
-        plural_class_name = "ARRefundCreditCards"
+        batch_class_name = "ARRefundCreditCards"
 
     Query: Type[ARRefundCreditCardQuery] = ARRefundCreditCardQuery
     Add: Type[ARRefundCreditCardAdd] = ARRefundCreditCardAdd
@@ -22068,7 +22139,7 @@ class ARRefundCreditCard(QBMixinWithSave):
             "type": "Element",
         },
     )
-    refund_applied_to_txn_ret: List[RefundAppliedToTxn] = field(
+    refund_applied_to_txns: List[RefundAppliedToTxn] = field(
         default_factory=list,
         metadata={
             "name": "RefundAppliedToTxnRet",
@@ -22085,11 +22156,11 @@ class ARRefundCreditCard(QBMixinWithSave):
 
 
 @dataclass
-class ARRefundCreditCards(PluralMixin, PluralTrxnMixin):
+class ARRefundCreditCards(BatchTrxnMixin):
 
     class Meta:
         name = "ARRefundCreditCard"
-        plural_of = ARRefundCreditCard
+        batch_of = ARRefundCreditCard
 
     def __init__(self):
         super().__init__()
@@ -22386,10 +22457,10 @@ class BillPaymentCheckMod(QBModRqMixin):
 
 
 @dataclass
-class BillPaymentCheck(QBMixinWithSave):
+class BillPaymentCheck(QBMixinWithSaveAndDel):
     class Meta:
         name = "BillPaymentCheck"
-        plural_class_name = "BillPaymentChecks"
+        batch_class_name = "BillPaymentChecks"
 
     Query: Type[BillPaymentCheckQuery] = BillPaymentCheckQuery
     Add: Type[BillPaymentCheckAdd] = BillPaymentCheckAdd
@@ -22525,7 +22596,7 @@ class BillPaymentCheck(QBMixinWithSave):
             "type": "Element",
         },
     )
-    applied_to_txn_ret: List[AppliedToTxn] = field(
+    applied_to_txns: List[AppliedToTxn] = field(
         default_factory=list,
         metadata={
             "name": "AppliedToTxnRet",
@@ -22542,10 +22613,10 @@ class BillPaymentCheck(QBMixinWithSave):
 
 
 @dataclass
-class BillPaymentChecks(PluralMixin, PluralTrxnMixin):
+class BillPaymentChecks(BatchTrxnMixin):
     class Meta:
         name = "BillPaymentCheck"
-        plural_of = BillPaymentCheck
+        batch_of = BillPaymentCheck
 
     def __init__(self):
         super().__init__()
@@ -22752,10 +22823,10 @@ class BillPaymentCreditCardAdd(QBAddRqMixin):
 
 
 @dataclass
-class BillPaymentCreditCard(QBMixinWithSave):
+class BillPaymentCreditCard(QBMixinWithSaveAndDel):
     class Meta:
         name = "BillPaymentCreditCard"
-        plural_class_name = "BillPaymentCreditCards"
+        batch_class_name = "BillPaymentCreditCards"
 
     Query: Type[BillPaymentCreditCardQuery] = BillPaymentCreditCardQuery
     Add: Type[BillPaymentCreditCardAdd] = BillPaymentCreditCardAdd
@@ -22870,7 +22941,7 @@ class BillPaymentCreditCard(QBMixinWithSave):
             "type": "Element",
         },
     )
-    applied_to_txn_ret: List[AppliedToTxn] = field(
+    applied_to_txns: List[AppliedToTxn] = field(
         default_factory=list,
         metadata={
             "name": "AppliedToTxnRet",
@@ -22887,10 +22958,10 @@ class BillPaymentCreditCard(QBMixinWithSave):
 
 
 @dataclass
-class BillPaymentCreditCards(PluralMixin, PluralTrxnMixin):
+class BillPaymentCreditCards(BatchTrxnMixin):
     class Meta:
         name = "BillPaymentCreditCard"
-        plural_of = BillPaymentCreditCard
+        batch_of = BillPaymentCreditCard
 
     def __init__(self):
         super().__init__()
@@ -23308,11 +23379,11 @@ class BillMod(QBModRqMixin):
 
 
 @dataclass
-class Bill(QBMixinWithSave):
+class Bill(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "Bill"
-        plural_class_name = "Bills"
+        batch_class_name = "Bills"
 
     Query: Type[BillQuery] = BillQuery
     Add: Type[BillAdd] = BillAdd
@@ -23512,11 +23583,11 @@ class Bill(QBMixinWithSave):
     )
 
 @dataclass
-class Bills(PluralMixin, PluralTrxnMixin):
+class Bills(BatchTrxnMixin):
 
     class Meta:
         name = "Bill"
-        plural_of = Bill
+        batch_of = Bill
 
     def __init__(self):
         super().__init__()
@@ -23830,10 +23901,10 @@ class BuildAssemblyMod(QBModRqMixin):
 
 
 @dataclass
-class BuildAssembly(QBMixinWithSave):
+class BuildAssembly(QBMixinWithSaveAndDel):
     class Meta:
         name = "BuildAssembly"
-        plural_class_name = "BuildAssemblies"
+        batch_class_name = "BuildAssemblies"
 
     Query: Type[BuildAssemblyQuery] = BuildAssemblyQuery
     Add: Type[BuildAssemblyAdd] = BuildAssemblyAdd
@@ -24000,10 +24071,10 @@ class BuildAssembly(QBMixinWithSave):
 
 
 @dataclass
-class BuildAssemblies(PluralMixin, PluralTrxnMixin):
+class BuildAssemblies(BatchTrxnMixin):
     class Meta:
         name = "BuildAssembly"
-        plural_of = BuildAssembly
+        batch_of = BuildAssembly
 
     def __init__(self):
         super().__init__()
@@ -24430,10 +24501,10 @@ class ChargeMod(QBModRqMixin):
 
 
 @dataclass
-class Charge(QBMixinWithSave):
+class Charge(QBMixinWithSaveAndDel):
     class Meta:
         name = "Charge"
-        plural_class_name = "Charges"
+        batch_class_name = "Charges"
 
     Query: Type[ChargeQuery] = ChargeQuery
     Add: Type[ChargeAdd] = ChargeAdd
@@ -24622,10 +24693,10 @@ class Charge(QBMixinWithSave):
 
 
 @dataclass
-class Charges(PluralMixin, PluralTrxnMixin):
+class Charges(BatchTrxnMixin):
     class Meta:
         name = "Charge"
-        plural_of = Charge
+        batch_of = Charge
 
     def __init__(self):
         super().__init__()
@@ -25054,10 +25125,10 @@ class CheckMod(QBModRqMixin):
 
 
 @dataclass
-class Check(QBMixinWithSave):
+class Check(QBMixinWithSaveAndDel):
     class Meta:
         name = "Check"
-        plural_class_name = "Checks"
+        batch_class_name = "Checks"
 
     Query: Type[CheckQuery] = CheckQuery
     Add: Type[CheckAdd] = CheckAdd
@@ -25224,10 +25295,10 @@ class Check(QBMixinWithSave):
 
 
 @dataclass
-class Checks(PluralMixin, PluralTrxnMixin):
+class Checks(BatchTrxnMixin):
     class Meta:
         name = "Check"
-        plural_of = Check
+        batch_of = Check
 
     def __init__(self):
         super().__init__()
@@ -25563,10 +25634,10 @@ class CreditCardChargeMod(QBModRqMixin):
 
 
 @dataclass
-class CreditCardCharge(QBMixinWithSave):
+class CreditCardCharge(QBMixinWithSaveAndDel):
     class Meta:
         name = "CurrencyFilter"
-        plural_class_name = "CurrencyFilters"
+        batch_class_name = "CurrencyFilters"
 
     Query: Type[CreditCardChargeQuery] = CreditCardChargeQuery
     Add: Type[CreditCardChargeAdd] = CreditCardChargeAdd
@@ -25705,10 +25776,10 @@ class CreditCardCharge(QBMixinWithSave):
 
 
 @dataclass
-class CreditCardCharges(PluralMixin, PluralTrxnMixin):
+class CreditCardCharges(BatchTrxnMixin):
     class Meta:
         name = "CreditCardCharge"
-        plural_of = CreditCardCharge
+        batch_of = CreditCardCharge
 
     def __init__(self):
         super().__init__()
@@ -26044,10 +26115,10 @@ class CreditCardCreditMod(QBModRqMixin):
 
 
 @dataclass
-class CreditCardCredit(QBMixinWithSave):
+class CreditCardCredit(QBMixinWithSaveAndDel):
     class Meta:
         name = "CreditCardCredits"
-        plural_class_name = "CreditCardCredits"
+        batch_class_name = "CreditCardCredits"
 
     Query: Type[CreditCardCreditQuery] = CreditCardCreditQuery
     Add: Type[CreditCardCreditAdd] = CreditCardCreditAdd
@@ -26186,10 +26257,10 @@ class CreditCardCredit(QBMixinWithSave):
 
 
 @dataclass
-class CreditCardCredits(PluralMixin, PluralTrxnMixin):
+class CreditCardCredits(BatchTrxnMixin):
     class Meta:
         name = "CreditCardCredit"
-        plural_of = CreditCardCredit
+        batch_of = CreditCardCredit
 
     def __init__(self):
         super().__init__()
@@ -26754,10 +26825,10 @@ class CreditMemoMod(QBModRqMixin):
 
 
 @dataclass
-class CreditMemo(QBMixinWithSave):
+class CreditMemo(QBMixinWithSaveAndDel):
     class Meta:
         name = "CreditMemo"
-        plural_class_name = "CreditMemos"
+        batch_class_name = "CreditMemos"
 
     Query: Type[CreditMemoQuery] = CreditMemoQuery
     Add: Type[CreditMemoAdd] = CreditMemoAdd
@@ -27073,10 +27144,10 @@ class CreditMemo(QBMixinWithSave):
 
 
 @dataclass
-class CreditMemos(PluralMixin, PluralTrxnMixin):
+class CreditMemos(BatchTrxnMixin):
     class Meta:
         name = "CreditMemo"
-        plural_of = CreditMemo
+        batch_of = CreditMemo
 
     def __init__(self):
         super().__init__()
@@ -27145,7 +27216,7 @@ class CashBackInfo(QBMixin):
 
     class Meta:
         name = "CashBackInfo"
-        plural_class_name = "CashBackInfo"
+        batch_class_name = "CashBackInfo"
 
     txn_line_id: Optional[str] = field(
         default=None,
@@ -27414,10 +27485,10 @@ class DepositMod(QBModRqMixin):
 
 
 @dataclass
-class Deposit(QBMixinWithSave):
+class Deposit(QBMixinWithSaveAndDel):
     class Meta:
         name = "Deposit"
-        plural_class_name = "Deposits"
+        batch_class_name = "Deposits"
 
     Query: Type[DepositQuery] = DepositQuery
     Add: Type[DepositAdd] = DepositAdd
@@ -27542,10 +27613,10 @@ class Deposit(QBMixinWithSave):
 
 
 @dataclass
-class Deposits(PluralMixin, PluralTrxnMixin):
+class Deposits(BatchTrxnMixin):
     class Meta:
         name = "Deposit"
-        plural_of = Deposit
+        batch_of = Deposit
 
     def __init__(self):
         super().__init__()
@@ -28066,10 +28137,10 @@ class EstimateMod(QBMixin):
 
 
 @dataclass
-class Estimate(QBMixinWithSave):
+class Estimate(QBMixinWithSaveAndDel):
     class Meta:
         name = "Estimate"
-        plural_class_name = "Estimates"
+        batch_class_name = "Estimates"
 
     Query: Type[EstimateQuery] = EstimateQuery
     Add: Type[EstimateAdd] = EstimateAdd
@@ -28350,10 +28421,10 @@ class Estimate(QBMixinWithSave):
 
 
 @dataclass
-class Estimates(PluralMixin, PluralTrxnMixin):
+class Estimates(BatchTrxnMixin):
     class Meta:
         name = "Estimate"
-        plural_of = Estimate
+        batch_of = Estimate
 
     def __init__(self):
         super().__init__()
@@ -28646,10 +28717,10 @@ class InventoryAdjustmentMod(QBModRqMixin):
 
 
 @dataclass
-class InventoryAdjustment(QBMixinWithSave):
+class InventoryAdjustment(QBMixinWithSaveAndDel):
     class Meta:
         name = "InventoryAdjustment"
-        plural_class_name = "InventoryAdjustments"
+        batch_class_name = "InventoryAdjustments"
 
     Query: Type[InventoryAdjustmentQuery] = InventoryAdjustmentQuery
     Add: Type[InventoryAdjustmentAdd] = InventoryAdjustmentAdd
@@ -28766,10 +28837,10 @@ class InventoryAdjustment(QBMixinWithSave):
 
 
 @dataclass
-class InventoryAdjustments(PluralMixin, PluralTrxnMixin):
+class InventoryAdjustments(BatchTrxnMixin):
     class Meta:
         name = "InventoryAdjustment"
-        plural_of = InventoryAdjustment
+        batch_of = InventoryAdjustment
 
     def __init__(self):
         super().__init__()
@@ -29372,11 +29443,11 @@ class InvoiceMod(QBModRqMixin):
 
 
 @dataclass
-class Invoice(QBMixinWithSave):
+class Invoice(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "Invoice"
-        plural_class_name = "Invoices"
+        batch_class_name = "Invoices"
 
     Query: Type[InvoiceQuery] = InvoiceQuery
     Add: Type[InvoiceAdd] = InvoiceAdd
@@ -29721,11 +29792,11 @@ class Invoice(QBMixinWithSave):
 
 
 @dataclass
-class Invoices(PluralMixin, PluralTrxnMixin):
+class Invoices(BatchTrxnMixin):
 
     class Meta:
         name = "Invoice"
-        plural_of = Invoice
+        batch_of = Invoice
 
     def __init__(self):
         super().__init__()
@@ -30028,10 +30099,10 @@ class JournalEntryMod(QBModRqMixin):
 
 
 @dataclass
-class JournalEntry(QBMixinWithSave):
+class JournalEntry(QBMixinWithSaveAndDel):
     class Meta:
         name = "JournalEntry"
-        plural_class_name = "JournalEntries"
+        batch_class_name = "JournalEntries"
 
     Query: Type[JournalEntryQuery] = JournalEntryQuery
     Add: Type[JournalEntryAdd] = JournalEntryAdd
@@ -30161,10 +30232,10 @@ class JournalEntry(QBMixinWithSave):
 
 
 @dataclass
-class JournalEntries(PluralMixin, PluralTrxnMixin):
+class JournalEntries(BatchTrxnMixin):
     class Meta:
         name = "JournalEntry"
-        plural_of = JournalEntry
+        batch_of = JournalEntry
 
     def __init__(self):
         super().__init__()
@@ -30703,11 +30774,11 @@ class PurchaseOrderMod(QBModRqMixin):
     )
 
 @dataclass
-class PurchaseOrder(QBMixinWithSave):
+class PurchaseOrder(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "PurchaseOrder"
-        plural_class_name = "PurchaseOrders"
+        batch_class_name = "PurchaseOrders"
 
     Query: Type[PurchaseOrderQuery] = PurchaseOrderQuery
     Add: Type[PurchaseOrderAdd] = PurchaseOrderAdd
@@ -30989,11 +31060,11 @@ class PurchaseOrder(QBMixinWithSave):
 
 
 @dataclass
-class PurchaseOrders(PluralMixin, PluralTrxnMixin):
+class PurchaseOrders(BatchTrxnMixin):
 
     class Meta:
         name = "PurchaseOrder"
-        plural_of = PurchaseOrder
+        batch_of = PurchaseOrder
 
     def __init__(self):
         super().__init__()
@@ -31564,10 +31635,10 @@ class ReceivePaymentMod(QBModRqMixin):
 
 
 @dataclass
-class ReceivePayment(QBMixinWithSave):
+class ReceivePayment(QBMixinWithSaveAndDel):
     class Meta:
         name = "ReceivePayment"
-        plural_class_name = "ReceivePayments"
+        batch_class_name = "ReceivePayments"
 
     Query: Type[ReceivePaymentQuery] = ReceivePaymentQuery
     Add: Type[ReceivePaymentAdd] = ReceivePaymentAdd
@@ -31716,7 +31787,7 @@ class ReceivePayment(QBMixinWithSave):
             "type": "Element",
         },
     )
-    applied_to_txn_ret: List[AppliedToTxn] = field(
+    applied_to_txns: List[AppliedToTxn] = field(
         default_factory=list,
         metadata={
             "name": "AppliedToTxnRet",
@@ -31733,10 +31804,10 @@ class ReceivePayment(QBMixinWithSave):
 
 
 @dataclass
-class ReceivePayments(PluralMixin, PluralTrxnMixin):
+class ReceivePayments(BatchTrxnMixin):
     class Meta:
         name = "ReceivePayment"
-        plural_of = ReceivePayment
+        batch_of = ReceivePayment
 
     def __init__(self):
         super().__init__()
@@ -32279,10 +32350,10 @@ class SalesOrderMod(QBModRqMixin):
 
 
 @dataclass
-class SalesOrder(QBMixinWithSave):
+class SalesOrder(QBMixinWithSaveAndDel):
     class Meta:
         name = "SalesOrder"
-        plural_class_name = "SalesOrders"
+        batch_class_name = "SalesOrders"
 
     Query: Type[SalesOrderQuery] = SalesOrderQuery
     Add: Type[SalesOrderAdd] = SalesOrderAdd
@@ -32598,10 +32669,10 @@ class SalesOrder(QBMixinWithSave):
 
 
 @dataclass
-class SalesOrders(PluralMixin, PluralTrxnMixin):
+class SalesOrders(BatchTrxnMixin):
     class Meta:
         name = "SalesOrder"
-        plural_of = SalesOrder
+        batch_of = SalesOrder
 
     def __init__(self):
         super().__init__()
@@ -33159,10 +33230,10 @@ class SalesReceiptMod(QBModRqMixin):
 
 
 @dataclass
-class SalesReceipt(QBMixinWithSave):
+class SalesReceipt(QBMixinWithSaveAndDel):
     class Meta:
         name = "SalesReceipt"
-        plural_class_name = "SalesReceipts"
+        batch_class_name = "SalesReceipts"
 
     Query: Type[SalesReceiptQuery] = SalesReceiptQuery
     Add: Type[SalesReceiptAdd] = SalesReceiptAdd
@@ -33478,10 +33549,10 @@ class SalesReceipt(QBMixinWithSave):
 
 
 @dataclass
-class SalesReceipts(PluralMixin, PluralTrxnMixin):
+class SalesReceipts(BatchTrxnMixin):
     class Meta:
         name = "SalesReceipt"
-        plural_of = SalesReceipt
+        batch_of = SalesReceipt
 
     def __init__(self):
         super().__init__()
@@ -33755,10 +33826,10 @@ class TimeTrackingMod(QBModRqMixin):
 
 
 @dataclass
-class TimeTracking(QBMixinWithSave):
+class TimeTracking(QBMixinWithSaveAndDel):
     class Meta:
         name = "TimeTracking"
-        plural_class_name = "TimeTrackings"
+        batch_class_name = "TimeTrackings"
 
     Query: Type[TimeTrackingQuery] = TimeTrackingQuery
     Add: Type[TimeTrackingAdd] = TimeTrackingAdd
@@ -33882,10 +33953,10 @@ class TimeTracking(QBMixinWithSave):
 
 
 @dataclass
-class TimeTrackings(PluralMixin, PluralTrxnMixin):
+class TimeTrackings(BatchTrxnMixin):
     class Meta:
         name = "TimeTracking"
-        plural_of = TimeTracking
+        batch_of = TimeTracking
 
     def __init__(self):
         super().__init__()
@@ -34298,11 +34369,11 @@ class TransactionQuery(QBQueryMixin):
 
 
 @dataclass
-class Transaction(QBMixinWithSave):
+class Transaction(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "Transaction"
-        plural_class_name = "Transactions"
+        batch_class_name = "Transactions"
 
     Query: Type[TransactionQuery] = TransactionQuery
     #No Add
@@ -34413,11 +34484,11 @@ class Transaction(QBMixinWithSave):
 
 
 @dataclass
-class Transactions(PluralMixin):
+class Transactions(BatchQBMixin):
 
     class Meta:
         name = "Transaction"
-        plural_of = Transaction
+        batch_of = Transaction
 
     def __init__(self):
         super().__init__()
@@ -34594,10 +34665,10 @@ class TransferMod(QBModRqMixin):
 
 
 @dataclass
-class Transfer(QBMixinWithSave):
+class Transfer(QBMixinWithSaveAndDel):
     class Meta:
         name = "Transfer"
-        plural_class_name = "Transfers"
+        batch_class_name = "Transfers"
 
     Query: Type[TransferQuery] = TransferQuery
     Add: Type[TransferAdd] = TransferAdd
@@ -34693,48 +34764,14 @@ class Transfer(QBMixinWithSave):
 
 
 @dataclass
-class Transfers(PluralMixin, PluralTrxnMixin):
+class Transfers(BatchTrxnMixin):
     class Meta:
         name = "Transfer"
-        plural_of = Transfer
+        batch_of = Transfer
 
     def __init__(self):
         super().__init__()
 
-
-@dataclass
-class TxnDel(QBMixin):
-    FIELD_ORDER = [
-        "TxnDelType", "TxnID"
-    ]
-
-    class Meta:
-        name = "TxnDel"
-
-    txn_del_type: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnDelType",
-            "type": "Element",
-            "required": True,
-            "valid_values": [
-                "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
-                "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
-                "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
-                "ItemReceipt", "JournalEntry", "PurchaseOrder", "ReceivePayment", "SalesOrder",
-                "SalesReceipt", "SalesTaxPaymentCheck", "TimeTracking", "TransferInventory",
-                "VehicleMileage", "VendorCredit"
-            ],
-        },
-    )
-    txn_id: Optional[str] = field(
-        default=None,
-        metadata={
-            "name": "TxnID",
-            "type": "Element",
-            "required": True,
-        },
-    )
 
 @dataclass
 class TxnVoid(QBMixin):
@@ -34751,12 +34788,7 @@ class TxnVoid(QBMixin):
             "name": "TxnVoidType",
             "type": "Element",
             "required": True,
-            "valid_values": [
-                "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
-                "Charge", "Check", "CreditCardCharge", "CreditCardCredit", "CreditMemo",
-                "Deposit", "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry",
-                "SalesReceipt", "VendorCredit"
-            ],
+            "valid_values": VALID_TXN_VOID_TYPE_VALUES,
         },
     )
     txn_id: Optional[str] = field(
@@ -35107,11 +35139,11 @@ class VendorCreditMod(QBModMixin):
 
 
 @dataclass
-class VendorCredit(QBMixinWithSave):
+class VendorCredit(QBMixinWithSaveAndDel):
 
     class Meta:
         name = "VendorCredit"
-        plural_class_name = "VendorCredits"
+        batch_class_name = "VendorCredits"
 
     Query: Type[VendorCreditQuery] = VendorCreditQuery
     Add: Type[VendorCreditAdd] = VendorCreditAdd
@@ -35278,11 +35310,11 @@ class VendorCredit(QBMixinWithSave):
     )
 
 @dataclass
-class VendorCredits(PluralMixin, PluralTrxnMixin):
+class VendorCredits(BatchTrxnMixin):
 
     class Meta:
         name = "VendorCredit"
-        plural_of = VendorCredit
+        batch_of = VendorCredit
 
     def __init__(self):
         super().__init__()

@@ -230,7 +230,34 @@ VALID_TXN_DISPLAY_MOD_TYPE_VALUES = [
     "VendorCredit"
 ]
 
+VALID_TXN_DEL_TYPE_VALUES = [
+    "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+    "BuildAssembly", "Charge", "Check", "CreditCardCharge", "CreditCardCredit",
+    "CreditMemo", "Deposit", "Estimate", "InventoryAdjustment", "Invoice",
+    "ItemReceipt", "JournalEntry", "PayrollLiabilityAdjustment",
+    "PayrollPriorPayment", "PayrollYearToDateAdjustment", "PurchaseOrder",
+    "ReceivePayment", "SalesOrder", "SalesReceipt", "SalesTaxPaymentCheck",
+    "TimeTracking", "TransferInventory", "VehicleMileage", "VendorCredit"
+]
 
+VALID_TXN_VOID_TYPE_VALUES = [
+    "ARRefundCreditCard", "Bill", "BillPaymentCheck", "BillPaymentCreditCard",
+    "Charge", "Check", "CreditCardCharge", "CreditCardCredit", "CreditMemo",
+    "Deposit", "InventoryAdjustment", "Invoice", "ItemReceipt", "JournalEntry",
+    "SalesReceipt", "VendorCredit"
+]
+
+VALID_LIST_DEL_TYPE_VALUES = [
+    "Account", "BillingRate", "Class", "Currency", "Customer", "CustomerMsg",
+    "CustomerType", "DateDrivenTerms", "Employee", "InventorySite",
+    "ItemDiscount", "ItemFixedAsset", "ItemGroup", "ItemInventory",
+    "ItemInventoryAssembly", "ItemNonInventory", "ItemOtherCharge",
+    "ItemPayment", "ItemSalesTax", "ItemSalesTaxGroup", "ItemService",
+    "ItemSubtotal", "JobType", "OtherName", "PaymentMethod",
+    "PayrollItemNonWage", "PayrollItemWage", "PriceLevel", "SalesRep",
+    "SalesTaxCode", "ShipMethod", "StandardTerms", "ToDo",
+    "UnitOfMeasureSet", "Vehicle", "Vendor", "VendorType", "WorkersCompCode"
+]
 
 list_id: Optional[str] = field(
         default=None,
