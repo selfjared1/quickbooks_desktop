@@ -249,8 +249,6 @@ class QuickbooksDesktop():
         This will open a connection to QuickBooks Desktop.
         Note: This should ALWAYS be closed before closing the program.  Leaving the session open will make it to
             where QuickBooks Desktop cannot be closed.
-        :param application_name: This is the name as it shows up in.
-            QuickBooks>Edit>Preferences>Integrated Applications>Company Settings
         :return: None
         """
 
@@ -630,7 +628,6 @@ class QuickbooksDesktop():
             else:
                 self.close_qb()
             logger.debug(f"There was an error trying to send data to QuickBooks. Error: {e}")
-            raise(f"There was an error trying to send data to QuickBooks. Error: {e}")
             return e
 
         if self.keep_session_open:
