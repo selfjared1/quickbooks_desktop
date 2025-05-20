@@ -1657,7 +1657,7 @@ class BatchTrxnMixin(BatchQBMixin, SaveBatchMixin, DelBatchMixin):
         else:
             pass
 
-        QueryRs_list = qb.send_xml(QueryRq)
+        QueryRs_list = qb.send_xml(QueryRq, response_type='response_list')
         if type(QueryRs_list) == list and len(QueryRs_list) == 1:
             QueryRs = QueryRs_list[0]
             batch_instance = cls()
