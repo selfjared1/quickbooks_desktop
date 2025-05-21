@@ -1332,6 +1332,7 @@ class QBMixinWithSaveAndDel(QBMixin, SaveMixin, DelMixin):
         super().__init_subclass__(**kwargs)
 
 
+@dataclass
 class BatchQBMixin:
     _items: List[Any] = field(default_factory=list)
 
