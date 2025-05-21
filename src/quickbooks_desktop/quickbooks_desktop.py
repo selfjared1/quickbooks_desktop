@@ -1333,14 +1333,13 @@ class QBMixinWithSaveAndDel(QBMixin, SaveMixin, DelMixin):
 
 
 class BatchQBMixin:
+    _items: List[Any] = field(default_factory=list)
 
     class Meta:
         name = ''
         batch_of = ''
         batch_of_db_model = ''
 
-    def __init__(self):
-        self._items = []
 
     def __iter__(self):
         return iter(self._items)
