@@ -4,7 +4,7 @@ from lxml import etree as et
 from dataclasses import dataclass, field
 from typing import Optional, List
 from src.quickbooks_desktop.quickbooks_desktop import (
-    FromXmlMixin, CustomerRef, Invoice, InvoiceLine, JournalEntry,
+    FromXmlMixin, CustomerRef, Invoice, InvoiceLine, JournalEntry, SalesOrder
 )
 from datetime import datetime
 
@@ -356,4 +356,72 @@ class TestFromXmlMixin(unittest.TestCase):
         self.assertEqual(instance.journal_debit_lines[2].account_ref.full_name, "Inventory")
         self.assertEqual(instance.journal_debit_lines[2].amount, 203500.00)
         self.assertEqual(instance.journal_debit_lines[2].memo, "original purchase")
+
+    def test_from_xml_so_lines(self):
+        LINES_XML = """<?xml version="1.0" ?>
+        <QBXML>
+            <QBXMLMsgsRs>
+                <SalesOrderQueryRs requestID="1" statusCode="0" statusSeverity="Info" statusMessage="Status OK">
+                    <SalesOrderRet>
+                        <TxnID>1DB9A-1745622547</TxnID>
+                        <SalesOrderLineRet>
+                            <TxnLineID>1DB9C-1745622547</TxnLineID>
+                            <ItemRef>
+                                <ListID>80000839-1737761486</ListID>
+                                <FullName>Lotion Pump:ABF.64894547.JLP</FullName>
+                            </ItemRef>
+                            <Desc>Pump OLLY BW 28-410 JL-AMA\n\n                        PART #64894547</Desc>
+                            <Quantity>300000</Quantity>
+                            <Rate>0.15</Rate>
+                            <Amount>45000.00</Amount>
+                            <SalesTaxCodeRef>
+                                <ListID>80000002-1693363606</ListID>
+                                <FullName>Non</FullName>
+                            </SalesTaxCodeRef>
+                            <Invoiced>0</Invoiced>
+                            <IsManuallyClosed>false</IsManuallyClosed>
+                        </SalesOrderLineRet>
+                        <SalesOrderLineRet>
+                            <TxnLineID>1DBA2-1745622547</TxnLineID>
+                            <ItemRef>
+                                <ListID>800008EA-1744215679</ListID>
+                                <FullName>Duty 145% Customer</FullName>
+                            </ItemRef>
+                            <Desc>Tariff 145% Additional ($0.18995/pc)</Desc>
+                            <Quantity>1</Quantity>
+                            <Rate>56985.00</Rate>
+                            <Amount>56985.00</Amount>
+                            <SalesTaxCodeRef>
+                                <ListID>80000002-1693363606</ListID>
+                                <FullName>Non</FullName>
+                            </SalesTaxCodeRef>
+                            <Invoiced>0</Invoiced>
+                            <IsManuallyClosed>false</IsManuallyClosed>
+                        </SalesOrderLineRet>
+                    </SalesOrderRet>
+                </SalesOrderQueryRs>
+            </QBXMLMsgsRs>
+        </QBXML>"""
+        root = et.fromstring(LINES_XML)
+        sales_order_el = root.find(".//SalesOrderRet")
+        sales_order = SalesOrder.from_xml(sales_order_el)
+
+        self.assertEqual(sales_order.txn_id, "1DB9A-1745622547")
+
+        self.assertEqual(len(sales_order.sales_order_lines), 2)
+
+        line1 = sales_order.sales_order_lines[0]
+        self.assertEqual(line1.txn_line_id, "1DB9C-1745622547")
+        self.assertEqual(line1.desc.strip(),
+                         "Pump OLLY BW 28-410 JL-AMA\n\n                        PART #64894547".strip())
+        self.assertEqual(line1.quantity, 300000)
+        self.assertEqual(line1.rate, Decimal('0.15'))
+        self.assertEqual(line1.amount, Decimal("45000.00"))
+
+        line2 = sales_order.sales_order_lines[1]
+        self.assertEqual(line2.txn_line_id, "1DBA2-1745622547")
+        self.assertEqual(line2.desc.strip(), "Tariff 145% Additional ($0.18995/pc)")
+        self.assertEqual(line2.quantity, 1)
+        self.assertEqual(line2.rate, 56985.00)
+        self.assertEqual(line2.amount, Decimal("56985.00"))
 
