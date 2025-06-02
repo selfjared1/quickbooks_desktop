@@ -251,12 +251,14 @@ class QuickbooksDesktop():
             where QuickBooks Desktop cannot be closed.
         :return: None
         """
-
+        logger.debug('Begin open_connection')
         try:
             self.dispatch()
             self.qbXMLRP.OpenConnection2('', self.application_name, 1)
             self.connection_open = True
+            logger.debug('End open_connection with connection_open = True')
         except Exception as e:
+            logger.debug('There is an issue with Connecting to QuickBooks.  Here is the issue directly from QuickBooks: \n {e}')
             raise Exception(f"There is an issue with Connecting to QuickBooks.  Here is the issue directly from QuickBooks: \n {e}")
 
 
@@ -268,21 +270,31 @@ class QuickbooksDesktop():
         """
         try:
             if not self.connection_open:
+                logger.debug('self.connection_open is False, trying to connect')
                 self.open_connection()
             else:
-                pass
+                logger.debug('self.connection_open was already True')
             file_path = self.company_file if self.company_file else ""
-
+            logger.debug(f'company_file = {self.company_file}')
+            logger.debug('Trying to begin session in single user')
             self.ticket = self.qbXMLRP.BeginSession(file_path, 0)
             self.session_begun = True
+            logger.debug('Session Begun in single user mode')
 
-        except:
+        except Exception as e:
+            logger.debug(f'BeginSession Failed with following error: {e}')
+            logger.debug(f'Making second BeginSession attempt in Multi-User Mode')
             try:
+                logger.debug(f'company_file = {self.company_file}')
                 file_path = self.company_file if self.company_file else ""
                 self.ticket = self.qbXMLRP.BeginSession(file_path, 1)
                 self.session_begun = True
+                logger.debug('Session Begun in multi user mode')
             except Exception as e:
-                logger.debug(e)
+                logger.debug(f'BeginSession Failed second attempt with following error: {e}')
+                self.close_connection()
+
+                raise e
 
     def open_qb(self, application_name='accountingpy', keep_open=False):
         """
@@ -651,18 +663,22 @@ class QuickbooksDesktop():
         Simply ends the QuickBooks Session.  This should ALWAYS happen before closing the program.
         :return: None
         """
+        logger.debug('Begin end_session')
         self.qbXMLRP.EndSession(self.ticket)
         self.session_begun = False
+        logger.debug('End end_session')
 
     def close_connection(self):
         """
         Simply closing the QuickBooks Connection.  This should ALWAYS happen before closing the program.
         :return: None
         """
+        logger.debug('Begin close_connection')
         if self.session_begun:
             self.end_session()
         self.qbXMLRP.CloseConnection()
         self.connection_open = False
+        logger.debug('End close_connection')
 
     def close_qb(self):
         """
