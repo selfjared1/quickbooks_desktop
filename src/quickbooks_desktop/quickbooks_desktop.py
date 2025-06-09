@@ -2341,21 +2341,33 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             return ReportData.from_xml(self._report_data_xml)
         return None
 
-    def _get_report_column_headers(self, return_row_type_column=False):
+    def _get_report_column_headers(self, return_row_type_column=False, use_col_type_as_headers=False):
         title_rows = {}
         for col in self.col_desc:
-            # col_id = col.col_id
-            for title in col.col_title:
-                if title.title_row in title_rows.keys():
-                    if title.title_value:
-                        title_rows[title.title_row].append(title.title_value)
+            if use_col_type_as_headers:
+                for title in col.col_title:
+                    if title.title_row in title_rows.keys():
+                        if col.col_type:
+                            title_rows[title.title_row].append(col.col_type)
+                        else:
+                            title_rows[title.title_row].append('Column' + str(col.col_id).zfill(2))
                     else:
-                        title_rows[title.title_row].append('Column' + str(col.col_id).zfill(2))
-                else:
-                    if title.title_value:
-                        title_rows[title.title_row] = [title.title_value]
+                        if col.col_type:
+                            title_rows[title.title_row] = [col.col_type]
+                        else:
+                            title_rows[title.title_row].append('Column' + str(col.col_id).zfill(2))
+            else:
+                for title in col.col_title:
+                    if title.title_row in title_rows.keys():
+                        if title.title_value:
+                            title_rows[title.title_row].append(title.title_value)
+                        else:
+                            title_rows[title.title_row].append('Column' + str(col.col_id).zfill(2))
                     else:
-                        title_rows[title.title_row] = ['Column' + str(col.col_id).zfill(2)]
+                        if title.title_value:
+                            title_rows[title.title_row] = [title.title_value]
+                        else:
+                            title_rows[title.title_row] = ['Column' + str(col.col_id).zfill(2)]
 
         # The highest numbered title_rows is the header right before the data.
         # So the column headers of the dataframe are the title_rows with the highest key
@@ -2431,12 +2443,14 @@ class ReportMixin(FromXmlMixin, ReprMixin):
         return rows
 
 
-    def to_dataframe(self, return_row_type_column=False) -> pd.DataFrame:
+    def to_dataframe(self, return_row_type_column=False, use_col_type_as_headers=False) -> pd.DataFrame:
         """Convert report_data into a Pandas DataFrame."""
         if not self._report_data_xml:
             return pd.DataFrame()
         else:
-            col_headers = self._get_report_column_headers(return_row_type_column=return_row_type_column)
+            col_headers = self._get_report_column_headers(
+                return_row_type_column=return_row_type_column,
+                use_col_type_as_headers=use_col_type_as_headers)
             rows = self._get_report_rows(col_headers, return_row_type_column=return_row_type_column)
             df = pd.DataFrame(rows, columns=col_headers)
             return df
