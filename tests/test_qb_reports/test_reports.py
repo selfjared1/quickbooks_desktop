@@ -336,8 +336,8 @@ class TestReports(unittest.TestCase):
         qb = QuickbooksDesktop()
         response_dict = qb._process_response(self.sample_bs_standard_response, 'instances_dict')
         bs_report = response_dict['GeneralSummaryReport'][0]
-        columns = bs_report._get_report_column_headers(with_row_type=True)
-        rows = bs_report._get_report_rows(columns, with_row_type=True)
+        columns = bs_report._get_report_column_headers(return_row_type_column=True)
+        rows = bs_report._get_report_rows(columns, return_row_type_column=True)
 
         expected_first_rows = [
             {'Column00': "TextRow", 'Column01': "ASSETS"},

@@ -17,7 +17,7 @@ logger.addHandler(logging.NullHandler())
 
 # region Connection To Desktop And Utilities
 
-COL_DATA_TYPE_MAP = {
+REPORT_COL_DATA_TYPE_MAP = {
     "IDTYPE": str,
     "GUIDTYPE": str,
     "STRTYPE": str,
@@ -2044,7 +2044,10 @@ class ColDesc(FromXmlMixin, ReprMixin):
     def from_xml(cls, element):
         instance = super().from_xml(element)
         instance.col_id = int(element.get("colID"))
-        instance.data_type = COL_DATA_TYPE_MAP[element.get('dataType')]
+        if instance.col_type == 'ModifiedTime':
+            instance.data_type = REPORT_COL_DATA_TYPE_MAP['DATETIMETYPE']
+        else:
+            instance.data_type = REPORT_COL_DATA_TYPE_MAP[element.get('dataType')]
         return instance
 
 
@@ -2338,7 +2341,7 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             return ReportData.from_xml(self._report_data_xml)
         return None
 
-    def _get_report_column_headers(self, with_row_type=False):
+    def _get_report_column_headers(self, return_row_type_column=False):
         title_rows = {}
         for col in self.col_desc:
             # col_id = col.col_id
@@ -2357,14 +2360,14 @@ class ReportMixin(FromXmlMixin, ReprMixin):
         # The highest numbered title_rows is the header right before the data.
         # So the column headers of the dataframe are the title_rows with the highest key
         col_headers = title_rows[max(title_rows.keys())]
-        if with_row_type:
+        if return_row_type_column:
             col_headers = ['Column00'] + col_headers
             return col_headers
         else:
             return col_headers
 
-    def _create_data_row(self, col_headers, row, with_row_type):
-        if with_row_type:
+    def _create_data_row(self, col_headers, row, return_row_type_column):
+        if return_row_type_column:
             row_data = row.find('RowData')
             if row_data is not None:
                 row_type = row_data.get('rowType')
@@ -2377,7 +2380,7 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             col_desc = self.col_desc
 
         for col_data in row.findall('ColData'):
-            col_index = int(col_data.get('colID')) - (not(with_row_type))
+            col_index = int(col_data.get('colID')) - (not(return_row_type_column))
             col_header = col_headers[col_index]
             data_type = col_desc[col_index].data_type
             if data_type == Decimal:
@@ -2403,23 +2406,23 @@ class ReportMixin(FromXmlMixin, ReprMixin):
             row_dict[col_header] = col_value
         return row_dict
 
-    def _get_report_rows(self, col_headers, with_row_type=False):
+    def _get_report_rows(self, col_headers, return_row_type_column=False):
         rows = []
         for row in self._report_data_xml:
 
-            if row.tag == 'DataRow' and with_row_type:
-                row_dict = self._create_data_row(col_headers, row, with_row_type)
+            if row.tag == 'DataRow' and return_row_type_column:
+                row_dict = self._create_data_row(col_headers, row, return_row_type_column)
 
             elif row.tag == 'DataRow':
-                row_dict = self._create_data_row(col_headers, row, with_row_type)
-            elif row.tag == 'TextRow' and with_row_type:
+                row_dict = self._create_data_row(col_headers, row, return_row_type_column)
+            elif row.tag == 'TextRow' and return_row_type_column:
                 row_dict = {'Column00': 'TextRow', col_headers[1]: row.get('value')}
             elif row.tag == 'TextRow':
                 row_dict = {col_headers[0]: row.get('value')}
             elif row.tag == 'SubtotalRow':
-                row_dict = self._create_total_row(col_headers, row, with_row_type)
+                row_dict = self._create_total_row(col_headers, row, return_row_type_column)
             elif row.tag == 'TotalRow':
-                row_dict = self._create_total_row(col_headers, row, with_row_type)
+                row_dict = self._create_total_row(col_headers, row, return_row_type_column)
             else:
                 # What else is there?
                 pass
@@ -2428,13 +2431,13 @@ class ReportMixin(FromXmlMixin, ReprMixin):
         return rows
 
 
-    def to_dataframe(self, with_row_type=False) -> pd.DataFrame:
+    def to_dataframe(self, return_row_type_column=False) -> pd.DataFrame:
         """Convert report_data into a Pandas DataFrame."""
         if not self._report_data_xml:
             return pd.DataFrame()
         else:
-            col_headers = self._get_report_column_headers(with_row_type=with_row_type)
-            rows = self._get_report_rows(col_headers, with_row_type=with_row_type)
+            col_headers = self._get_report_column_headers(return_row_type_column=return_row_type_column)
+            rows = self._get_report_rows(col_headers, return_row_type_column=return_row_type_column)
             df = pd.DataFrame(rows, columns=col_headers)
             return df
 

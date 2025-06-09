@@ -169,7 +169,11 @@ class QBDates(QBDatesMacro):
 @dataclass
 class QBDateTime:
     _name = 'QBDateTime'
-    datetime_value: Optional[Union[str, datetime]] = field(default=None)
+    _datetime_value: Optional[Union[str, datetime]] = field(default=None)
+
+    @property
+    def c(self) -> Optional[Union[str, datetime]]:
+        return self._datetime_value
 
     @property
     def datetime_value(self) -> Optional[Union[str, datetime]]:
