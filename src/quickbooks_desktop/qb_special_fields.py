@@ -171,48 +171,45 @@ class QBDateTime:
     _name = 'QBDateTime'
     _datetime_value: Optional[Union[str, datetime]] = field(default=None)
 
+    def __post_init__(self):
+        if isinstance(self._datetime_value, str):
+            self._datetime_value = self.parse_datetime(self._datetime_value)
+
     @property
-    def c(self) -> Optional[Union[str, datetime]]:
+    def c(self) -> Optional[datetime]:
         return self._datetime_value
 
     @property
-    def datetime_value(self) -> Optional[Union[str, datetime]]:
+    def datetime_value(self) -> Optional[datetime]:
         return self._datetime_value
 
     @datetime_value.setter
     def datetime_value(self, value: Optional[Union[str, datetime]]):
         if value is None:
             raise ValueError("You did not include a datetime value")
-        else:
-            self._datetime_value = self.parse_datetime(value)
+        self._datetime_value = self.parse_datetime(value)
 
-    def parse_datetime(self, datetime_str: Union[str, datetime]) -> datetime:
-        if isinstance(datetime_str, str):
+    def parse_datetime(self, datetime_input: Union[str, datetime]) -> datetime:
+        if isinstance(datetime_input, datetime):
+            return datetime_input
+        if isinstance(datetime_input, str):
             try:
-                # Parse datetime string in ISO 8601 format
-                return parser.isoparse(datetime_str)
+                return parser.parse(datetime_input)
             except Exception as e:
-                raise ValueError(f'Your datetime parameter "{datetime_str}" could not be parsed: {e}')
-        elif isinstance(datetime_str, datetime):
-            return datetime_str
-        else:
-            raise ValueError(f'Unsupported datetime type: {type(datetime_str)}')
+                raise ValueError(f'Could not parse datetime string "{datetime_input}": {e}')
+        raise ValueError(f'Unsupported datetime type: {type(datetime_input)}')
 
     def __str__(self):
-        if isinstance(self._datetime_value, datetime):
-            # Format as ISO 8601 string
-            return self._datetime_value.isoformat()
-        return str(self._datetime_value)
+        return self._datetime_value.isoformat() if isinstance(self._datetime_value, datetime) else ""
 
     def to_xml(self, field_name: str) -> et.Element:
         element = et.Element(snake_to_camel(field_name))
-        element.text = self.__str__()
+        element.text = str(self)
         return element
 
     @classmethod
     def from_xml(cls, xml_element: et.Element) -> 'QBDateTime':
-        datetime_str = xml_element.text
-        return cls(datetime_str)
+        return cls(xml_element.text)
 
 
 @dataclass
