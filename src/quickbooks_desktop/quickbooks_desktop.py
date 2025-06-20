@@ -296,11 +296,14 @@ class QuickbooksDesktop():
 
                 raise e
 
-    def open_qb(self, application_name='accountingpy', keep_open=False):
+    def open_qb(self, application_name=None, keep_open=False):
         """
         The purpose of this is to combine open_connection and begin_session into a single command.
         """
-        self.application_name = application_name
+        if application_name is not None:
+            self.application_name = application_name
+        else:
+            pass
         self.open_connection()
         self.begin_session()
         if keep_open:

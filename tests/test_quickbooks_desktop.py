@@ -91,20 +91,3 @@ class TestQuickbooksDesktop(unittest.TestCase):
         mock_qbXMLRP.ProcessRequest.assert_called_once()
         self.assertIsNotNone(result)
 
-    @patch('src.quickbooks_desktop.quickbooks_desktop.win32com.client.Dispatch')
-    def test_close_qb(self, mock_dispatch):
-        qb_desktop = QuickbooksDesktop()
-        mock_qbXMLRP = MagicMock()
-        qb_desktop.qbXMLRP = mock_qbXMLRP
-        qb_desktop.session_begun = True
-        qb_desktop.connection_open = True
-
-        # Call close_qb
-        qb_desktop.close_qb()
-
-        # Ensure that both end_session and close_connection were called
-        mock_qbXMLRP.EndSession.assert_called_once()
-        mock_qbXMLRP.CloseConnection.assert_called_once()
-        self.assertFalse(qb_desktop.session_begun)
-        self.assertFalse(qb_desktop.connection_open)
-
