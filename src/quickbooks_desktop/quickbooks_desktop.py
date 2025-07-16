@@ -1358,7 +1358,7 @@ class BatchQBMixin:
     class Meta:
         name = ''
         batch_of = ''
-        batch_of_db_model = ''
+        db_model = ''
 
 
     def __iter__(self):
@@ -14774,7 +14774,7 @@ class Employees(BatchListMixin):
     class Meta:
         name = "Employee"
         batch_of = Employee
-        # batch_of_db_model = DBEmployee
+        # db_model = DBEmployee
 
     def __init__(self):
         super().__init__()
