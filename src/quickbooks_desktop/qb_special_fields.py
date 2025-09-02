@@ -116,7 +116,7 @@ class QBDates(QBDatesMacro):
     # date: Optional[Union[str, dt.date, dt.datetime]] = field(default=None, init=False)
     date_is_macro: bool = field(init=False, default=False)
 
-    def __init__(self, date: Optional[Union[dt.date, dt.datetime]] = None):
+    def __init__(self, date: Optional[Union[dt.date, dt.datetime, str, int]] = None):
         """Ensures `date` is set properly during initialization."""
         super().__init__()  # Calls parent class constructor
 
@@ -146,6 +146,11 @@ class QBDates(QBDatesMacro):
                 return str(self.macro_dict[date.lower()])
             else:
                 try:
+                    # Normalize simple year numbers like "0" or "0000" to a safe default (today's year)
+                    stripped = date.strip()
+                    if re.fullmatch(r"0+", stripped):
+                        year = datetime.today().year
+                        return dt.datetime(year, 1, 1)
                     date_parsed = parser.parse(date)
                     return date_parsed
                 except Exception as e:

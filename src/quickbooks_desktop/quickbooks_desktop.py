@@ -433,7 +433,7 @@ class QuickbooksDesktop():
                     instance_list.append(single_instance)
                 instances[request_id] = instance_list
             except (ModuleNotFoundError, AttributeError) as e:
-                print(f"Error loading class for {class_name}: {e}")
+                logger.debug(f"Error loading class for {class_name}: {e}")
         return instances
 
     def _break_response_into_single_instances(self, responses):
@@ -461,7 +461,7 @@ class QuickbooksDesktop():
                     single_instance = cls.from_xml(element)
                     instance_list.append(single_instance)
                     i += 1
-                    # print(i)
+                    # logger.debug(i)
                 if len(instances) and class_name in instances.keys():
                     instances[class_name].extend(instance_list)
                 else:
@@ -819,7 +819,7 @@ class ToXmlMixin:
                         else:
                             pass
                 except Exception as e:
-                    print(e)
+                    logger.debug(e)
             return fields_in_new_order
         else:
             return fields
@@ -1035,7 +1035,7 @@ class FromXmlMixin:
                 try:
                     logger.debug(f'Extra field {field_name} is in the xml provided')
                 except Exception as e:
-                    print(e)
+                    logger.debug(e)
         return init_args
 
     @classmethod
@@ -1522,9 +1522,9 @@ class BatchQBMixin:
                 file.write(xml_str)
             except Exception as e:
                 problematic_chars = [char for char in xml_str if ord(char) > 127]  # Characters outside ASCII range
-                print(f'problematic_chars are: {problematic_chars}')
-                print(e)
-                print(xml_str)
+                logger.debug(f'problematic_chars are: {problematic_chars}')
+                logger.debug(e)
+                logger.debug(xml_str)
         logger.debug('Finished to_xml_file')
 
 class DelBatchMixin:
